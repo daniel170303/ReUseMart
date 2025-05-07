@@ -23,8 +23,8 @@ class PegawaiController extends Controller
             'id_role' => 'required|integer',
             'nama_pegawai' => 'required|string|max:50',
             'nomor_telepon_pegawai' => 'required|string|max:50',
-            'email_pegawai' => 'required|email|max:50',
-            'password_pegawai' => 'required|string|max:50',
+            'email_pegawai' => 'required|email|max:50|unique:pegawai,email_pegawai', // Memastikan email unik
+            'password_pegawai' => 'required|string|min:8|max:50', // Pastikan password minimal 8 karakter
         ]);
 
         $pegawai = Pegawai::create($validated);
@@ -32,12 +32,15 @@ class PegawaiController extends Controller
         return response()->json(['message' => 'Pegawai berhasil ditambahkan', 'data' => $pegawai], 201);
     }
 
-    public function show($id)
+    public function show($nama)
     {
-        $pegawai = Pegawai::find($id);
-        if (!$pegawai) {
+        // Mencari pegawai berdasarkan nama
+        $pegawai = Pegawai::where('nama_pegawai', 'like', '%' . $nama . '%')->get();
+        
+        if ($pegawai->isEmpty()) {
             return response()->json(['message' => 'Pegawai tidak ditemukan'], 404);
         }
+
         return response()->json($pegawai);
     }
 
@@ -58,8 +61,8 @@ class PegawaiController extends Controller
             'id_role' => 'required|integer',
             'nama_pegawai' => 'required|string|max:50',
             'nomor_telepon_pegawai' => 'required|string|max:50',
-            'email_pegawai' => 'required|email|max:50',
-            'password_pegawai' => 'required|string|max:50',
+            'email_pegawai' => 'required|email|max:50|unique:pegawai,email_pegawai', // Memastikan email unik
+            'password_pegawai' => 'required|string|min:8|max:50', // Pastikan password minimal 8 karakter
         ]);
 
         $pegawai->update($validated);
