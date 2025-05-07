@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Hash;
 use App\Models\Organisasi;
 
 class OrganisasiController extends Controller
@@ -31,6 +32,9 @@ class OrganisasiController extends Controller
             'password_organisasi' => 'required|string|max:50',
         ]);
 
+        // Hash password sebelum disimpan
+        $validated['password_organisasi'] = Hash::make($validated['password_organisasi']);
+
         $organisasi = Organisasi::create($validated);
         return response()->json($organisasi, 201);
     }
@@ -49,6 +53,11 @@ class OrganisasiController extends Controller
             'email_organisasi' => 'sometimes|required|email|max:50|unique:organisasi,email_organisasi,' . $id . ',id_organisasi',
             'password_organisasi' => 'sometimes|required|string|max:50',
         ]);
+
+        // Hash password jika dikirim dalam update
+        if (isset($validated['password_organisasi'])) {
+            $validated['password_organisasi'] = Hash::make($validated['password_organisasi']);
+        }
 
         $organisasi->update($validated);
         return response()->json($organisasi, 200);

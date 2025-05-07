@@ -25,6 +25,7 @@ class Organisasi extends Model
         'password_organisasi',
     ];
 
+    // Hash password otomatis saat diset
     public function setPasswordOrganisasiAttribute($value)
     {
         $this->attributes['password_organisasi'] = Hash::make($value);
