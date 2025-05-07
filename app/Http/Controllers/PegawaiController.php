@@ -7,59 +7,73 @@ use Illuminate\Http\Request;
 
 class PegawaiController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
     public function index()
     {
-        //
+        return response()->json(Pegawai::all());
     }
 
-    /**
-     * Show the form for creating a new resource.
-     */
     public function create()
     {
-        //
+        return view('pegawai.create');
     }
 
-    /**
-     * Store a newly created resource in storage.
-     */
     public function store(Request $request)
     {
-        //
+        $validated = $request->validate([
+            'id_role' => 'required|integer',
+            'nama_pegawai' => 'required|string|max:50',
+            'nomor_telepon_pegawai' => 'required|string|max:50',
+            'email_pegawai' => 'required|email|max:50',
+            'password_pegawai' => 'required|string|max:50',
+        ]);
+
+        $pegawai = Pegawai::create($validated);
+
+        return response()->json(['message' => 'Pegawai berhasil ditambahkan', 'data' => $pegawai], 201);
     }
 
-    /**
-     * Display the specified resource.
-     */
-    public function show(Pegawai $pegawai)
+    public function show($id)
     {
-        //
+        $pegawai = Pegawai::find($id);
+        if (!$pegawai) {
+            return response()->json(['message' => 'Pegawai tidak ditemukan'], 404);
+        }
+        return response()->json($pegawai);
     }
 
-    /**
-     * Show the form for editing the specified resource.
-     */
-    public function edit(Pegawai $pegawai)
+    public function edit($id)
     {
-        //
+        $pegawai = Pegawai::find($id);
+        return view('pegawai.edit', compact('pegawai'));
     }
 
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(Request $request, Pegawai $pegawai)
+    public function update(Request $request, $id)
     {
-        //
+        $pegawai = Pegawai::find($id);
+        if (!$pegawai) {
+            return response()->json(['message' => 'Pegawai tidak ditemukan'], 404);
+        }
+
+        $validated = $request->validate([
+            'id_role' => 'required|integer',
+            'nama_pegawai' => 'required|string|max:50',
+            'nomor_telepon_pegawai' => 'required|string|max:50',
+            'email_pegawai' => 'required|email|max:50',
+            'password_pegawai' => 'required|string|max:50',
+        ]);
+
+        $pegawai->update($validated);
+        return response()->json(['message' => 'Pegawai berhasil diperbarui', 'data' => $pegawai]);
     }
 
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy(Pegawai $pegawai)
+    public function destroy($id)
     {
-        //
+        $pegawai = Pegawai::find($id);
+        if (!$pegawai) {
+            return response()->json(['message' => 'Pegawai tidak ditemukan'], 404);
+        }
+
+        $pegawai->delete();
+        return response()->json(['message' => 'Pegawai berhasil dihapus']);
     }
 }
