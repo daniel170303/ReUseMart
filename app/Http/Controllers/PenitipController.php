@@ -4,93 +4,76 @@ namespace App\Http\Controllers;
 
 use App\Models\Penitip;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Hash;
 
 class PenitipController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
+    // Menampilkan semua data penitip
     public function index()
     {
-        $penitips = Penitip::all();
-        return response()->json($penitips);
+        return response()->json(Penitip::all());
     }
 
-    /**
-     * Show the form for creating a new resource.
-     */
-    public function create()
-    {
-        // Jika pakai API, bagian ini tidak diperlukan.
-    }
-
-    /**
-     * Store a newly created resource in storage.
-     */
+    // Menyimpan data penitip baru
     public function store(Request $request)
     {
         $validated = $request->validate([
             'nama_penitip' => 'required|string|max:50',
-            'nik_penitip' => 'required|string|size:16|unique:penitip,nik_penitip',
+            'nik_penitip' => 'required|string|max:16|unique:penitip,nik_penitip',
             'nomor_telepon_penitip' => 'required|string|max:50',
             'email_penitip' => 'required|email|max:50|unique:penitip,email_penitip',
-            'password_penitip' => 'required|string|min:6',
+            'password_penitip' => 'required|string|min:8|max:50',
         ]);
-
-        $validated['password_penitip'] = Hash::make($validated['password_penitip']);
 
         $penitip = Penitip::create($validated);
 
-        return response()->json($penitip, 201);
+        return response()->json(['message' => 'Penitip berhasil ditambahkan', 'data' => $penitip], 201);
     }
 
-    /**
-     * Display the specified resource.
-     */
-    public function show(Penitip $penitip)
+    // Menampilkan detail penitip berdasarkan ID
+    public function show($id)
     {
+        $penitip = Penitip::find($id);
+
+        if (!$penitip) {
+            return response()->json(['message' => 'Penitip tidak ditemukan'], 404);
+        }
+
         return response()->json($penitip);
     }
 
-    /**
-     * Show the form for editing the specified resource.
-     */
-    public function edit(Penitip $penitip)
+    // Memperbarui data penitip berdasarkan ID
+    public function update(Request $request, $id)
     {
-        // Jika pakai API, bagian ini tidak diperlukan.
-    }
+        $penitip = Penitip::find($id);
 
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(Request $request, Penitip $penitip)
-    {
-        $validated = $request->validate([
-            'nama_penitip' => 'sometimes|required|string|max:50',
-            'nik_penitip' => 'sometimes|required|string|size:16|unique:penitip,nik_penitip,' . $penitip->id_penitip . ',id_penitip',
-            'nomor_telepon_penitip' => 'sometimes|required|string|max:50',
-            'email_penitip' => 'sometimes|required|email|max:50|unique:penitip,email_penitip,' . $penitip->id_penitip . ',id_penitip',
-            'password_penitip' => 'sometimes|nullable|string|min:6',
-        ]);
-
-        if (!empty($validated['password_penitip'])) {
-            $validated['password_penitip'] = Hash::make($validated['password_penitip']);
-        } else {
-            unset($validated['password_penitip']);
+        if (!$penitip) {
+            return response()->json(['message' => 'Penitip tidak ditemukan'], 404);
         }
+
+        $validated = $request->validate([
+            'nama_penitip' => 'required|string|max:50',
+            'nik_penitip' => 'required|string|max:16|unique:penitip,nik_penitip,' . $penitip->id_penitip . ',id_penitip',
+            'nomor_telepon_penitip' => 'required|string|max:50',
+            'email_penitip' => 'required|email|max:50|unique:penitip,email_penitip,' . $penitip->id_penitip . ',id_penitip',
+            'password_penitip' => 'required|string|min:8|max:50',
+        ]);
 
         $penitip->update($validated);
 
-        return response()->json($penitip);
+        return response()->json(['message' => 'Penitip berhasil diperbarui', 'data' => $penitip]);
     }
 
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy(Penitip $penitip)
+    // Menghapus data penitip berdasarkan ID
+    public function destroy($id)
     {
+        $penitip = Penitip::find($id);
+
+        if (!$penitip) {
+            return response()->json(['message' => 'Penitip tidak ditemukan'], 404);
+        }
+
         $penitip->delete();
-        return response()->json(['message' => 'Penitip deleted successfully']);
+
+        return response()->json(['message' => 'Penitip berhasil dihapus']);
     }
 }

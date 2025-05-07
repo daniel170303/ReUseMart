@@ -39,38 +39,20 @@
     <section class="py-12 bg-white">
       <div class="max-w-7xl mx-auto px-4">
         <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+  @forelse($barangTitipan as $barang)
+    <div class="bg-green-100 p-4 rounded-lg shadow hover:shadow-md transition">
+      <img src="https://via.placeholder.com/300x200" alt="{{ $barang->nama_barang_titipan }}" class="rounded-md mb-3 w-full h-48 object-cover">
+      <h4 class="text-lg font-bold text-gray-800">{{ $barang->nama_barang_titipan }}</h4>
+      <p class="text-gray-600 text-sm mt-1">{{ Str::limit($barang->deskripsi_barang, 50) }}</p>
+      <p class="text-green-700 font-bold mt-2">Rp {{ number_format($barang->harga_barang, 0, ',', '.') }}</p>
+      <p class="text-sm text-green-600 mt-1">Garansi: {{ $barang->garansi_barang }}</p>
+      <a href="#" class="block mt-4 text-center bg-green-600 text-white py-2 rounded hover:bg-green-700">Lihat Detail</a>
+    </div>
+  @empty
+    <p class="col-span-3 text-center text-gray-600">Belum ada barang titipan tersedia.</p>
+  @endforelse
+</div>
 
-          <!-- Product Card -->
-          <div class="bg-green-100 p-4 rounded-lg shadow hover:shadow-md transition">
-            <img src="https://via.placeholder.com/300x200" alt="Laptop Bekas" class="rounded-md mb-3 w-full h-48 object-cover">
-            <h4 class="text-lg font-bold text-gray-800">Laptop ASUS i5 Bekas</h4>
-            <p class="text-gray-600 text-sm mt-1">Kondisi 90%, baterai tahan lama</p>
-            <p class="text-green-700 font-bold mt-2">Rp 2.500.000</p>
-            <p class="text-sm text-green-600 mt-1">Garansi penjual 30 hari</p>
-            <a href="#" class="block mt-4 text-center bg-green-600 text-white py-2 rounded hover:bg-green-700">Lihat Detail</a>
-          </div>
-
-          <!-- Product Card -->
-          <div class="bg-green-100 p-4 rounded-lg shadow hover:shadow-md transition">
-            <img src="https://via.placeholder.com/300x200" alt="Kursi Bekas" class="rounded-md mb-3 w-full h-48 object-cover">
-            <h4 class="text-lg font-bold text-gray-800">Kursi Kantor Ergonomis</h4>
-            <p class="text-gray-600 text-sm mt-1">Bekas pakai kantor, tanpa kerusakan</p>
-            <p class="text-green-700 font-bold mt-2">Rp 750.000</p>
-            <p class="text-sm text-green-600 mt-1">Garansi pengembalian 7 hari</p>
-            <a href="#" class="block mt-4 text-center bg-green-600 text-white py-2 rounded hover:bg-green-700">Lihat Detail</a>
-          </div>
-
-          <!-- Product Card -->
-          <div class="bg-green-100 p-4 rounded-lg shadow hover:shadow-md transition">
-            <img src="https://via.placeholder.com/300x200" alt="HP Second" class="rounded-md mb-3 w-full h-48 object-cover">
-            <h4 class="text-lg font-bold text-gray-800">Smartphone Samsung A52</h4>
-            <p class="text-gray-600 text-sm mt-1">Fullset, 98% mulus, baterai awet</p>
-            <p class="text-green-700 font-bold mt-2">Rp 2.000.000</p>
-            <p class="text-sm text-green-600 mt-1">Garansi toko 14 hari</p>
-            <a href="#" class="block mt-4 text-center bg-green-600 text-white py-2 rounded hover:bg-green-700">Lihat Detail</a>
-          </div>
-
-        </div>
       </div>
     </section>
 
