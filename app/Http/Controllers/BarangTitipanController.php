@@ -28,10 +28,10 @@ class BarangTitipanController extends Controller
         return response()->json(['message' => 'Barang Titipan berhasil ditambahkan', 'data' => $barang], 201);
     }
 
-    public function show($id)
+    public function show($nama)
     {
-        $barang = BarangTitipan::find($id);
-        if (!$barang) {
+        $barang = BarangTitipan::where('nama_barang_titipan', 'like', '%' . $nama . '%')->get();
+        if ($barang->isEmpty()) {
             return response()->json(['message' => 'Barang tidak ditemukan'], 404);
         }
         return response()->json($barang);
