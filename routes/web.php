@@ -9,10 +9,13 @@ use App\Models\Pegawai;
 
 Route::get('/', function () {
     $barangTitipan = BarangTitipan::take(3)->get();
- // ambil 6 barang terbaru
+    // ambil 6 barang terbaru
     return view('landingPage.landingPage', compact('barangTitipan'));
-
 });
+
+Route::get('/login', function () {
+    return view('login.login');
+})->name('login');
 
 Route::apiResource('/pegawai', PegawaiController::class);
 
