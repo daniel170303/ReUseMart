@@ -8,10 +8,14 @@ use App\Models\BarangTitipan;
 // // Menggunakan middleware api dan menambahkan prefix 'api'
 // Route::prefix('api')->middleware('api')->group(function () {
 
-    Route::get('/', function () {
-        $barangTitipan = BarangTitipan::take(3)->get();
-        return view('landingPage.landingPage', compact('barangTitipan'));
-    });
+Route::get('/', function () {
+    $barangTitipan = BarangTitipan::take(3)->get();
+    return view('landingPage.landingPage', compact('barangTitipan'));
+});
+
+Route::get('/login', function () {
+    return view('login.login');
+})->name('login'); 
 
     // // Rute API untuk Pegawai
     // Route::apiResource('/pegawai', PegawaiController::class);

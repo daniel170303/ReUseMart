@@ -14,12 +14,13 @@ use App\Http\Controllers\{
     TransaksiController
 };
 
-// Route auth
+// Auth Routes (login & register) - Tidak perlu autentikasi
 Route::post('/login', [AuthController::class, 'login']);
 Route::post('/register', [AuthController::class, 'register']);
 
-// Protected routes
-// Route::middleware('auth:sanctum')->group(function () {
+// Protected Routes - hanya bisa diakses jika sudah login
+Route::middleware('auth:sanctum')->group(function () {
+    // Resource routes
     Route::apiResource('barang-titipan', BarangTitipanController::class);
     Route::apiResource('organisasi', OrganisasiController::class);
     Route::apiResource('pegawai', PegawaiController::class);
@@ -30,9 +31,9 @@ Route::post('/register', [AuthController::class, 'register']);
     Route::apiResource('role-pegawai', RolePegawaiController::class);
     Route::apiResource('transaksi', TransaksiController::class);
 
-    // Optional: Logout & user info
+    // Logout & ambil user info aktif
     Route::post('/logout', [AuthController::class, 'logout']);
     Route::get('/user', function (\Illuminate\Http\Request $request) {
         return $request->user();
     });
-// });
+});
