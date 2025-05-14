@@ -1,17 +1,16 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
-// use App\Http\Controllers\BarangTitipanController;
+use App\Http\Controllers\BarangTitipanController;
 // use App\Http\Controllers\PegawaiController;
-// use App\Models\BarangTitipan;
+use App\Models\BarangTitipan;
 
 // // Menggunakan middleware api dan menambahkan prefix 'api'
 // Route::prefix('api')->middleware('api')->group(function () {
 
-    // Rute untuk mengambil 3 barang titipan terbaru
     Route::get('/', function () {
-        $barangTitipan = BarangTitipan::take(3)->get(); // Ambil 3 barang titipan terbaru
-        return response()->json($barangTitipan); // Kirim dalam bentuk JSON
+        $barangTitipan = BarangTitipan::take(3)->get();
+        return view('landingPage.landingPage', compact('barangTitipan'));
     });
 
     // // Rute API untuk Pegawai
