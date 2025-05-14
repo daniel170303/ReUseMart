@@ -21,7 +21,7 @@
           <a href="#" class="text-gray-700 hover:text-green-700">Beranda</a>
           <a href="#" class="text-gray-700 hover:text-green-700">Kategori</a>
           <a href="#" class="text-gray-700 hover:text-green-700">Tentang Kami</a>
-          <a href="#" class="text-gray-700 hover:text-green-700">Akun</a>
+          <a href="{{ route('login') }}" class="text-gray-700 hover:text-green-700">Akun</a>
         </div>
       </div>
     </nav>
