@@ -47,7 +47,7 @@ Route::prefix('penitip')->middleware('auth:sanctum')->group(function () {
 });
 
 // Route untuk donasi
-Route::prefix('donasi')->middleware('auth:sanctum')->group(function () {
+Route::prefix('donasi')->group(function () {
     Route::get('/', [DonasiController::class, 'index']);             // tampilkan semua donasi
     Route::post('/', [DonasiController::class, 'store']);            // tambah donasi baru
     Route::get('/{id}', [DonasiController::class, 'show']);          // tampilkan detail donasi
