@@ -69,6 +69,7 @@ class OrganisasiController extends Controller
     {
         $results = Organisasi::where('nama_organisasi', 'like', "%$keyword%")
             ->orWhere('alamat_organisasi', 'like', "%$keyword%")
+            ->orWhere('nomor_telepon_organisasi', 'like', "%$keyword%")
             ->orWhere('email_organisasi', 'like', "%$keyword%")
             ->get();
 

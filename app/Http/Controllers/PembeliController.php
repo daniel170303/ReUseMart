@@ -5,7 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Pembeli;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
-
+   
 class PembeliController extends Controller
 {
     /**
