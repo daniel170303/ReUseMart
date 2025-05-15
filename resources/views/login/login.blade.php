@@ -13,33 +13,42 @@
     <!-- Form Login -->
     <div class="w-full md:w-1/2 flex items-center justify-center px-6 lg:px-20">
       <div class="w-full max-w-md">
-        <h2 class="text-3xl font-semibold text-gray-900 mb-2">Welcome back!</h2>
-        <p class="text-gray-600 mb-6">Enter your Credentials to access your account</p>
+        <h2 class="text-4xl font-bold text-gray-900 mb-4">Welcome back!</h2>
+        <p class="text-lg text-gray-600 mb-8">Enter your credentials to access your account</p>
 
-        <form method="POST" action="{{ route('login') }}" class="space-y-4">
+        <form method="POST" action="{{ route('login') }}" class="space-y-6">
           @csrf
+
           <!-- Email -->
           <div>
-            <label for="email" class="block text-sm font-medium text-gray-700">Email</label>
+            <label for="email" class="block text-base font-medium text-gray-700">Email</label>
             <input type="email" name="email" id="email" value="{{ old('email') }}" required
-              class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-green-600 focus:border-green-600" />
+              class="mt-2 block w-full px-4 py-3 text-base border border-gray-300 rounded-md shadow-sm focus:ring-green-600 focus:border-green-600" />
           </div>
 
           <!-- Password -->
           <div>
-            <label for="password" class="block text-sm font-medium text-gray-700">Password</label>
+            <label for="password" class="block text-base font-medium text-gray-700">Password</label>
             <input type="password" name="password" id="password" required
-              class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-green-600 focus:border-green-600" />
+              class="mt-2 block w-full px-4 py-3 text-base border border-gray-300 rounded-md shadow-sm focus:ring-green-600 focus:border-green-600" />
           </div>
 
           <!-- Tombol Login -->
           <div>
             <button type="submit"
-              class="w-full bg-green-700 text-white py-2 px-4 rounded hover:bg-green-800 transition font-semibold">
+              class="w-full bg-green-700 text-white py-3 px-4 rounded-md hover:bg-green-800 transition font-semibold text-lg">
               Login
             </button>
           </div>
         </form>
+
+        <!-- Daftar sekarang -->
+        <div class="mt-6 text-center">
+          <p class="text-sm text-gray-600">
+            Belum punya akun?
+            <a href="" class="text-green-700 font-semibold hover:underline">Daftar sekarang!</a>
+          </p>
+        </div>
       </div>
     </div>
 
