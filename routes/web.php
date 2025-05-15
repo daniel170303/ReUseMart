@@ -2,7 +2,7 @@
 
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\BarangTitipanController;
-// use App\Http\Controllers\PegawaiController;
+use App\Http\Controllers\AuthController;
 use App\Models\BarangTitipan;
 
 // // Menggunakan middleware api dan menambahkan prefix 'api'
@@ -15,7 +15,13 @@ Route::get('/', function () {
 
 Route::get('/login', function () {
     return view('login.login');
-})->name('login'); 
+})->name('login');
+
+Route::post('/login', [AuthController::class, 'login']);
+
+Route::get('/admin', function () {
+    return view('admin.admin');
+})->name('admin');
 
     // // Rute API untuk Pegawai
     // Route::apiResource('/pegawai', PegawaiController::class);
