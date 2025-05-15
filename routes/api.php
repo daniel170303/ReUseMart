@@ -7,6 +7,8 @@ use App\Http\Controllers\PembeliController;
 use App\Http\Controllers\PenitipController;
 use App\Http\Controllers\DonasiController;
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\RequestController;
+
 
 
 // Gunakan Sanctum Auth middleware untuk route yang memerlukan autentikasi
@@ -53,4 +55,14 @@ Route::prefix('donasi')->group(function () {
     Route::get('/{id}', [DonasiController::class, 'show']);          // tampilkan detail donasi
     Route::put('/{id}', [DonasiController::class, 'update']);        // perbarui donasi
     Route::delete('/{id}', [DonasiController::class, 'destroy']);    // hapus donasi
+});
+
+
+Route::prefix('request')->group(function () {
+    Route::get('/search/{keyword}', [RequestController::class, 'search']); // cari request
+    Route::get('/', [RequestController::class, 'index']);                  // tampilkan semua request
+    Route::post('/', [RequestController::class, 'store']);                 // tambah request baru
+    Route::get('/{id}', [RequestController::class, 'show']);              // tampilkan request tertentu
+    Route::put('/{id}', [RequestController::class, 'update']);            // perbarui request
+    Route::delete('/{id}', [RequestController::class, 'destroy']);        // hapus request
 });
