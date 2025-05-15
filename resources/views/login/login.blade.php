@@ -18,25 +18,9 @@
 
         <form method="POST" action="{{ route('login') }}" class="space-y-4">
           @csrf
-          <!-- Role -->
-          <div>
-            <label for="role" class="block text-sm font-medium text-gray-700">Login sebagai</label>
-            <select name="role" id="role" required
-              class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-green-600 focus:border-green-600">
-              <option value="" disabled {{ old('role') ? '' : 'selected' }}>Pilih Role</option>
-              <option value="owner" {{ old('role') == 'owner' ? 'selected' : '' }}>Owner</option>
-              <option value="admin" {{ old('role') == 'admin' ? 'selected' : '' }}>Admin</option>
-              <option value="pegawai" {{ old('role') == 'pegawai' ? 'selected' : '' }}>Pegawai</option>
-              <option value="gudang" {{ old('role') == 'gudang' ? 'selected' : '' }}>Gudang</option>
-              <option value="cs" {{ old('role') == 'cs' ? 'selected' : '' }}>Customer Service</option>
-              <option value="penitip" {{ old('role') == 'penitip' ? 'selected' : '' }}>Penitip</option>
-              <option value="organisasi" {{ old('role') == 'organisasi' ? 'selected' : '' }}>Organisasi</option>
-            </select>
-          </div>
-
           <!-- Email -->
           <div>
-            <label for="email" class="block text-sm font-medium text-gray-700">Email address</label>
+            <label for="email" class="block text-sm font-medium text-gray-700">Email</label>
             <input type="email" name="email" id="email" value="{{ old('email') }}" required
               class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-green-600 focus:border-green-600" />
           </div>
