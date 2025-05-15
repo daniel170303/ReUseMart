@@ -12,9 +12,15 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('reward_penitip', function (Blueprint $table) {
-            $table->integer('id_penitip')->index('fk_id_penitip_reward_penitip');
+            $table->unsignedBigInteger('id_penitip')->index('fk_id_penitip_reward_penitip');
             $table->integer('jumlah_poin_penitip');
             $table->float('komisi_penitip');
+
+            $table->foreign('id_penitip')
+                ->references('id_penitip')
+                ->on('penitip')
+                ->onDelete('cascade')
+                ->onUpdate('cascade');
         });
     }
 

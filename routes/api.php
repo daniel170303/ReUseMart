@@ -19,7 +19,7 @@ Route::post('/login', [AuthController::class, 'login']);
 Route::post('/register', [AuthController::class, 'register']);
 
 // Protected Routes - hanya bisa diakses jika sudah login
-Route::middleware('auth:sanctum')->group(function () {
+// Route::middleware('auth:sanctum')->group(function () {
     // Route untuk Pegawai
     Route::prefix('pegawai')->group(function () {
         Route::get('/', [PegawaiController::class, 'index']);             // Tampilkan semua pegawai
@@ -107,9 +107,15 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/search/{keyword}', [TransaksiController::class, 'search']);  // Cari transaksi
     });
 
+    Route::prefix('gambar-barang-titipan')->group(function () {
+        Route::get('/{barangId}', [GambarBarangTitipanController::class, 'index']); // List gambar per barang titipan
+        Route::post('/', [GambarBarangTitipanController::class, 'store']);          // Upload banyak gambar sekaligus
+        Route::delete('/{id}', [GambarBarangTitipanController::class, 'destroy']);  // Hapus gambar
+    });
+
     // Logout & ambil user info aktif
     Route::post('/logout', [AuthController::class, 'logout']);
     Route::get('/user', function (\Illuminate\Http\Request $request) {
         return $request->user();
     });
-});
+// });

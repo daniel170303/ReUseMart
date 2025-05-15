@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\BarangTitipan;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 
 class BarangTitipanController extends Controller
 {
@@ -22,7 +23,14 @@ class BarangTitipanController extends Controller
             'jenis_barang' => 'required|string',
             'garansi_barang' => 'required|string|max:50',
             'berat_barang' => 'required|integer',
+            'gambar_barang' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048', // validasi gambar
         ]);
+
+        // Simpan gambar jika ada
+        if ($request->hasFile('gambar_barang')) {
+            $path = $request->file('gambar_barang')->store('gambar_barang', 'public');
+            $validatedData['gambar_barang'] = $path;
+        }
 
         $barang = BarangTitipan::create($validatedData);
         return response()->json(['message' => 'Barang Titipan berhasil ditambahkan', 'data' => $barang], 201);
@@ -68,7 +76,18 @@ class BarangTitipanController extends Controller
             'jenis_barang' => 'required|string',
             'garansi_barang' => 'required|string|max:50',
             'berat_barang' => 'required|integer',
+            'gambar_barang' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
         ]);
+
+        // Jika ada file baru, hapus lama dan simpan baru
+        if ($request->hasFile('gambar_barang')) {
+            // Hapus gambar lama jika ada
+            if ($barang->gambar_barang) {
+                Storage::disk('public')->delete($barang->gambar_barang);
+            }
+            $path = $request->file('gambar_barang')->store('gambar_barang', 'public');
+            $validatedData['gambar_barang'] = $path;
+        }
 
         $barang->update($validatedData);
         return response()->json(['message' => 'Barang berhasil diperbarui', 'data' => $barang]);
@@ -79,6 +98,11 @@ class BarangTitipanController extends Controller
         $barang = BarangTitipan::find($id);
         if (!$barang) {
             return response()->json(['message' => 'Barang tidak ditemukan'], 404);
+        }
+
+        // Hapus file gambar jika ada
+        if ($barang->gambar_barang) {
+            Storage::disk('public')->delete($barang->gambar_barang);
         }
 
         $barang->delete();

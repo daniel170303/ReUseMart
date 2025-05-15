@@ -12,9 +12,9 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('transaksi', function (Blueprint $table) {
-            $table->integer('id_transaksi', true);
-            $table->integer('id_barang')->index('fk_id_barang_transaksi');
-            $table->integer('id_pembeli')->index('fk_id_pembeli_pegawai');
+            $table->id('id_transaksi'); // primary key auto increment
+            $table->unsignedBigInteger('id_barang')->index('fk_id_barang_transaksi');
+            $table->unsignedBigInteger('id_pembeli')->index('fk_id_pembeli_pegawai');
             $table->string('nama_barang');
             $table->dateTime('tanggal_pemesanan');
             $table->dateTime('tanggal_pelunasan');
@@ -23,6 +23,19 @@ return new class extends Migration
             $table->dateTime('tanggal_pengambilan')->nullable();
             $table->integer('ongkir');
             $table->string('status_transaksi')->nullable();
+
+            // Foreign key constraints
+            $table->foreign('id_barang')
+                ->references('id_barang')
+                ->on('barang_titipan')
+                ->onDelete('cascade')
+                ->onUpdate('cascade');
+
+            $table->foreign('id_pembeli')
+                ->references('id_pembeli')
+                ->on('pembeli')
+                ->onDelete('cascade')
+                ->onUpdate('cascade');
         });
     }
 

@@ -41,7 +41,9 @@
         <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
   @forelse($barangTitipan as $barang)
     <div class="bg-green-100 p-4 rounded-lg shadow hover:shadow-md transition">
-      <img src="https://via.placeholder.com/300x200" alt="{{ $barang->nama_barang_titipan }}" class="rounded-md mb-3 w-full h-48 object-cover">
+      <img src="{{ asset('storage/' . $barang->gambar_barang) }}"
+      alt="{{ $barang->nama_barang_titipan }}"
+      class="rounded-md mb-3 w-full h-48 object-cover">
       <h4 class="text-lg font-bold text-gray-800">{{ $barang->nama_barang_titipan }}</h4>
       <p class="text-gray-600 text-sm mt-1">{{ Str::limit($barang->deskripsi_barang, 50) }}</p>
       <p class="text-green-700 font-bold mt-2">Rp {{ number_format($barang->harga_barang, 0, ',', '.') }}</p>

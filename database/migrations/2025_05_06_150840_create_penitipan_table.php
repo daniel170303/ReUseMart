@@ -12,14 +12,21 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('penitipan', function (Blueprint $table) {
-            $table->integer('id_penitipan', true);
-            $table->integer('id_penitip')->index('fk_id_penitip');
+            $table->id('id_penitipan'); // unsignedBigInteger primary key auto increment
+            $table->unsignedBigInteger('id_penitip')->index('fk_id_penitip');
             $table->dateTime('tanggal_penitipan');
             $table->dateTime('tanggal_selesai_penitipan');
             $table->dateTime('tanggal_batas_pengambilan');
             $table->string('status_perpanjangan', 20);
             $table->dateTime('tanggal_terjual')->nullable();
             $table->string('status_barang')->nullable();
+            $table->timestamps();
+
+            $table->foreign('id_penitip')
+                ->references('id_penitip')
+                ->on('penitip')
+                ->onDelete('cascade')
+                ->onUpdate('cascade');
         });
     }
 
