@@ -79,4 +79,17 @@ class PegawaiController extends Controller
         $pegawai->delete();
         return response()->json(['message' => 'Pegawai berhasil dihapus']);
     }
+
+    public function search($keyword)
+    {
+        // Melakukan pencarian pada beberapa atribut Pegawai
+        $results = Pegawai::where('nama_pegawai', 'like', "%$keyword%")
+            ->orWhere('nomor_telepon_pegawai', 'like', "%$keyword%")
+            ->orWhere('email_pegawai', 'like', "%$keyword%")
+            ->orWhere('id_role', 'like', "%$keyword%") // Menambahkan pencarian berdasarkan id_role
+            ->get();
+
+        // Mengembalikan hasil pencarian dalam bentuk JSON
+        return response()->json($results, 200);
+    }
 }

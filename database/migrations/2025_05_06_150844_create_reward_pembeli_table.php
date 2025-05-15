@@ -12,10 +12,24 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('reward_pembeli', function (Blueprint $table) {
-            $table->integer('id_poin_reward', true);
-            $table->integer('id_pembeli')->index('fk_id_pembeli_reward_pembeli');
-            $table->integer('id_merch')->index('fk_id_merch_reward_pembeli');
+            $table->id('id_poin_reward');  // primary key bigint unsigned
+            $table->unsignedBigInteger('id_pembeli')->index();
+            $table->unsignedBigInteger('id_merch')->index();
             $table->integer('jumlah_poin_pembeli');
+
+            // foreign key ke tabel pembeli (pastikan tabel pembeli sudah dibuat)
+            $table->foreign('id_pembeli')
+                ->references('id_pembeli')
+                ->on('pembeli')
+                ->onDelete('cascade')
+                ->onUpdate('cascade');
+
+            // foreign key ke tabel merchandise
+            $table->foreign('id_merch')
+                ->references('id_merch')
+                ->on('merchandise')
+                ->onDelete('cascade')
+                ->onUpdate('cascade');
         });
     }
 

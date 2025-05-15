@@ -7,59 +7,98 @@ use Illuminate\Http\Request;
 
 class TransaksiController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
+    // Menampilkan semua data transaksi
     public function index()
     {
-        //
+        return response()->json(Transaksi::all());
     }
 
-    /**
-     * Show the form for creating a new resource.
-     */
-    public function create()
-    {
-        //
-    }
-
-    /**
-     * Store a newly created resource in storage.
-     */
+    // Menyimpan data transaksi baru
     public function store(Request $request)
     {
-        //
+        $validated = $request->validate([
+            'id_barang' => 'required|integer',
+            'id_pembeli' => 'required|integer',
+            'nama_barang' => 'required|string|max:255',
+            'tanggal_pemesanan' => 'required|date',
+            'tanggal_pelunasan' => 'nullable|date',
+            'jenis_pengiriman' => 'required|string|max:50',
+            'tanggal_pengiriman' => 'nullable|date',
+            'tanggal_pengambilan' => 'nullable|date',
+            'ongkir' => 'required|integer',
+            'status_transaksi' => 'nullable|string|max:255',
+        ]);
+
+        $transaksi = Transaksi::create($validated);
+
+        return response()->json(['message' => 'Transaksi berhasil ditambahkan', 'data' => $transaksi], 201);
     }
 
-    /**
-     * Display the specified resource.
-     */
-    public function show(Transaksi $transaksi)
+    // Menampilkan detail transaksi berdasarkan ID
+    public function show($id)
     {
-        //
+        $transaksi = Transaksi::find($id);
+
+        if (!$transaksi) {
+            return response()->json(['message' => 'Transaksi tidak ditemukan'], 404);
+        }
+
+        return response()->json($transaksi);
     }
 
-    /**
-     * Show the form for editing the specified resource.
-     */
-    public function edit(Transaksi $transaksi)
+    // Memperbarui data transaksi
+    public function update(Request $request, $id)
     {
-        //
+        $transaksi = Transaksi::find($id);
+
+        if (!$transaksi) {
+            return response()->json(['message' => 'Transaksi tidak ditemukan'], 404);
+        }
+
+        $validated = $request->validate([
+            'id_barang' => 'required|integer',
+            'id_pembeli' => 'required|integer',
+            'nama_barang' => 'required|string|max:255',
+            'tanggal_pemesanan' => 'required|date',
+            'tanggal_pelunasan' => 'nullable|date',
+            'jenis_pengiriman' => 'required|string|max:50',
+            'tanggal_pengiriman' => 'nullable|date',
+            'tanggal_pengambilan' => 'nullable|date',
+            'ongkir' => 'required|integer',
+            'status_transaksi' => 'nullable|string|max:255',
+        ]);
+
+        $transaksi->update($validated);
+
+        return response()->json(['message' => 'Transaksi berhasil diperbarui', 'data' => $transaksi]);
     }
 
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(Request $request, Transaksi $transaksi)
+    // Menghapus transaksi
+    public function destroy($id)
     {
-        //
+        $transaksi = Transaksi::find($id);
+
+        if (!$transaksi) {
+            return response()->json(['message' => 'Transaksi tidak ditemukan'], 404);
+        }
+
+        $transaksi->delete();
+
+        return response()->json(['message' => 'Transaksi berhasil dihapus']);
     }
 
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy(Transaksi $transaksi)
+    // Pencarian transaksi berdasarkan keyword
+    public function search($keyword)
     {
-        //
+        $results = Transaksi::where('nama_barang', 'like', "%$keyword%")
+            ->orWhere('jenis_pengiriman', 'like', "%$keyword%")
+            ->orWhere('status_transaksi', 'like', "%$keyword%")
+            ->get();
+
+        if ($results->isEmpty()) {
+            return response()->json(['message' => 'Transaksi tidak ditemukan'], 404);
+        }
+
+        return response()->json($results);
     }
 }
