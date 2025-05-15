@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use App\Models\User;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Auth;
+use Laravel\Sanctum\HasApiTokens;
 
 class AuthController extends Controller
 {
@@ -35,29 +36,28 @@ class AuthController extends Controller
     // Proses login
     public function login(Request $request)
     {
-        // Validasi input
         $credentials = $request->validate([
             'email' => 'required|email|exists:users,email',
             'password' => 'required|string|min:6',
             'role' => 'required|in:admin,pegawai,owner,gudang,cs,penitip,pembeli,organisasi',
         ]);
 
-        // Cari user berdasarkan email & role
         $user = User::where('email', $credentials['email'])
                     ->where('role', $credentials['role'])
                     ->first();
 
-        // Cek password
         if ($user && Hash::check($credentials['password'], $user->password)) {
-            Auth::login($user);
+            // Login berhasil, buat token Sanctum
+            $token = $user->createToken('api-token')->plainTextToken;
 
             return response()->json([
                 'message' => 'Login berhasil',
                 'user' => $user,
+                'access_token' => $token,
+                'token_type' => 'Bearer'
             ], 200);
         }
 
-        // Gagal login
         return response()->json([
             'message' => 'Email, password, atau role salah',
         ], 401);

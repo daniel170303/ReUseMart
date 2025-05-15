@@ -28,6 +28,23 @@ class BarangTitipanController extends Controller
         return response()->json(['message' => 'Barang Titipan berhasil ditambahkan', 'data' => $barang], 201);
     }
 
+    public function search($keyword)
+    {
+        $results = BarangTitipan::where('nama_barang_titipan', 'like', "%$keyword%")
+            ->orWhere('harga_barang', 'like', "%$keyword%")
+            ->orWhere('deskripsi_barang', 'like', "%$keyword%")
+            ->orWhere('jenis_barang', 'like', "%$keyword%")
+            ->orWhere('garansi_barang', 'like', "%$keyword%")
+            ->orWhere('berat_barang', 'like', "%$keyword%")
+            ->get();
+
+        if ($results->isEmpty()) {
+            return response()->json(['message' => 'Barang tidak ditemukan'], 404);
+        }
+
+        return response()->json($results, 200);
+    }
+
     public function show($nama)
     {
         $barang = BarangTitipan::where('nama_barang_titipan', 'like', '%' . $nama . '%')->get();

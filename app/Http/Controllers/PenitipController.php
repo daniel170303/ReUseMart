@@ -76,4 +76,19 @@ class PenitipController extends Controller
 
         return response()->json(['message' => 'Penitip berhasil dihapus']);
     }
+
+    public function search($keyword)
+    {
+        $results = Penitip::where('nama_penitip', 'like', "%$keyword%")
+            ->orWhere('nik_penitip', 'like', "%$keyword%")
+            ->orWhere('nomor_telepon_penitip', 'like', "%$keyword%")
+            ->orWhere('email_penitip', 'like', "%$keyword%")
+            ->get();
+
+        if ($results->isEmpty()) {
+            return response()->json(['message' => 'Penitip tidak ditemukan'], 404);
+        }
+
+        return response()->json($results, 200);
+    }
 }
