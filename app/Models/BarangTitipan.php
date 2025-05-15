@@ -17,6 +17,7 @@ class BarangTitipan extends Model
 
     // Kolom yang boleh diisi melalui mass assignment (POST/PUT)
     protected $fillable = [
+        'gambar_barang',
         'nama_barang_titipan',
         'harga_barang',
         'deskripsi_barang',

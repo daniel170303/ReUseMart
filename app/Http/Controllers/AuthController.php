@@ -17,13 +17,13 @@ class AuthController extends Controller
         $request->validate([
             'email' => 'required|email|unique:users,email',
             'password' => 'required|string|min:6',
-            'role' => 'required|in:admin,pegawai,owner,gudang,cs,penitip,pembeli,organisasi',
+            'role' => 'required|in:pembeli,organisasi',
         ]);
 
         // Buat user
         $user = User::create([
             'email' => $request->email,
-            'password' => bcrypt($request->password), // atau Hash::make
+            'password' => bcrypt($request->password),
             'role' => $request->role,
         ]);
 
@@ -39,15 +39,10 @@ class AuthController extends Controller
         $credentials = $request->validate([
             'email' => 'required|email|exists:users,email',
             'password' => 'required|string|min:6',
-            'role' => 'required|in:admin,pegawai,owner,gudang,cs,penitip,pembeli,organisasi',
         ]);
 
-        $user = User::where('email', $credentials['email'])
-                    ->where('role', $credentials['role'])
-                    ->first();
-
-        if ($user && Hash::check($credentials['password'], $user->password)) {
-            // Login berhasil, buat token Sanctum
+        if (Auth::attempt($credentials)) {
+            $user = Auth::user();
             $token = $user->createToken('api-token')->plainTextToken;
 
             return response()->json([
@@ -59,7 +54,24 @@ class AuthController extends Controller
         }
 
         return response()->json([
-            'message' => 'Email, password, atau role salah',
+            'message' => 'Email atau password salah',
         ], 401);
+    }
+
+    // Proses logout
+    public function logout(Request $request)
+    {
+        $request->user()->tokens()->delete();
+        return response()->json([
+            'message' => 'Logout berhasil'
+        ], 200);
+    }
+
+    // Mengambil informasi user yang sedang login
+    public function userInfo(Request $request)
+    {
+        return response()->json([
+            'user' => $request->user()
+        ], 200);
     }
 }
