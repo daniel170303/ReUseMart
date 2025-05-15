@@ -104,6 +104,7 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/{id}', [TransaksiController::class, 'show']);        // Tampilkan transaksi tertentu
         Route::put('/{id}', [TransaksiController::class, 'update']);      // Perbarui transaksi
         Route::delete('/{id}', [TransaksiController::class, 'destroy']);  // Hapus transaksi
+        Route::get('/search/{keyword}', [TransaksiController::class, 'search']);  // Cari transaksi
     });
 
     // Logout & ambil user info aktif
