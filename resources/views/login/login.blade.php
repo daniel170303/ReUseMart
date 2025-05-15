@@ -5,52 +5,38 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="description" content="Login page for ReuseMart. Access your account to manage orders and profile.">
   <meta name="robots" content="noindex, nofollow">
+  <meta name="csrf-token" content="{{ csrf_token() }}">
   <title>Login - ReuseMart</title>
   <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body class="bg-white font-sans">
 
   <div class="flex min-h-screen">
-    
     <!-- Form Login -->
     <div class="w-full md:w-1/2 flex items-center justify-center px-6 lg:px-20">
       <div class="w-full max-w-md">
         <h2 class="text-3xl font-semibold text-gray-900 mb-2">Welcome back!</h2>
-        <p class="text-gray-600 mb-6">Enter your Credentials to access your account</p>
+        <p class="text-gray-600 mb-6">Enter your credentials to access your account</p>
 
-        <!-- Error Messages -->
+        <!-- Tempat pesan error -->
         @if ($errors->any())
-          <div class="bg-red-100 text-red-700 p-4 mb-4 rounded">
-              <ul>
-                  @foreach ($errors->all() as $error)
-                      <li>{{ $error }}</li>
-                  @endforeach
-              </ul>
-          </div>
+            <div class="bg-red-100 text-red-700 p-4 mb-4 rounded">
+                <ul>
+                    @foreach ($errors->all() as $error)
+                        <li>{{ $error }}</li>
+                    @endforeach
+                </ul>
+            </div>
         @endif
 
-        <form method="POST" action="{{ route('login') }}" class="space-y-4">
-          @csrf
-          <!-- Role -->
-          <div>
-            <label for="role" class="block text-sm font-medium text-gray-700">Login sebagai</label>
-            <select name="role" id="role" required
-              class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-green-600 focus:border-green-600">
-              <option value="" disabled {{ old('role') ? '' : 'selected' }}>Pilih Role</option>
-              <option value="owner" {{ old('role') == 'owner' ? 'selected' : '' }}>Owner</option>
-              <option value="admin" {{ old('role') == 'admin' ? 'selected' : '' }}>Admin</option>
-              <option value="pegawai" {{ old('role') == 'pegawai' ? 'selected' : '' }}>Pegawai</option>
-              <option value="gudang" {{ old('role') == 'gudang' ? 'selected' : '' }}>Gudang</option>
-              <option value="cs" {{ old('role') == 'cs' ? 'selected' : '' }}>Customer Service</option>
-              <option value="penitip" {{ old('role') == 'penitip' ? 'selected' : '' }}>Penitip</option>
-              <option value="organisasi" {{ old('role') == 'organisasi' ? 'selected' : '' }}>Organisasi</option>
-            </select>
-          </div>
+        <div id="errorMessage" class="bg-red-100 text-red-700 p-4 mb-4 rounded hidden"></div>
 
+        <form id="loginForm" action="{{ route('login') }}" method="POST" class="space-y-4">
+          @csrf
           <!-- Email -->
           <div>
             <label for="email" class="block text-sm font-medium text-gray-700">Email address</label>
-            <input type="email" name="email" id="email" value="{{ old('email') }}" required autofocus
+            <input type="email" name="email" id="email" required autofocus
               class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-green-600 focus:border-green-600" />
           </div>
 
@@ -78,14 +64,84 @@
     </div>
   </div>
 
-  <!-- Script untuk menampilkan loading spinner saat form dikirim -->
+  <!-- Script JS Login (opsional untuk API) -->
   <script>
-    const form = document.querySelector('form');
-    form.addEventListener('submit', () => {
-      const button = document.getElementById('loginButton');
-      button.innerHTML = 'Loading...'; // Ganti teks tombol saat loading
-      button.disabled = true; // Nonaktifkan tombol sementara
+    const form = document.getElementById('loginForm');
+    const button = document.getElementById('loginButton');
+    const errorDiv = document.getElementById('errorMessage');
+
+    // Jika ingin menggunakan API untuk login, uncomment kode di bawah
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      button.innerHTML = 'Loading...';
+      button.disabled = true;
+      errorDiv.classList.add('hidden');
+      errorDiv.innerHTML = '';
+
+      const email = document.getElementById('email').value;
+      const password = document.getElementById('password').value;
+
+      try {
+        const response = await fetch('/api/login', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+          },
+          body: JSON.stringify({ email, password })
+        });
+
+        const data = await response.json();
+
+        if (response.ok) {
+          localStorage.setItem('token', data.token);
+          localStorage.setItem('user', JSON.stringify(data.user));
+
+          // Redirect ke dashboard sesuai role dari respons server
+          switch (data.user.role) {
+            case 'admin':
+              window.location.href = '/admin/dashboard';
+              break;
+            case 'pegawai':
+              window.location.href = '/pegawai/dashboard';
+              break;
+            case 'owner':
+              window.location.href = '/owner/dashboard';
+              break;
+            case 'gudang':
+              window.location.href = '/gudang/dashboard';
+              break;
+            case 'cs':
+              window.location.href = '/cs/dashboard';
+              break;
+            case 'penitip':
+              window.location.href = '/penitip/dashboard';
+              break;
+            case 'pembeli':
+              window.location.href = '/pembeli/dashboard';
+              break;
+            case 'organisasi':
+              window.location.href = '/organisasi/dashboard';
+              break;
+            default:
+              window.location.href = '/dashboard';
+          }
+        } else {
+          errorDiv.innerHTML = data.message || 'Login gagal.';
+          errorDiv.classList.remove('hidden');
+        }
+      } catch (error) {
+        errorDiv.innerHTML = 'Terjadi kesalahan. Coba lagi nanti.';
+        errorDiv.classList.remove('hidden');
+      } finally {
+        button.innerHTML = 'Login';
+        button.disabled = false;
+      }
     });
+    */
   </script>
 
 </body>

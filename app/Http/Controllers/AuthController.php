@@ -17,14 +17,14 @@ class AuthController extends Controller
         // Validasi input
         $request->validate([
             'email' => 'required|email|unique:users,email',
-            'password' => 'required|string|min:6|confirmed', // Validasi password dan konfirmasi
+            'password' => 'required|string|min:6|confirmed',
             'role' => 'required|in:admin,pegawai,owner,gudang,cs,penitip,pembeli,organisasi',
         ]);
 
         // Buat user baru
         $user = User::create([
             'email' => $request->email,
-            'password' => Hash::make($request->password), // Gunakan Hash::make untuk keamanan
+            'password' => Hash::make($request->password),
             'role' => $request->role,
         ]);
 
@@ -35,13 +35,13 @@ class AuthController extends Controller
     }
 
     /**
-     * Proses login user
+     * Proses login user via API
      */
     public function login(Request $request)
     {
         // Validasi input
         $credentials = $request->validate([
-            'email' => 'required|email|exists:users,email',
+            'email' => 'required|email',
             'password' => 'required|string|min:6',
         ]);
 
@@ -52,19 +52,31 @@ class AuthController extends Controller
         if ($user && Hash::check($credentials['password'], $user->password)) {
             Auth::login($user);
 
-            // Generate token jika login berhasil (dengan Laravel Sanctum)
-            $token = $user->createToken('YourAppName')->plainTextToken;
+            // Buat token untuk API
+            $token = $user->createToken('auth_token')->plainTextToken;
 
             return response()->json([
                 'message' => 'Login berhasil',
                 'user' => $user,
-                'token' => $token, // Token untuk autentikasi lebih lanjut
+                'token' => $token,
             ], 200);
         }
 
-        // Jika login gagal
+        // Gagal login
         return response()->json([
             'message' => 'Email atau password salah',
         ], 401);
+    }
+
+    /**
+     * Logout user (hapus token)
+     */
+    public function logout(Request $request)
+    {
+        $request->user()->currentAccessToken()->delete();
+
+        return response()->json([
+            'message' => 'Logout berhasil',
+        ]);
     }
 }

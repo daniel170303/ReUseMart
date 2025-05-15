@@ -2,6 +2,7 @@
 
 use Illuminate\Support\Facades\Route;
 use App\Models\BarangTitipan;
+use App\Http\Controllers\LoginController;
 use App\Http\Controllers\AuthController;
 
 // Halaman Utama (Landing Page)
@@ -14,12 +15,10 @@ Route::get('/', function () {
 });
 
 // Halaman Login (GET request)
-Route::get('/login', function () {
-    return view('login.login');
-})->name('login');
+Route::get('/login', [LoginController::class, 'showLoginForm'])->name('login');
 
 // Halaman Login (POST request) untuk autentikasi
-Route::post('/login', [AuthController::class, 'login']);
+Route::post('/login', [LoginController::class, 'login'])->name('login');
 
 // Halaman Registrasi (GET request)
 Route::get('/register', function () {
@@ -27,4 +26,39 @@ Route::get('/register', function () {
 });
 
 // Halaman Logout (GET request)
-Route::get('/logout', [AuthController::class, 'logout'])->name('logout');
+Route::get('/logout', [LoginController::class, 'logout'])->name('logout');
+
+// Dashboard routes - tambahkan route untuk dashboard sesuai role
+Route::middleware('auth')->group(function() {
+    Route::get('/admin/dashboard', function() {
+        return view('admin.dashboard');
+    })->name('admin.dashboard');
+    
+    Route::get('/pegawai/dashboard', function() {
+        return view('pegawai.dashboard');
+    })->name('pegawai.dashboard');
+    
+    Route::get('/owner/dashboard', function() {
+        return view('owner.dashboard');
+    })->name('owner.dashboard');
+    
+    Route::get('/gudang/dashboard', function() {
+        return view('gudang.dashboard');
+    })->name('gudang.dashboard');
+    
+    Route::get('/cs/dashboard', function() {
+        return view('cs.dashboard');
+    })->name('cs.dashboard');
+    
+    Route::get('/penitip/dashboard', function() {
+        return view('penitip.dashboard');
+    })->name('penitip.dashboard');
+    
+    Route::get('/pembeli/dashboard', function() {
+        return view('pembeli.dashboard');
+    })->name('pembeli.dashboard');
+    
+    Route::get('/organisasi/dashboard', function() {
+        return view('organisasi.dashboard');
+    })->name('organisasi.dashboard');
+});
