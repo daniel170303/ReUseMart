@@ -19,8 +19,27 @@ use App\Http\Controllers\{
 Route::post('/login', [AuthController::class, 'login']);
 Route::post('/register', [AuthController::class, 'register']);
 
+// === ROUTE PENITIP AUTH ===
+// Login penitip
+Route::post('/penitip/login', [AuthController::class, 'loginPenitip']);
+
+// Group route penitip yang membutuhkan autentikasi Sanctum
+Route::middleware('auth:sanctum')->prefix('penitip')->group(function () {
+    // Logout penitip
+    Route::post('/logout', [AuthController::class, 'logoutPenitip']);
+
+    // CRUD penitip
+    Route::get('/', [PenitipController::class, 'index']);
+    Route::get('/{id}', [PenitipController::class, 'show']);
+    Route::put('/{id}', [PenitipController::class, 'update']);
+    Route::delete('/{id}', [PenitipController::class, 'destroy']);
+    Route::get('/search/{keyword}', [PenitipController::class, 'search']);
+});
+
+
 // Protected Routes - hanya bisa diakses jika sudah login
-// Route::middleware('auth:sanctum')->group(function () {
+Route::middleware('auth:sanctum')->group(function () {
+    
     // Route untuk Pegawai
     Route::prefix('pegawai')->group(function () {
         Route::get('/', [PegawaiController::class, 'index']);             // Tampilkan semua pegawai
@@ -59,16 +78,6 @@ Route::post('/register', [AuthController::class, 'register']);
         Route::put('/{id}', [PembeliController::class, 'update']);          // Perbarui pembeli
         Route::delete('/{id}', [PembeliController::class, 'destroy']);      // Hapus pembeli
         Route::get('/search/{keyword}', [PembeliController::class, 'search']); // Cari pembeli
-    });
-
-    // Route untuk Penitip
-    Route::prefix('penitip')->group(function () {
-        Route::get('/', [PenitipController::class, 'index']);              // Tampilkan semua penitip
-        Route::post('/', [PenitipController::class, 'store']);             // Tambah penitip baru
-        Route::get('/{id}', [PenitipController::class, 'show']);           // Tampilkan penitip tertentu
-        Route::put('/{id}', [PenitipController::class, 'update']);         // Perbarui penitip
-        Route::delete('/{id}', [PenitipController::class, 'destroy']);     // Hapus penitip
-        Route::get('/search/{keyword}', [PenitipController::class, 'search']);  // Cari penitip
     });
 
     // Route untuk Request
@@ -119,4 +128,4 @@ Route::post('/register', [AuthController::class, 'register']);
     Route::get('/user', function (\Illuminate\Http\Request $request) {
         return $request->user();
     });
-// });
+});

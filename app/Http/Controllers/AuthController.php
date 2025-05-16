@@ -3,75 +3,43 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use App\Models\User;
+use App\Models\Penitip;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\Auth;
 
 class AuthController extends Controller
 {
     /**
-     * Proses registrasi user baru
+     * Proses login penitip via API
      */
-    public function register(Request $request)
+    public function loginPenitip(Request $request)
     {
-        // Validasi input
         $request->validate([
-            'email' => 'required|email|unique:users,email',
-            'password' => 'required|string|min:6|confirmed',
-            'role' => 'required|in:admin,pegawai,owner,gudang,cs,penitip,pembeli,organisasi',
+            'email_penitip' => 'required|email',
+            'password_penitip' => 'required|string|min:3',
         ]);
 
-        // Buat user baru
-        $user = User::create([
-            'email' => $request->email,
-            'password' => Hash::make($request->password),
-            'role' => $request->role,
-        ]);
+        $penitip = Penitip::where('email_penitip', $request->email_penitip)->first();
 
-        return response()->json([
-            'message' => 'Registrasi berhasil',
-            'user' => $user
-        ], 201);
-    }
-
-    /**
-     * Proses login user via API
-     */
-    public function login(Request $request)
-    {
-        // Validasi input
-        $credentials = $request->validate([
-            'email' => 'required|email',
-            'password' => 'required|string|min:6',
-        ]);
-
-        // Cari user berdasarkan email
-        $user = User::where('email', $credentials['email'])->first();
-
-        // Cek password
-        if ($user && Hash::check($credentials['password'], $user->password)) {
-            Auth::login($user);
-
-            // Buat token untuk API
-            $token = $user->createToken('auth_token')->plainTextToken;
-
+        if (!$penitip || !Hash::check($request->password_penitip, $penitip->password_penitip)) {
             return response()->json([
-                'message' => 'Login berhasil',
-                'user' => $user,
-                'token' => $token,
-            ], 200);
+                'message' => 'Email atau password salah',
+            ], 401);
         }
 
-        // Gagal login
+        // Buat token API menggunakan Sanctum
+        $token = $penitip->createToken('penitip-token')->plainTextToken;
+
         return response()->json([
-            'message' => 'Email atau password salah',
-        ], 401);
+            'message' => 'Login berhasil',
+            'penitip' => $penitip,
+            'token' => $token,
+        ]);
     }
 
     /**
-     * Logout user (hapus token)
+     * Logout penitip (hapus token)
      */
-    public function logout(Request $request)
+    public function logoutPenitip(Request $request)
     {
         $request->user()->currentAccessToken()->delete();
 
