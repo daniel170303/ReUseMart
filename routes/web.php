@@ -5,10 +5,16 @@ use App\Http\Controllers\BarangTitipanController;
 use App\Http\Controllers\AuthController;
 use App\Models\BarangTitipan;
 use App\Http\Controllers\DiskusiProdukController;
+use App\Http\Controllers\Admin\DashboardController;
+
 
 
 // // Menggunakan middleware api dan menambahkan prefix 'api'
 // Route::prefix('api')->middleware('api')->group(function () {
+
+
+Route::get('/admin/dashboard', [DashboardController::class, 'index'])->name('admin.dashboard');
+
 
 Route::get('/', function () {
     $barangTitipan = BarangTitipan::take(3)->get();
@@ -22,7 +28,7 @@ Route::get('/login', function () {
 Route::post('/login', [AuthController::class, 'login']);
 
 Route::get('/admin', function () {
-    return view('admin.admin');
+    return view('admin.dashboard');
 })->name('admin');
 
 Route::get('/barang/{id}', [BarangTitipanController::class, 'showDetail'])->name('barang.show');
