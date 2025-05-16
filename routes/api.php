@@ -28,7 +28,7 @@ Route::middleware('auth:sanctum')->prefix('penitip')->group(function () {
     // Logout penitip
     Route::post('/logout', [AuthController::class, 'logoutPenitip']);
 
-    // CRUD penitip
+    // CRUDS penitip
     Route::get('/', [PenitipController::class, 'index']);
     Route::get('/{id}', [PenitipController::class, 'show']);
     Route::put('/{id}', [PenitipController::class, 'update']);
@@ -36,6 +36,25 @@ Route::middleware('auth:sanctum')->prefix('penitip')->group(function () {
     Route::get('/search/{keyword}', [PenitipController::class, 'search']);
 });
 
+// === ROUTE PEMBELI AUTH ===
+// Register pembeli
+Route::post('/register', [AuthController::class, 'registerPembeli']);
+
+// Login pembeli
+Route::post('/login', [AuthController::class, 'loginPembeli']);
+
+// Group route pembeli yang membutuhkan autentikasi Sanctum
+Route::middleware('auth:sanctum')->prefix('pembeli')->group(function () {
+    // Logout pembeli
+    Route::post('/logout', [AuthController::class, 'logoutPembeli']);
+
+    // CRUD pembeli
+    Route::get('/', [PembeliController::class, 'index']);
+    Route::get('/{id}', [PembeliController::class, 'show']);
+    Route::put('/{id}', [PembeliController::class, 'update']);
+    Route::delete('/{id}', [PembeliController::class, 'destroy']);
+    Route::get('/search/{keyword}', [PembeliController::class, 'search']);
+});
 
 // Protected Routes - hanya bisa diakses jika sudah login
 Route::middleware('auth:sanctum')->group(function () {
