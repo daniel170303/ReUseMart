@@ -35,3 +35,9 @@ Route::get('/admin', function () {
 Route::get('/barang/{id}', [BarangTitipanController::class, 'showDetail'])->name('barang.show');
 
 Route::post('/diskusi/{id_barang}', [DiskusiProdukController::class, 'store'])->name('diskusi.store');
+
+// Hapus atau ganti route lama ini
+Route::get('/admin', function () {
+    return view('admin.admin');
+})->name('admin');
+
