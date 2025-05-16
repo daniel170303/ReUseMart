@@ -12,62 +12,36 @@ use App\Http\Controllers\{
     RewardPembeliController,
     RolePegawaiController,
     TransaksiController,
-    GambarBarangTitipanController
+    GambarBarangTitipanController,
+    DonasiController
 };
 
-/// === LOGIN ROUTES ===
-// Pegawai (admin, owner, cs, gudang) login
-Route::post('/pegawai/login', [AuthController::class, 'loginPegawai']);
+// Auth Routes (login & register) - Tidak perlu autentikasi
+Route::post('/login', [AuthController::class, 'login']);
+Route::post('/register', [AuthController::class, 'register']);
 
-// Penitip login
+// === ROUTE PENITIP AUTH ===
+// Login penitip
 Route::post('/penitip/login', [AuthController::class, 'loginPenitip']);
 
-// Pembeli register + login
-Route::post('/pembeli/register', [AuthController::class, 'registerPembeli']);
-Route::post('/pembeli/login', [AuthController::class, 'loginPembeli']);
+// Group route penitip yang membutuhkan autentikasi Sanctum
+Route::middleware('auth:sanctum')->prefix('penitip')->group(function () {
+    // Logout penitip
+    Route::post('/logout', [AuthController::class, 'logoutPenitip']);
 
-// Organisasi register + login
-Route::post('/organisasi/register', [AuthController::class, 'registerOrganisasi']);
-Route::post('/organisasi/login', [AuthController::class, 'loginOrganisasi']);
+    // CRUD penitip
+    Route::get('/', [PenitipController::class, 'index']);
+    Route::get('/{id}', [PenitipController::class, 'show']);
+    Route::put('/{id}', [PenitipController::class, 'update']);
+    Route::delete('/{id}', [PenitipController::class, 'destroy']);
+    Route::get('/search/{keyword}', [PenitipController::class, 'search']);
+});
 
 
-// === ROUTES WITH AUTHENTICATION (sanctum) ===
+// Protected Routes - hanya bisa diakses jika sudah login
 Route::middleware('auth:sanctum')->group(function () {
     
-    // Logout (all user types)
-    Route::post('/logout', [AuthController::class, 'logout']);
-    
-    // Penitip routes
-    Route::prefix('penitip')->group(function () {
-        Route::get('/', [PenitipController::class, 'index']);
-        Route::post('/', [PenitipController::class, 'store']);
-        Route::get('/{id}', [PenitipController::class, 'show']);
-        Route::put('/{id}', [PenitipController::class, 'update']);
-        Route::delete('/{id}', [PenitipController::class, 'destroy']);
-        Route::get('/search/{keyword}', [PenitipController::class, 'search']);
-    });
-
-    // Pembeli routes
-    Route::prefix('pembeli')->group(function () {
-        Route::get('/', [PembeliController::class, 'index']);
-        Route::post('/', [PembeliController::class, 'store']);
-        Route::get('/{id}', [PembeliController::class, 'show']);
-        Route::put('/{id}', [PembeliController::class, 'update']);
-        Route::delete('/{id}', [PembeliController::class, 'destroy']);
-        Route::get('/search/{keyword}', [PembeliController::class, 'search']);
-    });
-
-    // Organisasi routes
-    Route::prefix('organisasi')->group(function () {
-        Route::get('/', [OrganisasiController::class, 'index']);
-        Route::post('/', [OrganisasiController::class, 'store']);
-        Route::get('/{id}', [OrganisasiController::class, 'show']);
-        Route::put('/{id}', [OrganisasiController::class, 'update']);
-        Route::delete('/{id}', [OrganisasiController::class, 'destroy']);
-        Route::get('/search/{keyword}', [OrganisasiController::class, 'search']);
-    });
-
-    // Pegawai routes
+    // Route untuk Pegawai
     Route::prefix('pegawai')->group(function () {
         Route::get('/', [PegawaiController::class, 'index']);
         Route::post('/', [PegawaiController::class, 'store']);
@@ -87,13 +61,34 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/search/{keyword}', [BarangTitipanController::class, 'search']);  // Cari barang titipan
     });
 
-    // Request Routes
+    // Route untuk Organisasi
+    Route::prefix('organisasi')->group(function () {
+        Route::get('/', [OrganisasiController::class, 'index']);            // Tampilkan semua organisasi
+        Route::post('/', [OrganisasiController::class, 'store']);           // Tambah organisasi baru
+        Route::get('/{id}', [OrganisasiController::class, 'show']);         // Tampilkan organisasi tertentu
+        Route::put('/{id}', [OrganisasiController::class, 'update']);       // Perbarui organisasi
+        Route::delete('/{id}', [OrganisasiController::class, 'destroy']);   // Hapus organisasi
+        Route::get('/search/{keyword}', [OrganisasiController::class, 'search']);  // Cari organisasi
+    });
+
+    // Route untuk Pembeli
+    Route::prefix('pembeli')->group(function () {
+        Route::get('/', [PembeliController::class, 'index']);               // Tampilkan semua pembeli
+        Route::post('/', [PembeliController::class, 'store']);              // Tambah pembeli baru
+        Route::get('/{id}', [PembeliController::class, 'show']);            // Tampilkan pembeli tertentu
+        Route::put('/{id}', [PembeliController::class, 'update']);          // Perbarui pembeli
+        Route::delete('/{id}', [PembeliController::class, 'destroy']);      // Hapus pembeli
+        Route::get('/search/{keyword}', [PembeliController::class, 'search']); // Cari pembeli
+    });
+
+    // Route untuk Request
     Route::prefix('request')->group(function () {
-        Route::get('/', [RequestController::class, 'index']);             // Tampilkan semua request
-        Route::post('/', [RequestController::class, 'store']);            // Tambah request baru
-        Route::get('/{id}', [RequestController::class, 'show']);          // Tampilkan request tertentu
-        Route::put('/{id}', [RequestController::class, 'update']);        // Perbarui request
-        Route::delete('/{id}', [RequestController::class, 'destroy']);    // Hapus request
+        Route::get('/search/{keyword}', [RequestController::class, 'search']);
+        Route::get('/', [RequestController::class, 'index']);                 
+        Route::post('/', [RequestController::class, 'store']);                
+        Route::get('/{id}', [RequestController::class, 'show']);             
+        Route::put('/{id}', [RequestController::class, 'update']);           
+        Route::delete('/{id}', [RequestController::class, 'destroy']);       
     });
 
     // Reward Pembeli Routes
@@ -107,12 +102,12 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // Transaksi Routes
     Route::prefix('transaksi')->group(function () {
-        Route::get('/', [TransaksiController::class, 'index']);           // Tampilkan semua transaksi
-        Route::post('/', [TransaksiController::class, 'store']);          // Tambah transaksi baru
-        Route::get('/{id}', [TransaksiController::class, 'show']);        // Tampilkan transaksi tertentu
-        Route::put('/{id}', [TransaksiController::class, 'update']);      // Perbarui transaksi
-        Route::delete('/{id}', [TransaksiController::class, 'destroy']);  // Hapus transaksi
-        Route::get('/search/{keyword}', [TransaksiController::class, 'search']);  // Cari transaksi
+        Route::get('/', [TransaksiController::class, 'index']);              // Semua transaksi
+        Route::post('/', [TransaksiController::class, 'store']);             // Simpan transaksi baru
+        Route::get('/{id}', [TransaksiController::class, 'show']);           // Detail transaksi
+        Route::put('/{id}', [TransaksiController::class, 'update']);         // Update transaksi
+        Route::delete('/{id}', [TransaksiController::class, 'destroy']);     // Hapus transaksi
+        Route::get('/search/{keyword}', [TransaksiController::class, 'search']); // Cari transaksi
     });
 
     Route::prefix('gambar-barang-titipan')->group(function () {
@@ -121,9 +116,18 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::delete('/destroy/{id}', [GambarBarangTitipanController::class, 'destroy']);  // Hapus gambar
     });
 
-    // // Logout & ambil user info aktif
-    // Route::post('/logout', [AuthController::class, 'logout']);
-    // Route::get('/user', function (\Illuminate\Http\Request $request) {
-    //     return $request->user();
-    // });
+    Route::prefix('donasi')->group(function () {
+        Route::get('/', [DonasiController::class, 'index']);            // GET semua donasi
+        Route::get('/{id}', [DonasiController::class, 'show']);         // GET satu donasi berdasarkan ID
+        Route::post('/', [DonasiController::class, 'store']);           // POST tambah donasi
+        Route::put('/{id}', [DonasiController::class, 'update']);       // PUT update donasi
+        Route::delete('/{id}', [DonasiController::class, 'destroy']);   // DELETE donasi
+        Route::get('/search/{keyword}', [DonasiController::class, 'search']); // GET pencarian donasi
+    });
+
+    // Logout & ambil user info aktif
+    Route::post('/logout', [AuthController::class, 'logout']);
+    Route::get('/user', function (\Illuminate\Http\Request $request) {
+        return $request->user();
+    });
 });

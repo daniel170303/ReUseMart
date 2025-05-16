@@ -73,3 +73,4 @@ Route::get('/customer-service', function () {
 })->name('customerService.index');
 
 Route::resource('penitip', PenitipController::class);
+

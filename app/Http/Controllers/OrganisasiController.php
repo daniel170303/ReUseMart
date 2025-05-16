@@ -97,4 +97,25 @@ class OrganisasiController extends Controller
             'data' => $results
         ], 200);
     }
+
+    public function showRequestForm()
+    {
+        return view('organisasi.request_barang');
+    }
+
+    public function submitRequest(Request $request)
+    {
+        $validated = $request->validate([
+            'nama_request_barang' => 'required|string|max:255',
+            'tanggal_request' => 'required|date',
+        ]);
+
+        // Simpan request baru, id_organisasi dari user yang login
+        $validated['id_organisasi'] = auth()->user()->id; // asumsi user model ada relasi ke organisasi
+        $validated['status_request'] = 'pending'; // default status
+
+        RequestDonasi::create($validated);
+
+        return redirect()->route('organisasi.request-form')->with('success', 'Request barang titipan berhasil dikirim.');
+    }
 }

@@ -3,10 +3,8 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
-use App\Models\BarangTitipan;
 
-
-class Transaksi extends Model
+class DiskusiProduk extends Model
 {
     //
 }

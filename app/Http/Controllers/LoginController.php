@@ -25,62 +25,35 @@ class LoginController extends Controller
             'password' => ['required', 'string'],
         ]);
 
-        $email = $credentials['email'];
-        $password = $credentials['password'];
+        // Cari user berdasarkan email
+        $user = User::where('email', $credentials['email'])->first();
 
-        // Cek di pembeli (gunakan kolom email_pembeli)
-        $user = Pembeli::where('email_pembeli', $email)->first();
-        if ($user && Hash::check($password, $user->password_pembeli)) {
-            Auth::guard('pembeli')->login($user);
-            $request->session()->regenerate();
-            return redirect()->route('dashboard.pembeli');
-        }
-
-        // Cek di organisasi (gunakan kolom email_organisasi)
-        $user = Organisasi::where('email_organisasi', $email)->first();
-        if ($user && Hash::check($password, $user->password)) {
-            Auth::guard('organisasi')->login($user);
-            $request->session()->regenerate();
-            return redirect()->route('dashboard.organisasi');
-        }
-
-        // Cek di penitip (gunakan kolom email_penitip)
-        $user = Penitip::where('email_penitip', $email)->first();
-        if ($user && Hash::check($password, $user->password)) {
-            Auth::guard('penitip')->login($user);
-            $request->session()->regenerate();
-            return redirect()->route('penitip.dashboard');
-        }
-
-        // Cek di users (user biasa, pakai kolom email)
-        $user = User::where('email', $email)->first();
-        if ($user && Hash::check($password, $user->password)) {
+        // Jika user ditemukan dan password cocok
+        if ($user && Hash::check($credentials['password'], $user->password)) {
             Auth::login($user);
             $request->session()->regenerate();
-
-            switch ($user->role) {
-                case 'admin':
-                    return redirect()->route('dashboard.admin');
-                case 'pegawai':
-                    return redirect()->route('dashboard.pegawai');
-                case 'owner':
-                    return redirect()->route('dashboard.owner');
-                case 'gudang':
-                    return redirect()->route('dashboard.gudang');
-                case 'cs':
-                    return redirect()->route('dashboard.cs');
-                default:
-                    Auth::logout();
-                    return back()->withErrors(['role' => 'Role tidak dikenali']);
-            }
+            
+            // Redirect sesuai role
+            return match ($user->role) {
+                'admin' => redirect()->route('admin.dashboard'),
+                'pegawai' => redirect()->route('pegawai.dashboard'),
+                'owner' => redirect()->route('owner.dashboard'),
+                'gudang' => redirect()->route('gudang.dashboard'),
+                'cs' => redirect()->route('cs.dashboard'),
+                'penitip' => redirect()->route('penitip.dashboard'),
+                'organisasi' => redirect()->route('organisasi.dashboard'),
+                'pembeli' => redirect()->route('pembeli.dashboard'),
+                default => redirect('/'),
+            };
         }
 
+        // Jika login gagal, kembalikan error
         return back()->withErrors([
             'email' => 'Email atau password salah.',
         ])->onlyInput('email');
     }
 
-    // Logout untuk semua guard
+    // Logout
     public function logout(Request $request)
     {
         Auth::guard('pembeli')->logout();
