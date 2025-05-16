@@ -16,12 +16,12 @@ use App\Http\Controllers\{
 };
 
 // Auth Routes (login & register) - Tidak perlu autentikasi
-Route::post('/login', [AuthController::class, 'login']);
-Route::post('/register', [AuthController::class, 'register']);
+// Route::post('/login', [AuthController::class, 'login']);
+// Route::post('/register', [AuthController::class, 'register']);
 
 // === ROUTE PENITIP AUTH ===
 // Login penitip
-Route::post('/login', [AuthController::class, 'loginPenitip']);
+Route::post('/penitip/login', [AuthController::class, 'loginPenitip']);
 
 // Group route penitip yang membutuhkan autentikasi Sanctum
 Route::middleware('auth:sanctum')->prefix('penitip')->group(function () {
@@ -38,10 +38,10 @@ Route::middleware('auth:sanctum')->prefix('penitip')->group(function () {
 
 // === ROUTE PEMBELI AUTH ===
 // Register pembeli
-Route::post('/register', [AuthController::class, 'registerPembeli']);
+Route::post('/pembeli/register', [AuthController::class, 'registerPembeli']);
 
 // Login pembeli
-Route::post('/login', [AuthController::class, 'loginPembeli']);
+Route::post('/pembeli/login', [AuthController::class, 'loginPembeli']);
 
 // Group route pembeli yang membutuhkan autentikasi Sanctum
 Route::middleware('auth:sanctum')->prefix('pembeli')->group(function () {

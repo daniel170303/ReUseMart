@@ -28,7 +28,7 @@ class PembeliController extends Controller
 
         $pembeli = Pembeli::create($validated);
 
-        return response()->json(['message' => 'Pembeli berhasil ditambahkan', 'data' => $pembeli], 201);
+        return response()->json(['message' => 'Data pembeli berhasil ditambahkan', 'data' => $pembeli], 201);
     }
 
     public function show($id)
@@ -62,7 +62,7 @@ class PembeliController extends Controller
 
         $pembeli->update($validated);
 
-        return response()->json(['message' => 'Pembeli berhasil diperbarui', 'data' => $pembeli]);
+        return response()->json(['message' => 'Data pembeli berhasil diperbarui', 'data' => $pembeli]);
     }
 
     public function destroy($id)
@@ -75,7 +75,7 @@ class PembeliController extends Controller
 
         $pembeli->delete();
 
-        return response()->json(['message' => 'Pembeli berhasil dihapus']);
+        return response()->json(['message' => 'Data pembeli berhasil dihapus']);
     }
 
     public function search($keyword)
@@ -90,6 +90,10 @@ class PembeliController extends Controller
             return response()->json(['message' => 'Pembeli tidak ditemukan'], 404);
         }
 
-        return response()->json($results, 200);
+        return response()->json([
+            'status' => 'success',
+            'total_results' => $results->count(),
+            'data' => $results
+        ], 200);
     }
 }

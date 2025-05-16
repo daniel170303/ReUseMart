@@ -57,12 +57,10 @@ class AuthController extends Controller
 
         $validated['password_pembeli'] = Hash::make($validated['password_pembeli']);
         $pembeli = Pembeli::create($validated);
-        $token = $pembeli->createToken('pembeli-token')->plainTextToken;
 
         return response()->json([
             'message' => 'Registrasi berhasil',
             'pembeli' => $pembeli,
-            'token' => $token,
         ], 201);
     }
 
