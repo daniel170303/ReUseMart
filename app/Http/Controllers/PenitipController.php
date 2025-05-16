@@ -21,7 +21,7 @@ class PenitipController extends Controller
             'nik_penitip' => 'required|string|max:16|unique:penitip,nik_penitip',
             'nomor_telepon_penitip' => 'required|string|max:50',
             'email_penitip' => 'required|email|max:50|unique:penitip,email_penitip',
-            'password_penitip' => 'required|string|min:8|max:50',
+            'password_penitip' => 'required|string|min:8|max:255',
         ]);
 
         $validated['password_penitip'] = Hash::make($validated['password_penitip']); // Hash password
@@ -55,7 +55,7 @@ class PenitipController extends Controller
             'nik_penitip' => 'required|string|max:16|unique:penitip,nik_penitip,' . $penitip->id_penitip . ',id_penitip',
             'nomor_telepon_penitip' => 'required|string|max:50',
             'email_penitip' => 'required|email|max:50|unique:penitip,email_penitip,' . $penitip->id_penitip . ',id_penitip',
-            'password_penitip' => 'required|string|min:8|max:50',
+            'password_penitip' => 'required|string|min:8|max:255',
         ]);
 
         $validated['password_penitip'] = Hash::make($validated['password_penitip']);

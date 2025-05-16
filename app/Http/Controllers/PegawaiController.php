@@ -24,7 +24,7 @@ class PegawaiController extends Controller
             'nama_pegawai' => 'required|string|max:50',
             'nomor_telepon_pegawai' => 'required|string|max:50',
             'email_pegawai' => 'required|email|max:50|unique:pegawai,email_pegawai', // Memastikan email unik
-            'password_pegawai' => 'required|string|min:8|max:50', // Pastikan password minimal 8 karakter
+            'password_pegawai' => 'required|string|min:8|max:255', // Pastikan password minimal 8 karakter
         ]);
 
         $pegawai = Pegawai::create($validated);
@@ -62,7 +62,7 @@ class PegawaiController extends Controller
             'nama_pegawai' => 'required|string|max:50',
             'nomor_telepon_pegawai' => 'required|string|max:50',
             'email_pegawai' => 'required|email|max:50|unique:pegawai,email_pegawai', // Memastikan email unik
-            'password_pegawai' => 'required|string|min:8|max:50', // Pastikan password minimal 8 karakter
+            'password_pegawai' => 'required|string|min:8|max:255', // Pastikan password minimal 8 karakter
         ]);
 
         $pegawai->update($validated);

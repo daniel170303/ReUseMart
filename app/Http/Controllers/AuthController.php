@@ -5,11 +5,12 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\Penitip;
 use App\Models\Pembeli;
+use App\Models\Pegawai;
 use Illuminate\Support\Facades\Hash;
 
 class AuthController extends Controller
 {
-    //Login penitip menggunakan API
+    // ========== LOGIN PENITIP ==========
     public function loginPenitip(Request $request)
     {
         $request->validate([
@@ -20,31 +21,27 @@ class AuthController extends Controller
         $penitip = Penitip::where('email_penitip', $request->email_penitip)->first();
 
         if (!$penitip || !Hash::check($request->password_penitip, $penitip->password_penitip)) {
-            return response()->json([
-                'message' => 'Email atau password salah',
-            ], 401);
+            return response()->json(['message' => 'Email atau password salah'], 401);
         }
 
-        $token = $penitip->createToken('penitip-token')->plainTextToken;
+        $token = $penitip->createToken('penitip-token', ['penitip'])->plainTextToken;
 
         return response()->json([
             'message' => 'Login berhasil',
+            'role' => 'penitip',
             'penitip' => $penitip,
             'token' => $token,
         ]);
     }
 
-    //Logout penitip (hapus token)
     public function logoutPenitip(Request $request)
     {
         $request->user()->currentAccessToken()->delete();
 
-        return response()->json([
-            'message' => 'Logout berhasil',
-        ]);
+        return response()->json(['message' => 'Logout berhasil']);
     }
 
-    //Register pembeli
+    // ========== REGISTER PEMBELI ==========
     public function registerPembeli(Request $request)
     {
         $validated = $request->validate([
@@ -64,7 +61,7 @@ class AuthController extends Controller
         ], 201);
     }
 
-    //Login pembeli menggunakan API
+    // ========== LOGIN PEMBELI ==========
     public function loginPembeli(Request $request)
     {
         $request->validate([
@@ -78,20 +75,51 @@ class AuthController extends Controller
             return response()->json(['message' => 'Email atau password salah'], 401);
         }
 
-        $token = $pembeli->createToken('pembeli-token')->plainTextToken;
+        $token = $pembeli->createToken('pembeli-token', ['pembeli'])->plainTextToken;
 
         return response()->json([
             'message' => 'Login berhasil',
+            'role' => 'pembeli',
             'pembeli' => $pembeli,
             'token' => $token,
         ]);
     }
 
-    //Logout pembeli (hapus token)
     public function logoutPembeli(Request $request)
     {
         $request->user()->currentAccessToken()->delete();
+        return response()->json(['message' => 'Logout berhasil']);
+    }
 
+    // ========== LOGIN PEGAWAI / ADMIN ==========
+    public function loginPegawai(Request $request)
+    {
+        $request->validate([
+            'email_pegawai' => 'required|email',
+            'password_pegawai' => 'required|string|min:3',
+        ]);
+
+        $pegawai = Pegawai::where('email_pegawai', $request->email_pegawai)->first();
+
+        if (!$pegawai || !Hash::check($request->password_pegawai, $pegawai->password_pegawai)) {
+            return response()->json(['message' => 'Email atau password salah'], 401);
+        }
+
+        $role = $pegawai->role->nama_role_pegawai ?? 'pegawai';
+
+        $token = $pegawai->createToken('pegawai-token', [$role])->plainTextToken;
+
+        return response()->json([
+            'message' => 'Login berhasil',
+            'role' => $role,
+            'pegawai' => $pegawai,
+            'token' => $token,
+        ]);
+    }
+
+    public function logoutPegawai(Request $request)
+    {
+        $request->user()->currentAccessToken()->delete();
         return response()->json(['message' => 'Logout berhasil']);
     }
 }

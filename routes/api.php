@@ -1,60 +1,75 @@
 <?php
 
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
-use App\Http\Controllers\{
-    BarangTitipanController,
-    OrganisasiController,
-    PegawaiController,
-    PembeliController,
-    PenitipController,
-    RequestController,
-    RewardPembeliController,
-    RolePegawaiController,
-    TransaksiController,
-    GambarBarangTitipanController
-};
+use App\Http\Controllers\BarangTitipanController;
+use App\Http\Controllers\GambarBarangController;
+use App\Http\Controllers\PegawaiController;
+use App\Http\Controllers\PembeliController;
+use App\Http\Controllers\PenitipController;
+use App\Http\Controllers\RequestController;
+use App\Http\Controllers\RewardPembeliController;
+use App\Http\Controllers\RolePegawaiController;
+use App\Http\Controllers\TransaksiController;
 
-// Auth Routes (login & register) - Tidak perlu autentikasi
-// Route::post('/login', [AuthController::class, 'login']);
-// Route::post('/register', [AuthController::class, 'register']);
+// ======================================
+// AUTH ROUTES
+// ======================================
 
-// === ROUTE PENITIP AUTH ===
-// Login penitip
+// PENITIP AUTH
 Route::post('/penitip/login', [AuthController::class, 'loginPenitip']);
-
-// Group route penitip yang membutuhkan autentikasi Sanctum
 Route::middleware('auth:sanctum')->prefix('penitip')->group(function () {
-    // Logout penitip
     Route::post('/logout', [AuthController::class, 'logoutPenitip']);
-
-    // CRUDS penitip
-    Route::get('/', [PenitipController::class, 'index']);
-    Route::get('/{id}', [PenitipController::class, 'show']);
-    Route::put('/{id}', [PenitipController::class, 'update']);
-    Route::delete('/{id}', [PenitipController::class, 'destroy']);
-    Route::get('/search/{keyword}', [PenitipController::class, 'search']);
 });
 
-// === ROUTE PEMBELI AUTH ===
-// Register pembeli
+// PEMBELI AUTH
 Route::post('/pembeli/register', [AuthController::class, 'registerPembeli']);
-
-// Login pembeli
 Route::post('/pembeli/login', [AuthController::class, 'loginPembeli']);
-
-// Group route pembeli yang membutuhkan autentikasi Sanctum
 Route::middleware('auth:sanctum')->prefix('pembeli')->group(function () {
-    // Logout pembeli
     Route::post('/logout', [AuthController::class, 'logoutPembeli']);
-
-    // CRUD pembeli
-    Route::get('/', [PembeliController::class, 'index']);
-    Route::get('/{id}', [PembeliController::class, 'show']);
-    Route::put('/{id}', [PembeliController::class, 'update']);
-    Route::delete('/{id}', [PembeliController::class, 'destroy']);
-    Route::get('/search/{keyword}', [PembeliController::class, 'search']);
 });
+
+// PEGAWAI AUTH
+Route::post('/pegawai/login', [AuthController::class, 'loginPegawai']);
+Route::middleware('auth:sanctum')->prefix('pegawai')->group(function () {
+    Route::post('/logout', [AuthController::class, 'logoutPegawai']);
+});
+
+// ======================================
+// CRUD ROUTES (Protected by Sanctum)
+// ======================================
+
+Route::middleware('auth:sanctum')->group(function () {
+    
+    // Pegawai
+    Route::apiResource('pegawai', PegawaiController::class);
+
+    // Penitip
+    Route::apiResource('penitip', PenitipController::class);
+
+    // Pembeli
+    Route::apiResource('pembeli', PembeliController::class);
+
+    // Transaksi
+    Route::apiResource('transaksi', TransaksiController::class);
+
+    // Reward Pembeli
+    Route::apiResource('reward-pembeli', RewardPembeliController::class);
+
+    // Role Pegawai
+    Route::apiResource('role-pegawai', RolePegawaiController::class);
+
+    // Barang Titipan
+    Route::apiResource('barang-titipan', BarangTitipanController::class);
+
+    // Gambar Barang
+    Route::apiResource('gambar-barang', GambarBarangController::class);
+
+    // Request
+    Route::apiResource('request', RequestController::class);
+});
+
 
 // Protected Routes - hanya bisa diakses jika sudah login
 Route::middleware('auth:sanctum')->group(function () {
