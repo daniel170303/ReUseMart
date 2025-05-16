@@ -1,30 +1,38 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
-use App\Models\BarangTitipan;
+use App\Http\Controllers\BarangTitipanController;
 use App\Http\Controllers\AuthController;
+use App\Models\BarangTitipan;
+use App\Http\Controllers\DiskusiProdukController;
 
-// Halaman Utama (Landing Page)
+
+// // Menggunakan middleware api dan menambahkan prefix 'api'
+// Route::prefix('api')->middleware('api')->group(function () {
+
 Route::get('/', function () {
-    // Ambil 3 barang titipan terbaru
     $barangTitipan = BarangTitipan::take(3)->get();
-
-    // Kirim data barangTitipan ke view
     return view('landingPage.landingPage', compact('barangTitipan'));
 });
 
-// Halaman Login (GET request)
 Route::get('/login', function () {
     return view('login.login');
 })->name('login');
 
-// Halaman Login (POST request) untuk autentikasi
 Route::post('/login', [AuthController::class, 'login']);
 
-// Halaman Registrasi (GET request)
-Route::get('/register', function () {
-    return view('auth.register');
-});
+Route::get('/admin', function () {
+    return view('admin.admin');
+})->name('admin');
 
-// Halaman Logout (GET request)
-Route::get('/logout', [AuthController::class, 'logout'])->name('logout');
+Route::get('/barang/{id}', [BarangTitipanController::class, 'showDetail'])->name('barang.show');
+
+    // // Rute API untuk Pegawai
+    // Route::apiResource('/pegawai', PegawaiController::class);
+
+    // // Rute API untuk Barang Titipan
+    // Route::apiResource('/barang-titipan', BarangTitipanController::class);
+// });
+
+
+Route::post('/diskusi/{id_barang}', [DiskusiProdukController::class, 'store'])->name('diskusi.store');

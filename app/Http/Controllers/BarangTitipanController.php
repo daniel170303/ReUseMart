@@ -4,16 +4,19 @@ namespace App\Http\Controllers;
 
 use App\Models\BarangTitipan;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 
 class BarangTitipanController extends Controller
 {
+    // Menampilkan semua barang
     public function index()
     {
         $barangTitipan = BarangTitipan::all();
         return response()->json($barangTitipan);
     }
 
+    // Menyimpan barang baru
     public function store(Request $request)
     {
         $validatedData = $request->validate([
@@ -23,19 +26,22 @@ class BarangTitipanController extends Controller
             'jenis_barang' => 'required|string',
             'garansi_barang' => 'required|string|max:50',
             'berat_barang' => 'required|integer',
-            'gambar_barang' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048', // validasi gambar
+            'gambar_barang' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
         ]);
 
-        // Simpan gambar jika ada
         if ($request->hasFile('gambar_barang')) {
             $path = $request->file('gambar_barang')->store('gambar_barang', 'public');
             $validatedData['gambar_barang'] = $path;
         }
 
         $barang = BarangTitipan::create($validatedData);
-        return response()->json(['message' => 'Barang Titipan berhasil ditambahkan', 'data' => $barang], 201);
+        return response()->json([
+            'message' => 'Barang Titipan berhasil ditambahkan',
+            'data' => $barang
+        ], 201);
     }
 
+    // Fitur pencarian
     public function search($keyword)
     {
         $results = BarangTitipan::where('nama_barang_titipan', 'like', "%$keyword%")
@@ -53,6 +59,7 @@ class BarangTitipanController extends Controller
         return response()->json($results, 200);
     }
 
+    // Menampilkan barang berdasarkan nama (optional)
     public function show($nama)
     {
         $barang = BarangTitipan::where('nama_barang_titipan', 'like', '%' . $nama . '%')->get();
@@ -62,14 +69,20 @@ class BarangTitipanController extends Controller
         return response()->json($barang);
     }
 
-    // Menampilkan detail barang + semua gambar
+    // ✅ Menampilkan detail barang + semua gambar + diskusi
     public function showDetail($id)
     {
         $barang = BarangTitipan::with('gambarBarang')->findOrFail($id);
 
-        return view('detailBarang', compact('barang'));
+        $diskusi = DB::table('diskusi_produk')
+            ->where('id_barang', $id)
+            ->orderBy('created_at', 'desc')
+            ->get();
+
+        return view('detailBarang', compact('barang', 'diskusi'));
     }
 
+    // Update barang
     public function update(Request $request, $id)
     {
         $barang = BarangTitipan::find($id);
@@ -87,9 +100,7 @@ class BarangTitipanController extends Controller
             'gambar_barang' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
         ]);
 
-        // Jika ada file baru, hapus lama dan simpan baru
         if ($request->hasFile('gambar_barang')) {
-            // Hapus gambar lama jika ada
             if ($barang->gambar_barang) {
                 Storage::disk('public')->delete($barang->gambar_barang);
             }
@@ -98,9 +109,13 @@ class BarangTitipanController extends Controller
         }
 
         $barang->update($validatedData);
-        return response()->json(['message' => 'Barang berhasil diperbarui', 'data' => $barang]);
+        return response()->json([
+            'message' => 'Barang berhasil diperbarui',
+            'data' => $barang
+        ]);
     }
 
+    // Hapus barang
     public function destroy($id)
     {
         $barang = BarangTitipan::find($id);
@@ -108,7 +123,6 @@ class BarangTitipanController extends Controller
             return response()->json(['message' => 'Barang tidak ditemukan'], 404);
         }
 
-        // Hapus file gambar jika ada
         if ($barang->gambar_barang) {
             Storage::disk('public')->delete($barang->gambar_barang);
         }
