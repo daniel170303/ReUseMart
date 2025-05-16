@@ -26,6 +26,7 @@ class BarangTitipanController extends Controller
             'jenis_barang' => 'required|string',
             'garansi_barang' => 'required|string|max:50',
             'berat_barang' => 'required|integer',
+            'status_barang' => 'required|in:dijual,barang untuk donasi',
             'gambar_barang' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
         ]);
 
@@ -50,6 +51,7 @@ class BarangTitipanController extends Controller
             ->orWhere('jenis_barang', 'like', "%$keyword%")
             ->orWhere('garansi_barang', 'like', "%$keyword%")
             ->orWhere('berat_barang', 'like', "%$keyword%")
+            ->orwhere('status_barang', 'like', "%$keyword%")
             ->get();
 
         if ($results->isEmpty()) {
@@ -97,6 +99,7 @@ class BarangTitipanController extends Controller
             'jenis_barang' => 'required|string',
             'garansi_barang' => 'required|string|max:50',
             'berat_barang' => 'required|integer',
+            'status_barang' => 'required|in:dijual,barang untuk donasi',
             'gambar_barang' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
         ]);
 

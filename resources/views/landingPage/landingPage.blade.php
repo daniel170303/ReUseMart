@@ -14,7 +14,7 @@
     </div>
 
     <!-- Navbar -->
-    <nav class="bg-white shadow">
+    <nav class="bg-white shadow sticky top-0 z-50">
       <div class="max-w-7xl mx-auto px-4 flex justify-between items-center h-16">
         <h1 class="text-xl font-bold text-green-700">ReuseMart</h1>
         <div class="hidden md:flex space-x-6">
@@ -38,7 +38,7 @@
     <!-- Produk Unggulan -->
     <section class="py-12 bg-white">
       <div class="max-w-7xl mx-auto px-4">
-        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 justify-items-center">   
   @forelse($barangTitipan as $barang)
     <div class="bg-green-100 p-4 rounded-lg shadow hover:shadow-md transition">
       <img src="{{ asset('storage/' . $barang->gambar_barang) }}"
@@ -47,7 +47,15 @@
       <h4 class="text-lg font-bold text-gray-800">{{ $barang->nama_barang_titipan }}</h4>
       <p class="text-gray-600 text-sm mt-1">{{ Str::limit($barang->deskripsi_barang, 50) }}</p>
       <p class="text-green-700 font-bold mt-2">Rp {{ number_format($barang->harga_barang, 0, ',', '.') }}</p>
-      <p class="text-sm text-green-600 mt-1">Garansi: {{ $barang->garansi_barang }}</p>
+      
+      <p class="text-sm mt-1">
+        @if(strtolower($barang->garansi_barang) !== '0 bulan')
+          <span class="text-green-600">Garansi: {{ $barang->garansi_barang }}</span>
+        @else
+          <span class="text-red-500 font-semibold">Tanpa Garansi</span>
+        @endif
+      </p>
+
       <a href="{{ route('barang.show', $barang->id_barang) }}" class="block mt-4 text-center bg-green-600 text-white py-2 rounded hover:bg-green-700">Lihat Detail</a>
     </div>
   @empty
