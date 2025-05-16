@@ -23,17 +23,21 @@ class BarangTitipanController extends Controller
             'jenis_barang' => 'required|string',
             'garansi_barang' => 'required|string|max:50',
             'berat_barang' => 'required|integer',
-            'gambar_barang' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048', // validasi gambar
+            'status_barang' => 'required|in:dijual,barang untuk donasi',
+            'gambar_barang' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
         ]);
 
-        // Simpan gambar jika ada
         if ($request->hasFile('gambar_barang')) {
             $path = $request->file('gambar_barang')->store('gambar_barang', 'public');
             $validatedData['gambar_barang'] = $path;
         }
 
         $barang = BarangTitipan::create($validatedData);
-        return response()->json(['message' => 'Barang Titipan berhasil ditambahkan', 'data' => $barang], 201);
+
+        return response()->json([
+            'message' => 'Barang Titipan berhasil ditambahkan',
+            'data' => $barang
+        ], 201);
     }
 
     public function search($keyword)
@@ -44,35 +48,37 @@ class BarangTitipanController extends Controller
             ->orWhere('jenis_barang', 'like', "%$keyword%")
             ->orWhere('garansi_barang', 'like', "%$keyword%")
             ->orWhere('berat_barang', 'like', "%$keyword%")
+            ->orWhere('status_barang', 'like', "%$keyword%")
             ->get();
 
         if ($results->isEmpty()) {
             return response()->json(['message' => 'Barang tidak ditemukan'], 404);
         }
 
-        return response()->json($results, 200);
+        return response()->json($results);
     }
 
     public function show($nama)
     {
-        $barang = BarangTitipan::where('nama_barang_titipan', 'like', '%' . $nama . '%')->get();
+        $barang = BarangTitipan::where('nama_barang_titipan', 'like', "%$nama%")->get();
+
         if ($barang->isEmpty()) {
             return response()->json(['message' => 'Barang tidak ditemukan'], 404);
         }
+
         return response()->json($barang);
     }
 
-    // Menampilkan detail barang + semua gambar
     public function showDetail($id)
     {
         $barang = BarangTitipan::with('gambarBarang')->findOrFail($id);
-
         return view('detailBarang', compact('barang'));
     }
 
     public function update(Request $request, $id)
     {
         $barang = BarangTitipan::find($id);
+
         if (!$barang) {
             return response()->json(['message' => 'Barang tidak ditemukan'], 404);
         }
@@ -84,36 +90,41 @@ class BarangTitipanController extends Controller
             'jenis_barang' => 'required|string',
             'garansi_barang' => 'required|string|max:50',
             'berat_barang' => 'required|integer',
+            'status_barang' => 'required|in:dijual,barang untuk donasi',
             'gambar_barang' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
         ]);
 
-        // Jika ada file baru, hapus lama dan simpan baru
         if ($request->hasFile('gambar_barang')) {
-            // Hapus gambar lama jika ada
             if ($barang->gambar_barang) {
                 Storage::disk('public')->delete($barang->gambar_barang);
             }
+
             $path = $request->file('gambar_barang')->store('gambar_barang', 'public');
             $validatedData['gambar_barang'] = $path;
         }
 
         $barang->update($validatedData);
-        return response()->json(['message' => 'Barang berhasil diperbarui', 'data' => $barang]);
+
+        return response()->json([
+            'message' => 'Barang berhasil diperbarui',
+            'data' => $barang
+        ]);
     }
 
     public function destroy($id)
     {
         $barang = BarangTitipan::find($id);
+
         if (!$barang) {
             return response()->json(['message' => 'Barang tidak ditemukan'], 404);
         }
 
-        // Hapus file gambar jika ada
         if ($barang->gambar_barang) {
             Storage::disk('public')->delete($barang->gambar_barang);
         }
 
         $barang->delete();
+
         return response()->json(['message' => 'Barang berhasil dihapus']);
     }
 }
