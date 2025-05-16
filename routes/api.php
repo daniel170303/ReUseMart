@@ -11,7 +11,8 @@ use App\Http\Controllers\{
     RequestController,
     RewardPembeliController,
     RolePegawaiController,
-    TransaksiController
+    TransaksiController,
+    GambarBarangTitipanController
 };
 
 // Auth Routes (login & register) - Tidak perlu autentikasi
@@ -110,7 +111,7 @@ Route::post('/register', [AuthController::class, 'register']);
     Route::prefix('gambar-barang-titipan')->group(function () {
         Route::get('/{barangId}', [GambarBarangTitipanController::class, 'index']); // List gambar per barang titipan
         Route::post('/', [GambarBarangTitipanController::class, 'store']);          // Upload banyak gambar sekaligus
-        Route::delete('/{id}', [GambarBarangTitipanController::class, 'destroy']);  // Hapus gambar
+        Route::delete('/destroy/{id}', [GambarBarangTitipanController::class, 'destroy']);  // Hapus gambar
     });
 
     // Logout & ambil user info aktif

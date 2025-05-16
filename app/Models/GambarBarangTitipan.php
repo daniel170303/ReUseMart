@@ -14,7 +14,7 @@ class GambarBarangTitipan extends Model
     protected $primaryKey = 'id_gambar';
 
     protected $fillable = [
-        'barang_titipan_id',
+        'id_barang',
         'nama_file_gambar',
     ];
 

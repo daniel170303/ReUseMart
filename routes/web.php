@@ -23,6 +23,8 @@ Route::get('/admin', function () {
     return view('admin.admin');
 })->name('admin');
 
+Route::get('/barang/{id}', [BarangTitipanController::class, 'showDetail'])->name('barang.show');
+
     // // Rute API untuk Pegawai
     // Route::apiResource('/pegawai', PegawaiController::class);
 

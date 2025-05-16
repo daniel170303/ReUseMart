@@ -48,7 +48,7 @@
       <p class="text-gray-600 text-sm mt-1">{{ Str::limit($barang->deskripsi_barang, 50) }}</p>
       <p class="text-green-700 font-bold mt-2">Rp {{ number_format($barang->harga_barang, 0, ',', '.') }}</p>
       <p class="text-sm text-green-600 mt-1">Garansi: {{ $barang->garansi_barang }}</p>
-      <a href="#" class="block mt-4 text-center bg-green-600 text-white py-2 rounded hover:bg-green-700">Lihat Detail</a>
+      <a href="{{ route('barang.show', $barang->id_barang) }}" class="block mt-4 text-center bg-green-600 text-white py-2 rounded hover:bg-green-700">Lihat Detail</a>
     </div>
   @empty
     <p class="col-span-3 text-center text-gray-600">Belum ada barang titipan tersedia.</p>

@@ -25,4 +25,10 @@ class BarangTitipan extends Model
         'garansi_barang',
         'berat_barang',
     ];
+
+    // Dalam model BarangTitipan
+    public function gambarBarang()
+    {
+        return $this->hasMany(GambarBarangTitipan::class, 'id_barang');
+    }
 }
