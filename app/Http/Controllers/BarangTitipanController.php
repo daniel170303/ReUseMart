@@ -62,6 +62,14 @@ class BarangTitipanController extends Controller
         return response()->json($barang);
     }
 
+    // Menampilkan detail barang + semua gambar
+    public function showDetail($id)
+    {
+        $barang = BarangTitipan::with('gambarBarang')->findOrFail($id);
+
+        return view('detailBarang', compact('barang'));
+    }
+
     public function update(Request $request, $id)
     {
         $barang = BarangTitipan::find($id);
