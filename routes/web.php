@@ -4,6 +4,8 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\BarangTitipanController;
 use App\Http\Controllers\AuthController;
 use App\Models\BarangTitipan;
+use App\Http\Controllers\DiskusiProdukController;
+
 
 // // Menggunakan middleware api dan menambahkan prefix 'api'
 // Route::prefix('api')->middleware('api')->group(function () {
@@ -31,3 +33,6 @@ Route::get('/barang/{id}', [BarangTitipanController::class, 'showDetail'])->name
     // // Rute API untuk Barang Titipan
     // Route::apiResource('/barang-titipan', BarangTitipanController::class);
 // });
+
+
+Route::post('/diskusi/{id_barang}', [DiskusiProdukController::class, 'store'])->name('diskusi.store');
