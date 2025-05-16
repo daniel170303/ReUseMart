@@ -18,7 +18,7 @@ class Penitip extends Model
         'nik_penitip',
         'nomor_telepon_penitip',
         'email_penitip',
-        'password_penitip',
+        'password_penitip'
     ];
 
     protected $hidden = [

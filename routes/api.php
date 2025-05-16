@@ -21,7 +21,7 @@ Route::post('/register', [AuthController::class, 'register']);
 
 // === ROUTE PENITIP AUTH ===
 // Login penitip
-Route::post('/penitip/login', [AuthController::class, 'loginPenitip']);
+Route::post('/login', [AuthController::class, 'loginPenitip']);
 
 // Group route penitip yang membutuhkan autentikasi Sanctum
 Route::middleware('auth:sanctum')->prefix('penitip')->group(function () {
