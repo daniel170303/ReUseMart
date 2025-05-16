@@ -4,6 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Models\Penitip;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Auth;
 
 class PenitipController extends Controller
 {
@@ -24,12 +26,34 @@ class PenitipController extends Controller
             'password_penitip' => 'required|string|min:8|max:50',
         ]);
 
+        $validated['password_penitip'] = Hash::make($validated['password_penitip']); // Hash password
+
         $penitip = Penitip::create($validated);
 
         return response()->json(['message' => 'Penitip berhasil ditambahkan', 'data' => $penitip], 201);
     }
 
-    // Menampilkan detail penitip berdasarkan ID
+    // Login penitip
+    public function login(Request $request)
+    {
+        $credentials = $request->validate([
+            'email_penitip' => 'required|email',
+            'password_penitip' => 'required|string|min:8',
+        ]);
+
+        $penitip = Penitip::where('email_penitip', $credentials['email_penitip'])->first();
+
+        if ($penitip && Hash::check($credentials['password_penitip'], $penitip->password_penitip)) {
+            // Simulasikan login, atau tambahkan Sanctum/token jika API
+            return response()->json([
+                'message' => 'Login berhasil',
+                'penitip' => $penitip
+            ]);
+        }
+
+        return response()->json(['message' => 'Email atau password salah'], 401);
+    }
+
     public function show($id)
     {
         $penitip = Penitip::find($id);
@@ -41,7 +65,6 @@ class PenitipController extends Controller
         return response()->json($penitip);
     }
 
-    // Memperbarui data penitip berdasarkan ID
     public function update(Request $request, $id)
     {
         $penitip = Penitip::find($id);
@@ -58,12 +81,13 @@ class PenitipController extends Controller
             'password_penitip' => 'required|string|min:8|max:50',
         ]);
 
+        $validated['password_penitip'] = Hash::make($validated['password_penitip']);
+
         $penitip->update($validated);
 
         return response()->json(['message' => 'Penitip berhasil diperbarui', 'data' => $penitip]);
     }
 
-    // Menghapus data penitip berdasarkan ID
     public function destroy($id)
     {
         $penitip = Penitip::find($id);

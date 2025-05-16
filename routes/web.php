@@ -4,8 +4,6 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\BarangTitipanController;
 use App\Http\Controllers\AuthController;
 use App\Models\BarangTitipan;
-use App\Http\Controllers\DiskusiProdukController;
-
 
 // // Menggunakan middleware api dan menambahkan prefix 'api'
 // Route::prefix('api')->middleware('api')->group(function () {
@@ -21,18 +19,17 @@ Route::get('/login', function () {
 
 Route::post('/login', [AuthController::class, 'login']);
 
+// Tampilkan halaman register
+Route::get('/register', function () {
+    return view('register.register');
+})->name('register');
+
+// Proses data register
+Route::post('/register', [AuthController::class, 'register']);
+
+
 Route::get('/admin', function () {
     return view('admin.admin');
 })->name('admin');
 
 Route::get('/barang/{id}', [BarangTitipanController::class, 'showDetail'])->name('barang.show');
-
-    // // Rute API untuk Pegawai
-    // Route::apiResource('/pegawai', PegawaiController::class);
-
-    // // Rute API untuk Barang Titipan
-    // Route::apiResource('/barang-titipan', BarangTitipanController::class);
-// });
-
-
-Route::post('/diskusi/{id_barang}', [DiskusiProdukController::class, 'store'])->name('diskusi.store');
