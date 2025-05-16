@@ -19,20 +19,18 @@ class LoginController extends Controller
     {
         // Validasi input
         $credentials = $request->validate([
-            'email' => 'required|email|exists:users,email', // memastikan email valid dan terdaftar di database
-            'password' => 'required|string|min:6', // validasi password harus ada dan memiliki panjang minimal 6 karakter
-            'role' => 'required|in:admin,pegawai,owner,gudang,cs,penitip,pembeli,organisasi', // validasi role hanya diizinkan yang valid
+            'email' => 'required|email',
+            'password' => 'required|string|min:6',
         ]);
 
-        // Cari user berdasarkan email dan role
-        $user = User::where('email', $credentials['email'])
-                    ->where('role', $credentials['role'])
-                    ->first();
+        // Cari user berdasarkan email
+        $user = User::where('email', $credentials['email'])->first();
 
-        // Cek password dan login user
+        // Jika user ditemukan dan password cocok
         if ($user && Hash::check($credentials['password'], $user->password)) {
             Auth::login($user);
-
+            $request->session()->regenerate();
+            
             // Redirect sesuai role
             return match ($user->role) {
                 'admin' => redirect()->route('admin.dashboard'),
@@ -42,13 +40,14 @@ class LoginController extends Controller
                 'cs' => redirect()->route('cs.dashboard'),
                 'penitip' => redirect()->route('penitip.dashboard'),
                 'organisasi' => redirect()->route('organisasi.dashboard'),
+                'pembeli' => redirect()->route('pembeli.dashboard'),
                 default => redirect('/'),
             };
         }
 
         // Jika login gagal, kembalikan error
         return back()->withErrors([
-            'email' => 'Email, password, atau role salah.',
+            'email' => 'Email atau password salah.',
         ])->onlyInput('email');
     }
 

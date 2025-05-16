@@ -6,24 +6,25 @@ use Illuminate\Http\Request;
 use App\Models\User;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Auth;
-use Laravel\Sanctum\HasApiTokens;
 
 class AuthController extends Controller
 {
-    // Proses registrasi user baru
+    /**
+     * Proses registrasi user baru
+     */
     public function register(Request $request)
     {
         // Validasi input
         $request->validate([
             'email' => 'required|email|unique:users,email',
-            'password' => 'required|string|min:6',
-            'role' => 'required|in:pembeli,organisasi',
+            'password' => 'required|string|min:6|confirmed',
+            'role' => 'required|in:admin,pegawai,owner,gudang,cs,penitip,pembeli,organisasi',
         ]);
 
-        // Buat user
+        // Buat user baru
         $user = User::create([
             'email' => $request->email,
-            'password' => bcrypt($request->password),
+            'password' => Hash::make($request->password),
             'role' => $request->role,
         ]);
 
@@ -33,45 +34,49 @@ class AuthController extends Controller
         ], 201);
     }
 
-    // Proses login
+    /**
+     * Proses login user via API
+     */
     public function login(Request $request)
     {
+        // Validasi input
         $credentials = $request->validate([
-            'email' => 'required|email|exists:users,email',
+            'email' => 'required|email',
             'password' => 'required|string|min:6',
         ]);
 
-        if (Auth::attempt($credentials)) {
-            $user = Auth::user();
-            $token = $user->createToken('api-token')->plainTextToken;
+        // Cari user berdasarkan email
+        $user = User::where('email', $credentials['email'])->first();
+
+        // Cek password
+        if ($user && Hash::check($credentials['password'], $user->password)) {
+            Auth::login($user);
+
+            // Buat token untuk API
+            $token = $user->createToken('auth_token')->plainTextToken;
 
             return response()->json([
                 'message' => 'Login berhasil',
                 'user' => $user,
-                'access_token' => $token,
-                'token_type' => 'Bearer'
+                'token' => $token,
             ], 200);
         }
 
+        // Gagal login
         return response()->json([
             'message' => 'Email atau password salah',
         ], 401);
     }
 
-    // Proses logout
+    /**
+     * Logout user (hapus token)
+     */
     public function logout(Request $request)
     {
-        $request->user()->tokens()->delete();
-        return response()->json([
-            'message' => 'Logout berhasil'
-        ], 200);
-    }
+        $request->user()->currentAccessToken()->delete();
 
-    // Mengambil informasi user yang sedang login
-    public function userInfo(Request $request)
-    {
         return response()->json([
-            'user' => $request->user()
-        ], 200);
+            'message' => 'Logout berhasil',
+        ]);
     }
 }
