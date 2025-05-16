@@ -12,11 +12,13 @@ use App\Http\Controllers\{
     RewardPembeliController,
     RolePegawaiController,
     TransaksiController,
-    GambarBarangTitipanController
+    GambarBarangTitipanController,
+    DonasiController
 };
 
 // Auth Routes (login & register) - Tidak perlu autentikasi
 Route::post('/login', [AuthController::class, 'login']);
+Route::post('/login', [AuthController::class, 'loginPenitip']);
 Route::post('/register', [AuthController::class, 'register']);
 
 // Protected Routes - hanya bisa diakses jika sudah login
@@ -101,18 +103,27 @@ Route::post('/register', [AuthController::class, 'register']);
 
     // Route untuk Transaksi
     Route::prefix('transaksi')->group(function () {
-        Route::get('/', [TransaksiController::class, 'index']);           // Tampilkan semua transaksi
-        Route::post('/', [TransaksiController::class, 'store']);          // Tambah transaksi baru
-        Route::get('/{id}', [TransaksiController::class, 'show']);        // Tampilkan transaksi tertentu
-        Route::put('/{id}', [TransaksiController::class, 'update']);      // Perbarui transaksi
-        Route::delete('/{id}', [TransaksiController::class, 'destroy']);  // Hapus transaksi
-        Route::get('/search/{keyword}', [TransaksiController::class, 'search']);  // Cari transaksi
+        Route::get('/', [TransaksiController::class, 'index']);              // Semua transaksi
+        Route::post('/', [TransaksiController::class, 'store']);             // Simpan transaksi baru
+        Route::get('/{id}', [TransaksiController::class, 'show']);           // Detail transaksi
+        Route::put('/{id}', [TransaksiController::class, 'update']);         // Update transaksi
+        Route::delete('/{id}', [TransaksiController::class, 'destroy']);     // Hapus transaksi
+        Route::get('/search/{keyword}', [TransaksiController::class, 'search']); // Cari transaksi
     });
 
     Route::prefix('gambar-barang-titipan')->group(function () {
         Route::get('/{barangId}', [GambarBarangTitipanController::class, 'index']); // List gambar per barang titipan
         Route::post('/', [GambarBarangTitipanController::class, 'store']);          // Upload banyak gambar sekaligus
         Route::delete('/destroy/{id}', [GambarBarangTitipanController::class, 'destroy']);  // Hapus gambar
+    });
+
+    Route::prefix('donasi')->group(function () {
+        Route::get('/', [DonasiController::class, 'index']);            // GET semua donasi
+        Route::get('/{id}', [DonasiController::class, 'show']);         // GET satu donasi berdasarkan ID
+        Route::post('/', [DonasiController::class, 'store']);           // POST tambah donasi
+        Route::put('/{id}', [DonasiController::class, 'update']);       // PUT update donasi
+        Route::delete('/{id}', [DonasiController::class, 'destroy']);   // DELETE donasi
+        Route::get('/search/{keyword}', [DonasiController::class, 'search']); // GET pencarian donasi
     });
 
     // Logout & ambil user info aktif

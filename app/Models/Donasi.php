@@ -10,10 +10,10 @@ class Donasi extends Model
     protected $table = 'donasi';
 
     // Primary key kustom
-    protected $primaryKey = 'id_donasi';
+    protected $primaryKey = 'id';
 
     // Tidak menggunakan auto timestamps (created_at & updated_at)
-    public $timestamps = true; // ubah ke false jika tidak pakai timestamps
+    public $timestamps = false; // ubah ke false jika tidak pakai timestamps
 
     // Kolom-kolom yang bisa diisi secara massal
     protected $fillable = [

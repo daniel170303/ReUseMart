@@ -12,7 +12,20 @@ class BarangTitipanController extends Controller
     // Menampilkan semua barang
     public function index()
     {
-        $barangTitipan = BarangTitipan::all();
+        $barangTitipan = BarangTitipan::whereDoesntHave('transaksi')->with(['transaksiTerakhir'])->get();
+
+        foreach ($barangTitipan as $barang) {
+            if ($barang->sisa_garansi === null) {
+                $barang->status_garansi = 'Tanpa Garansi';
+            } elseif ($barang->garansi_masih_berlaku) {
+                $tanggalHabis = now()->addMonths($barang->sisa_garansi);
+                $barang->status_garansi = 'Masih Bergaransi sampai ' . $tanggalHabis->translatedFormat('d M Y');
+            } else {
+                $tanggalHabis = now()->subMonths(abs($barang->sisa_garansi));
+                $barang->status_garansi = 'Garansi Habis pada ' . $tanggalHabis->translatedFormat('d M Y');
+            }
+        }
+
         return response()->json($barangTitipan);
     }
 
@@ -26,7 +39,7 @@ class BarangTitipanController extends Controller
             'jenis_barang' => 'required|string',
             'garansi_barang' => 'required|string|max:50',
             'berat_barang' => 'required|integer',
-            'status_barang' => 'required|in:dijual,barang untuk donasi',
+            'status_barang' => 'required|in:ready,terjual',
             'gambar_barang' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
         ]);
 
@@ -36,6 +49,7 @@ class BarangTitipanController extends Controller
         }
 
         $barang = BarangTitipan::create($validatedData);
+
         return response()->json([
             'message' => 'Barang Titipan berhasil ditambahkan',
             'data' => $barang
@@ -51,7 +65,7 @@ class BarangTitipanController extends Controller
             ->orWhere('jenis_barang', 'like', "%$keyword%")
             ->orWhere('garansi_barang', 'like', "%$keyword%")
             ->orWhere('berat_barang', 'like', "%$keyword%")
-            ->orwhere('status_barang', 'like', "%$keyword%")
+            ->orWhere('status_barang', 'like', "%$keyword%")
             ->get();
 
         if ($results->isEmpty()) {
@@ -61,7 +75,7 @@ class BarangTitipanController extends Controller
         return response()->json($results, 200);
     }
 
-    // Menampilkan barang berdasarkan nama (optional)
+    // Menampilkan barang berdasarkan nama
     public function show($nama)
     {
         $barang = BarangTitipan::where('nama_barang_titipan', 'like', '%' . $nama . '%')->get();
@@ -71,10 +85,10 @@ class BarangTitipanController extends Controller
         return response()->json($barang);
     }
 
-    // ✅ Menampilkan detail barang + semua gambar + diskusi
+    // Menampilkan detail barang + gambar + diskusi
     public function showDetail($id)
     {
-        $barang = BarangTitipan::with('gambarBarang')->findOrFail($id);
+        $barang = BarangTitipan::with(['gambarBarang', 'transaksiTerakhir'])->findOrFail($id);
 
         $diskusi = DB::table('diskusi_produk')
             ->where('id_barang', $id)
@@ -99,7 +113,7 @@ class BarangTitipanController extends Controller
             'jenis_barang' => 'required|string',
             'garansi_barang' => 'required|string|max:50',
             'berat_barang' => 'required|integer',
-            'status_barang' => 'required|in:dijual,barang untuk donasi',
+            'status_barang' => 'required|in:ready,terjual',
             'gambar_barang' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
         ]);
 
@@ -112,6 +126,7 @@ class BarangTitipanController extends Controller
         }
 
         $barang->update($validatedData);
+
         return response()->json([
             'message' => 'Barang berhasil diperbarui',
             'data' => $barang
@@ -131,6 +146,41 @@ class BarangTitipanController extends Controller
         }
 
         $barang->delete();
+
         return response()->json(['message' => 'Barang berhasil dihapus']);
     }
+
+    public function cekGaransi(Request $request)
+    {
+        $keyword = $request->input('keyword');
+
+        // Cari barang berdasarkan id atau nama, yang sudah pernah transaksi
+        $barang = BarangTitipan::where('id_barang', $keyword)
+            ->orWhere('nama_barang_titipan', 'like', "%$keyword%")
+            ->whereHas('transaksi') // pastikan barang sudah pernah transaksi
+            ->with('transaksiTerakhir')
+            ->first();
+
+        if (!$barang) {
+            return redirect()->back()->with('error', 'Barang tidak ditemukan atau belum pernah transaksi.');
+        }
+
+        // Hitung sisa garansi dari accessor dan bulatkan
+        $sisaGaransi = round($barang->sisa_garansi);
+
+        // Format status garansi
+        if ($sisaGaransi === null) {
+            $statusGaransi = 'Barang tanpa garansi atau belum terjual.';
+        } elseif ($barang->garansi_masih_berlaku) {
+            $tanggalHabis = \Carbon\Carbon::parse($barang->transaksiTerakhir->tanggal_pelunasan)->addMonths($barang->garansi_bulan);
+            $statusGaransi = "Garansi masih berlaku, habis pada " . $tanggalHabis->translatedFormat('d M Y') . " (sisa $sisaGaransi bulan).";
+        } else {
+            $tanggalHabis = \Carbon\Carbon::parse($barang->transaksiTerakhir->tanggal_pelunasan)->addMonths($barang->garansi_bulan);
+            $statusGaransi = "Garansi sudah habis sejak " . $tanggalHabis->translatedFormat('d M Y') . ".";
+        }
+
+        // Kirim ke view baru, atau ke halaman sama dengan session flash message
+        return view('landingPage.cekGaransi', compact('barang', 'statusGaransi'));
+    }
+
 }

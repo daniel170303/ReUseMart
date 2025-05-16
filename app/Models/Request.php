@@ -18,4 +18,9 @@ class Request extends Model
         'tanggal_request',
         'status_request',
     ];
+
+    public function organisasi()
+    {
+        return $this->belongsTo(Organisasi::class, 'id_organisasi');
+    }
 }
