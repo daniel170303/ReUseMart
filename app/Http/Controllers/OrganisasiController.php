@@ -4,12 +4,33 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\Organisasi;
+use Illuminate\Support\Facades\Hash;
 
 class OrganisasiController extends Controller
 {
     public function index()
     {
         return response()->json(Organisasi::all(), 200);
+    }
+
+    public function store(Request $request)
+    {
+        $validated = $request->validate([
+            'nama_organisasi' => 'required|string|max:50',
+            'alamat_organisasi' => 'required|string|max:50',
+            'nomor_telepon_organisasi' => 'required|string|max:50',
+            'email_organisasi' => 'required|email|max:50|unique:organisasi,email_organisasi',
+            'password_organisasi' => 'required|string|min:6|max:50',
+        ]);
+
+        $validated['password_organisasi'] = Hash::make($validated['password_organisasi']);
+
+        $organisasi = Organisasi::create($validated);
+
+        return response()->json([
+            'message' => 'Organisasi berhasil ditambahkan',
+            'data' => $organisasi,
+        ], 201);
     }
 
     public function show($id)
@@ -21,20 +42,6 @@ class OrganisasiController extends Controller
         return response()->json($organisasi, 200);
     }
 
-    public function store(Request $request)
-    {
-        $validated = $request->validate([
-            'nama_organisasi' => 'required|string|max:50',
-            'alamat_organisasi' => 'required|string|max:50',
-            'nomor_telepon_organisasi' => 'required|string|max:50',
-            'email_organisasi' => 'required|email|max:50|unique:organisasi,email_organisasi',
-            'password_organisasi' => 'required|string|max:50',
-        ]);
-
-        $organisasi = Organisasi::create($validated);
-        return response()->json($organisasi, 201);
-    }
-
     public function update(Request $request, $id)
     {
         $organisasi = Organisasi::find($id);
@@ -43,16 +50,23 @@ class OrganisasiController extends Controller
         }
 
         $validated = $request->validate([
-            'nama_organisasi' => 'sometimes|required|string|max:50',
-            'alamat_organisasi' => 'sometimes|required|string|max:50',
-            'nomor_telepon_organisasi' => 'sometimes|required|string|max:50',
-            'email_organisasi' => 'sometimes|required|email|max:50|unique:organisasi,email_organisasi,' . $id . ',id_organisasi',
-            'password_organisasi' => 'sometimes|required|string|max:50',
+            'nama_organisasi' => 'required|string|max:50',
+            'alamat_organisasi' => 'required|string|max:50',
+            'nomor_telepon_organisasi' => 'required|string|max:50',
+            'email_organisasi' => 'required|email|max:50|unique:organisasi,email_organisasi,' . $id . ',id_organisasi',
+            'password_organisasi' => 'required|string|min:6|max:50',
         ]);
 
+        $validated['password_organisasi'] = Hash::make($validated['password_organisasi']);
+
         $organisasi->update($validated);
-        return response()->json($organisasi, 200);
+
+        return response()->json([
+            'message' => 'Data organisasi berhasil diperbarui',
+            'data' => $organisasi,
+        ], 200);
     }
+
 
     public function destroy($id)
     {
@@ -62,7 +76,7 @@ class OrganisasiController extends Controller
         }
 
         $organisasi->delete();
-        return response()->json(['message' => 'Organisasi berhasil dihapus'], 200);
+        return response()->json(['message' => 'Data organisasi berhasil dihapus'], 200);
     }
 
     public function search($keyword)
@@ -73,6 +87,14 @@ class OrganisasiController extends Controller
             ->orWhere('email_organisasi', 'like', "%$keyword%")
             ->get();
 
-        return response()->json($results, 200);
+        if ($results->isEmpty()) {
+            return response()->json(['message' => 'Organisasi tidak ditemukan'], 404);
+        }
+
+        return response()->json([
+            'status' => 'success',
+            'total_results' => $results->count(),
+            'data' => $results
+        ], 200);
     }
 }

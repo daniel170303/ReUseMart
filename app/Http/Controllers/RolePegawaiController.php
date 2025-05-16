@@ -3,63 +3,90 @@
 namespace App\Http\Controllers;
 
 use App\Models\RolePegawai;
+use App\Models\Pegawai;
 use Illuminate\Http\Request;
 
 class RolePegawaiController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
     public function index()
     {
-        //
+        $roles = RolePegawai::with('pegawai')->get();
+        return response()->json($roles);
     }
 
-    /**
-     * Show the form for creating a new resource.
-     */
-    public function create()
-    {
-        //
-    }
-
-    /**
-     * Store a newly created resource in storage.
-     */
     public function store(Request $request)
     {
-        //
+        $validated = $request->validate([
+            'nama_role' => 'required|string|max:50|unique:role_pegawai,nama_role',
+        ]);
+
+        $rolePegawai = RolePegawai::create($validated);
+
+        return response()->json(['message' => 'Role Pegawai berhasil ditambahkan', 'data' => $rolePegawai], 201);
     }
 
-    /**
-     * Display the specified resource.
-     */
-    public function show(RolePegawai $rolePegawai)
+    public function show($id)
     {
-        //
+        $rolePegawai = RolePegawai::with('pegawai')->find($id);
+
+        if (!$rolePegawai) {
+            return response()->json(['message' => 'Role Pegawai tidak ditemukan'], 404);
+        }
+
+        return response()->json($rolePegawai);
     }
 
-    /**
-     * Show the form for editing the specified resource.
-     */
-    public function edit(RolePegawai $rolePegawai)
+    public function update(Request $request, $id)
     {
-        //
+        $rolePegawai = RolePegawai::find($id);
+
+        if (!$rolePegawai) {
+            return response()->json(['message' => 'Role Pegawai tidak ditemukan'], 404);
+        }
+
+        $validated = $request->validate([
+            'nama_role' => 'required|string|max:50|unique:role_pegawai,nama_role,' . $rolePegawai->id_role . ',id_role',
+        ]);
+
+        $rolePegawai->update($validated);
+
+        return response()->json(['message' => 'Role Pegawai berhasil diperbarui', 'data' => $rolePegawai]);
     }
 
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(Request $request, RolePegawai $rolePegawai)
+    public function destroy($id)
     {
-        //
+        $rolePegawai = RolePegawai::find($id);
+
+        if (!$rolePegawai) {
+            return response()->json(['message' => 'Role Pegawai tidak ditemukan'], 404);
+        }
+
+        $rolePegawai->delete();
+
+        return response()->json(['message' => 'Role Pegawai berhasil dihapus']);
     }
 
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy(RolePegawai $rolePegawai)
+    public function search($keyword)
     {
-        //
+        $results = RolePegawai::with('pegawai')
+            ->where('nama_role', 'like', "%$keyword%")
+            ->get();
+
+        if ($results->isEmpty()) {
+            return response()->json(['message' => 'Role Pegawai tidak ditemukan'], 404);
+        }
+
+        return response()->json($results, 200);
+    }
+
+    public function pegawaiByRole($id)
+    {
+        $rolePegawai = RolePegawai::with('pegawai')->find($id);
+
+        if (!$rolePegawai) {
+            return response()->json(['message' => 'Role Pegawai tidak ditemukan'], 404);
+        }
+
+        return response()->json($rolePegawai->pegawai);
     }
 }

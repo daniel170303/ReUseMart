@@ -15,10 +15,15 @@
     <!-- Form Login -->
     <div class="w-full md:w-1/2 flex items-center justify-center px-6 lg:px-20">
       <div class="w-full max-w-md">
+        @if(session('success'))
+          <div class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded mb-6">
+            {{ session('success') }}
+          </div>
+        @endif
         <h2 class="text-4xl font-bold text-gray-900 mb-4">Welcome back!</h2>
         <p class="text-lg text-gray-600 mb-8">Enter your credentials to access your account</p>
 
-        <form id="loginForm" method="POST" action="{{ route('login') }}" class="space-y-6" onsubmit="return validateForm()">
+        <form id="loginForm" method="POST" action="{{ route('login.submit') }}" class="space-y-6" onsubmit="return validateForm()">
           @csrf
 
           <!-- Email -->

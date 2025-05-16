@@ -2,52 +2,44 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Pegawai;
+use App\Models\{Pegawai, RolePegawai};
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Auth;
 
 class PegawaiController extends Controller
 {
     public function index()
     {
-        return response()->json(Pegawai::all());
-    }
-
-    public function create()
-    {
-        return view('pegawai.create');
+        $pegawai = Pegawai::with('rolePegawai')->get();
+        return response()->json($pegawai);
     }
 
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'id_role' => 'required|integer',
+            'id_role' => 'required|integer|exists:role_pegawai,id_role',
             'nama_pegawai' => 'required|string|max:50',
             'nomor_telepon_pegawai' => 'required|string|max:50',
-            'email_pegawai' => 'required|email|max:50|unique:pegawai,email_pegawai', // Memastikan email unik
-            'password_pegawai' => 'required|string|min:8|max:50', // Pastikan password minimal 8 karakter
+            'email_pegawai' => 'required|email|max:50|unique:pegawai,email_pegawai',
+            'password_pegawai' => 'required|string|min:8|max:50',
         ]);
 
+        $validated['password_pegawai'] = Hash::make($validated['password_pegawai']);
         $pegawai = Pegawai::create($validated);
 
         return response()->json(['message' => 'Pegawai berhasil ditambahkan', 'data' => $pegawai], 201);
     }
 
-    public function show($nama)
+    public function show($id)
     {
-        // Mencari pegawai berdasarkan nama
-        $pegawai = Pegawai::where('nama_pegawai', 'like', '%' . $nama . '%')->get();
-        
-        if ($pegawai->isEmpty()) {
+        $pegawai = Pegawai::with('rolePegawai')->find($id);
+
+        if (!$pegawai) {
             return response()->json(['message' => 'Pegawai tidak ditemukan'], 404);
         }
 
         return response()->json($pegawai);
-    }
-
-    public function edit($id)
-    {
-        $pegawai = Pegawai::find($id);
-        return view('pegawai.edit', compact('pegawai'));
     }
 
     public function update(Request $request, $id)
@@ -58,12 +50,16 @@ class PegawaiController extends Controller
         }
 
         $validated = $request->validate([
-            'id_role' => 'required|integer',
+            'id_role' => 'required|integer|exists:role_pegawai,id_role',
             'nama_pegawai' => 'required|string|max:50',
             'nomor_telepon_pegawai' => 'required|string|max:50',
-            'email_pegawai' => 'required|email|max:50|unique:pegawai,email_pegawai', // Memastikan email unik
-            'password_pegawai' => 'required|string|min:8|max:50', // Pastikan password minimal 8 karakter
+            'email_pegawai' => 'required|email|max:50|unique:pegawai,email_pegawai,' . $pegawai->id_pegawai . ',id_pegawai',
+            'password_pegawai' => 'nullable|string|min:8|max:50',
         ]);
+
+        if (isset($validated['password_pegawai'])) {
+            $validated['password_pegawai'] = Hash::make($validated['password_pegawai']);
+        }
 
         $pegawai->update($validated);
         return response()->json(['message' => 'Pegawai berhasil diperbarui', 'data' => $pegawai]);
@@ -82,14 +78,14 @@ class PegawaiController extends Controller
 
     public function search($keyword)
     {
-        // Melakukan pencarian pada beberapa atribut Pegawai
         $results = Pegawai::where('nama_pegawai', 'like', "%$keyword%")
             ->orWhere('nomor_telepon_pegawai', 'like', "%$keyword%")
             ->orWhere('email_pegawai', 'like', "%$keyword%")
-            ->orWhere('id_role', 'like', "%$keyword%") // Menambahkan pencarian berdasarkan id_role
+            ->orWhereHas('rolePegawai', function ($query) use ($keyword) {
+                $query->where('nama_role', 'like', "%$keyword%");
+            })
             ->get();
 
-        // Mengembalikan hasil pencarian dalam bentuk JSON
         return response()->json($results, 200);
     }
 }

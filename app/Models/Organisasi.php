@@ -2,11 +2,14 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Model;
-use Illuminate\Support\Facades\Hash;
+use Illuminate\Foundation\Auth\User as Authenticatable;
+use Laravel\Sanctum\HasApiTokens;
+use Illuminate\Notifications\Notifiable;
 
-class Organisasi extends Model
+class Organisasi extends Authenticatable
 {
+    use HasApiTokens, Notifiable;
+
     protected $table = 'organisasi';
     protected $primaryKey = 'id_organisasi';
     public $incrementing = true;
@@ -23,10 +26,11 @@ class Organisasi extends Model
 
     protected $hidden = [
         'password_organisasi',
+        'remember_token',
     ];
 
-    public function setPasswordOrganisasiAttribute($value)
+    public function getAuthPassword()
     {
-        $this->attributes['password_organisasi'] = Hash::make($value);
+        return $this->password_organisasi;
     }
 }

@@ -2,10 +2,13 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Model;
+use Illuminate\Foundation\Auth\User as Authenticatable;
+use Laravel\Sanctum\HasApiTokens;
 
-class Pegawai extends Model
+class Pegawai extends Authenticatable
 {
+    use HasApiTokens;
+
     protected $table = 'pegawai';
     protected $primaryKey = 'id_pegawai';
     public $timestamps = false;
@@ -17,4 +20,9 @@ class Pegawai extends Model
         'email_pegawai',
         'password_pegawai',
     ];
+
+    public function role()
+    {
+        return $this->belongsTo(RolePegawai::class, 'id_role', 'id_role');
+    }
 }
