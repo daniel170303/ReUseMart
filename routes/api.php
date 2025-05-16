@@ -20,14 +20,14 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
     return $request->user();
 });
 
-// Route untuk resource organisasi
-Route::prefix('organisasi')->middleware('auth:sanctum')->group(function () {
-    Route::get('/search/{keyword}', [OrganisasiController::class, 'search']); 
-    Route::get('/', [OrganisasiController::class, 'index']);                  
-    Route::post('/', [OrganisasiController::class, 'store']);                 
-    Route::get('/{id}', [OrganisasiController::class, 'show']);               
-    Route::put('/{id}', [OrganisasiController::class, 'update']);             
-    Route::delete('/{id}', [OrganisasiController::class, 'destroy']);         
+/// Route untuk resource organisasi
+Route::prefix('organisasi')->group(function () {
+    Route::get('/search/{keyword}', [OrganisasiController::class, 'search']); // cari organisasi
+    Route::get('/', [OrganisasiController::class, 'index']);                   // tampilkan semua organisasi
+    Route::post('/', [OrganisasiController::class, 'store']);                  // tambah organisasi baru
+    Route::get('/{id}', [OrganisasiController::class, 'show']);                // tampilkan organisasi tertentu
+    Route::put('/{id}', [OrganisasiController::class, 'update']);              // perbarui organisasi
+    Route::delete('/{id}', [OrganisasiController::class, 'destroy']);          // hapus organisasi
 });
 
 // Route untuk resource pembeli

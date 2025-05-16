@@ -14,24 +14,19 @@ class LoginController extends Controller
         return view('login.login');
     }
 
-    // Proses login
     public function login(Request $request)
     {
-        // Validasi input
         $credentials = $request->validate([
             'email' => 'required|email',
             'password' => 'required|string|min:6',
         ]);
 
-        // Cari user berdasarkan email
         $user = User::where('email', $credentials['email'])->first();
 
-        // Jika user ditemukan dan password cocok
         if ($user && Hash::check($credentials['password'], $user->password)) {
             Auth::login($user);
             $request->session()->regenerate();
-            
-            // Redirect sesuai role
+
             return match ($user->role) {
                 'admin' => redirect()->route('admin.dashboard'),
                 'pegawai' => redirect()->route('pegawai.dashboard'),
@@ -45,13 +40,11 @@ class LoginController extends Controller
             };
         }
 
-        // Jika login gagal, kembalikan error
         return back()->withErrors([
             'email' => 'Email atau password salah.',
         ])->onlyInput('email');
     }
 
-    // Logout
     public function logout(Request $request)
     {
         Auth::logout();

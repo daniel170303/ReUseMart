@@ -9,19 +9,15 @@ use Illuminate\Support\Facades\Auth;
 
 class AuthController extends Controller
 {
-    /**
-     * Proses registrasi user baru
-     */
+    // Registrasi user via API
     public function register(Request $request)
     {
-        // Validasi input
         $request->validate([
             'email' => 'required|email|unique:users,email',
             'password' => 'required|string|min:6|confirmed',
             'role' => 'required|in:admin,pegawai,owner,gudang,cs,penitip,pembeli,organisasi',
         ]);
 
-        // Buat user baru
         $user = User::create([
             'email' => $request->email,
             'password' => Hash::make($request->password),
@@ -34,25 +30,18 @@ class AuthController extends Controller
         ], 201);
     }
 
-    /**
-     * Proses login user via API
-     */
+    // Login via API
     public function login(Request $request)
     {
-        // Validasi input
         $credentials = $request->validate([
             'email' => 'required|email',
             'password' => 'required|string|min:6',
         ]);
 
-        // Cari user berdasarkan email
         $user = User::where('email', $credentials['email'])->first();
 
-        // Cek password
         if ($user && Hash::check($credentials['password'], $user->password)) {
             Auth::login($user);
-
-            // Buat token untuk API
             $token = $user->createToken('auth_token')->plainTextToken;
 
             return response()->json([
@@ -62,15 +51,12 @@ class AuthController extends Controller
             ], 200);
         }
 
-        // Gagal login
         return response()->json([
             'message' => 'Email atau password salah',
         ], 401);
     }
 
-    /**
-     * Logout user (hapus token)
-     */
+    // Logout via API
     public function logout(Request $request)
     {
         $request->user()->currentAccessToken()->delete();
