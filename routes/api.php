@@ -16,6 +16,7 @@ use App\Http\Controllers\{
 };
 
 // Auth Routes (login & register) - Tidak perlu autentikasi
+<<<<<<< HEAD
 Route::post('/login', [AuthController::class, 'login']);
 Route::post('/register', [AuthController::class, 'register']);
 
@@ -79,6 +80,98 @@ Route::post('/register', [AuthController::class, 'register']);
         Route::get('/{id}', [RequestController::class, 'show']);             
         Route::put('/{id}', [RequestController::class, 'update']);           
         Route::delete('/{id}', [RequestController::class, 'destroy']);       
+=======
+// Route::post('/login', [AuthController::class, 'login']);
+// Route::post('/register', [AuthController::class, 'register']);
+
+// === ROUTE PENITIP AUTH ===
+// Login penitip
+Route::post('/penitip/login', [AuthController::class, 'loginPenitip']);
+
+// Group route penitip yang membutuhkan autentikasi Sanctum
+Route::middleware('auth:sanctum')->prefix('penitip')->group(function () {
+    // Logout penitip
+    Route::post('/logout', [AuthController::class, 'logoutPenitip']);
+
+    // CRUDS penitip
+    Route::get('/', [PenitipController::class, 'index']);
+    Route::get('/{id}', [PenitipController::class, 'show']);
+    Route::put('/{id}', [PenitipController::class, 'update']);
+    Route::delete('/{id}', [PenitipController::class, 'destroy']);
+    Route::get('/search/{keyword}', [PenitipController::class, 'search']);
+});
+
+// === ROUTE PEMBELI AUTH ===
+// Register pembeli
+Route::post('/pembeli/register', [AuthController::class, 'registerPembeli']);
+
+// Login pembeli
+Route::post('/pembeli/login', [AuthController::class, 'loginPembeli']);
+
+// Group route pembeli yang membutuhkan autentikasi Sanctum
+Route::middleware('auth:sanctum')->prefix('pembeli')->group(function () {
+    // Logout pembeli
+    Route::post('/logout', [AuthController::class, 'logoutPembeli']);
+
+    // CRUD pembeli
+    Route::get('/', [PembeliController::class, 'index']);
+    Route::get('/{id}', [PembeliController::class, 'show']);
+    Route::put('/{id}', [PembeliController::class, 'update']);
+    Route::delete('/{id}', [PembeliController::class, 'destroy']);
+    Route::get('/search/{keyword}', [PembeliController::class, 'search']);
+});
+
+// Protected Routes - hanya bisa diakses jika sudah login
+Route::middleware('auth:sanctum')->group(function () {
+    
+    // Route untuk Pegawai
+    Route::prefix('pegawai')->group(function () {
+        Route::get('/', [PegawaiController::class, 'index']);             // Tampilkan semua pegawai
+        Route::post('/', [PegawaiController::class, 'store']);            // Tambah pegawai baru
+        Route::get('/{id}', [PegawaiController::class, 'show']);          // Tampilkan pegawai tertentu
+        Route::put('/{id}', [PegawaiController::class, 'update']);        // Perbarui pegawai
+        Route::delete('/{id}', [PegawaiController::class, 'destroy']);    // Hapus pegawai
+        Route::get('/search/{keyword}', [PegawaiController::class, 'search']); // Cari pegawai berdasarkan kata kunci
+    });
+
+    // Route untuk Barang Titipan
+    Route::prefix('barang-titipan')->group(function () {
+        Route::get('/', [BarangTitipanController::class, 'index']);             // Tampilkan semua barang titipan
+        Route::post('/', [BarangTitipanController::class, 'store']);            // Tambah barang titipan baru
+        Route::get('/{id}', [BarangTitipanController::class, 'show']);          // Tampilkan detail barang titipan
+        Route::put('/{id}', [BarangTitipanController::class, 'update']);        // Perbarui barang titipan
+        Route::delete('/{id}', [BarangTitipanController::class, 'destroy']);    // Hapus barang titipan
+        Route::get('/search/{keyword}', [BarangTitipanController::class, 'search']);  // Cari barang titipan
+    });
+
+    // Route untuk Organisasi
+    Route::prefix('organisasi')->group(function () {
+        Route::get('/', [OrganisasiController::class, 'index']);            // Tampilkan semua organisasi
+        Route::post('/', [OrganisasiController::class, 'store']);           // Tambah organisasi baru
+        Route::get('/{id}', [OrganisasiController::class, 'show']);         // Tampilkan organisasi tertentu
+        Route::put('/{id}', [OrganisasiController::class, 'update']);       // Perbarui organisasi
+        Route::delete('/{id}', [OrganisasiController::class, 'destroy']);   // Hapus organisasi
+        Route::get('/search/{keyword}', [OrganisasiController::class, 'search']);  // Cari organisasi
+    });
+
+    // Route untuk Pembeli
+    Route::prefix('pembeli')->group(function () {
+        Route::get('/', [PembeliController::class, 'index']);               // Tampilkan semua pembeli
+        Route::post('/', [PembeliController::class, 'store']);              // Tambah pembeli baru
+        Route::get('/{id}', [PembeliController::class, 'show']);            // Tampilkan pembeli tertentu
+        Route::put('/{id}', [PembeliController::class, 'update']);          // Perbarui pembeli
+        Route::delete('/{id}', [PembeliController::class, 'destroy']);      // Hapus pembeli
+        Route::get('/search/{keyword}', [PembeliController::class, 'search']); // Cari pembeli
+    });
+
+    // Route untuk Request
+    Route::prefix('request')->group(function () {
+        Route::get('/', [RequestController::class, 'index']);             // Tampilkan semua request
+        Route::post('/', [RequestController::class, 'store']);            // Tambah request baru
+        Route::get('/{id}', [RequestController::class, 'show']);          // Tampilkan request tertentu
+        Route::put('/{id}', [RequestController::class, 'update']);        // Perbarui request
+        Route::delete('/{id}', [RequestController::class, 'destroy']);    // Hapus request
+>>>>>>> origin/pipi
     });
 
     // Route untuk Reward Pembeli
@@ -120,4 +213,8 @@ Route::post('/register', [AuthController::class, 'register']);
     Route::get('/user', function (\Illuminate\Http\Request $request) {
         return $request->user();
     });
+<<<<<<< HEAD
 // });
+=======
+});
+>>>>>>> origin/pipi

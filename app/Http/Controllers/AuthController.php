@@ -3,21 +3,23 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use App\Models\User;
+use App\Models\Penitip;
+use App\Models\Pembeli;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\Auth;
 
 class AuthController extends Controller
 {
-    // Registrasi user via API
+    /**
+     * Proses registrasi user baru
+     */
     public function register(Request $request)
     {
         $request->validate([
-            'email' => 'required|email|unique:users,email',
-            'password' => 'required|string|min:6|confirmed',
-            'role' => 'required|in:admin,pegawai,owner,gudang,cs,penitip,pembeli,organisasi',
+            'email_penitip' => 'required|email',
+            'password_penitip' => 'required|string|min:3',
         ]);
 
+        // Buat user baru
         $user = User::create([
             'email' => $request->email,
             'password' => Hash::make($request->password),
@@ -30,33 +32,43 @@ class AuthController extends Controller
         ], 201);
     }
 
-    // Login via API
+    /**
+     * Proses login user via API
+     */
     public function login(Request $request)
     {
+        // Validasi input
         $credentials = $request->validate([
             'email' => 'required|email',
             'password' => 'required|string|min:6',
         ]);
 
+        // Cari user berdasarkan email
         $user = User::where('email', $credentials['email'])->first();
 
+        // Cek password
         if ($user && Hash::check($credentials['password'], $user->password)) {
             Auth::login($user);
+
+            // Buat token untuk API
             $token = $user->createToken('auth_token')->plainTextToken;
 
             return response()->json([
-                'message' => 'Login berhasil',
-                'user' => $user,
-                'token' => $token,
-            ], 200);
+                'message' => 'Email atau password salah',
+            ], 401);
         }
 
+        // Gagal login
         return response()->json([
-            'message' => 'Email atau password salah',
-        ], 401);
+            'message' => 'Login berhasil',
+            'penitip' => $penitip,
+            'token' => $token,
+        ]);
     }
 
-    // Logout via API
+    /**
+     * Logout user (hapus token)
+     */
     public function logout(Request $request)
     {
         $request->user()->currentAccessToken()->delete();
