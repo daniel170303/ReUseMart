@@ -44,8 +44,6 @@
                         <td>
                             <form action="{{ route('request.terima', $req->id_request) }}" method="POST" class="d-flex gap-2">
                                 @csrf
-                                <input type="date" name="tanggal_donasi" required class="form-control form-control-sm" style="max-width: 150px;" />
-                                <input type="text" name="nama_penerima_donasi" required placeholder="Nama Penerima" class="form-control form-control-sm" />
                                 <button type="submit" class="btn btn-success btn-sm">Terima</button>
                             </form>
                         </td>
@@ -76,7 +74,7 @@
             <tbody>
                 @foreach($donasis as $donasi)
                 <tr>
-                    <td>{{ $donasi->id }}</td>
+                    <td>{{ $donasi->id_donasi }}</td>
                     <td>{{ $donasi->id_barang }}</td>
                     <td>{{ $donasi->id_request }}</td>
                     <td>{{ $donasi->tanggal_donasi }}</td>
@@ -86,7 +84,7 @@
                             class="btn btn-primary btn-sm btn-edit-donasi"
                             data-bs-toggle="modal" 
                             data-bs-target="#editDonasiModal"
-                            data-id="{{ $donasi->id }}"
+                            data-id="{{ $donasi->id_donasi }}"
                             data-id_barang="{{ $donasi->id_barang }}"
                             data-id_request="{{ $donasi->id_request }}"
                             data-tanggal_donasi="{{ $donasi->tanggal_donasi }}"

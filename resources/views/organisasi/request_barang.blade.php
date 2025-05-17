@@ -65,7 +65,7 @@
 </head>
 <body>
 
-    <h1>Request Barang Titipan</h1>
+    <h1>Request Barang Donasi</h1>
 
     {{-- Pesan sukses / error --}}
     @if(session('success'))
@@ -87,10 +87,9 @@
     @endif
 
     {{-- Form Search --}}
-    <form action="{{ route('organisasi.requestBarang.search') }}" method="GET" style="margin-bottom:20px;">
-        <input type="text" name="keyword" placeholder="Cari request..." value="{{ request('keyword') }}">
-        <button type="submit" class="btn btn-search">Cari</button>
-        <a href="{{ route('organisasi.requestBarang.index') }}" style="margin-left:10px;">Reset</a>
+    <form action="{{ route('organisasi.requestBarang.search') }}" method="GET">
+        <input type="text" name="keyword" placeholder="Cari request...">
+        <button type="submit">Cari</button>
     </form>
 
     {{-- Form Tambah / Edit Request --}}

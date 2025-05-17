@@ -89,16 +89,18 @@ class RequestController extends Controller
     }
 
     // Search request berdasarkan keyword (API)
-    public function search($keyword)
+    public function search(HttpRequest $request)
     {
-        $results = Request::where('id_request', 'like', "%$keyword%")
+        $keyword = $request->query('keyword');
+
+        $requests = \App\Models\Request::where('id_request', 'like', "%$keyword%")
             ->orWhere('id_organisasi', 'like', "%$keyword%")
             ->orWhere('nama_request_barang', 'like', "%$keyword%")
             ->orWhere('tanggal_request', 'like', "%$keyword%")
             ->orWhere('status_request', 'like', "%$keyword%")
             ->get();
 
-        return response()->json($results, 200);
+        return view('organisasi.request_barang', compact('requests'));
     }
 
     // Menampilkan halaman owner untuk menerima request donasi
@@ -112,43 +114,32 @@ class RequestController extends Controller
     // Terima request donasi: simpan di donasi, ubah status request dan status barang
     public function terimaRequest(HttpRequest $request, $id_request)
     {
-        $request->validate([
-            'tanggal_donasi' => 'required|date',
-            'nama_penerima_donasi' => 'required|string|max:255',
-        ]);
-
         DB::beginTransaction();
 
         try {
-            // Ambil request donasi
             $requestDonasi = Request::findOrFail($id_request);
 
-            // Cari barang titipan yang cocok
-            $barangTitipan = BarangTitipan::where('nama_barang', $requestDonasi->nama_request_barang)
-                                ->where('status_barang', 'barang untuk donasi')
-                                ->first();
+            $barangTitipan = BarangTitipan::where('nama_barang_titipan', $requestDonasi->nama_request_barang)
+                ->where('status_barang', 'barang untuk donasi')
+                ->first();
 
             if (!$barangTitipan) {
                 return redirect()->back()->with('error', 'Barang titipan tidak tersedia atau sudah didonasikan.');
             }
 
-            // Simpan ke tabel donasi
             Donasi::create([
                 'id_barang' => $barangTitipan->id_barang,
                 'id_request' => $requestDonasi->id_request,
-                'tanggal_donasi' => $request->tanggal_donasi,
-                'penerima_donasi' => $request->nama_penerima_donasi,
+                'tanggal_donasi' => now()->toDateString(), // default tanggal hari ini
+                'penerima_donasi' => 'Organisasi #' . $requestDonasi->id_organisasi, // default penerima
             ]);
 
-            // Update status request
             $requestDonasi->status_request = 'diterima';
             $requestDonasi->save();
 
-            // Update status barang
-            $barangTitipan->status_barang = 'dijual'; // atau 'sudah didonasikan' jika enum diubah
+            $barangTitipan->status_barang = 'sudah didonasikan';
             $barangTitipan->save();
 
-            // Kirim notifikasi ke penitip
             $penitip = Penitip::find($barangTitipan->id_penitip);
             if ($penitip) {
                 Notification::send($penitip, new DonasiDiterimaNotification($barangTitipan, $requestDonasi));
@@ -156,7 +147,6 @@ class RequestController extends Controller
 
             DB::commit();
             return redirect()->back()->with('success', 'Request donasi berhasil diterima dan tercatat.');
-
         } catch (\Exception $e) {
             DB::rollBack();
             return redirect()->back()->with('error', 'Terjadi kesalahan: ' . $e->getMessage());

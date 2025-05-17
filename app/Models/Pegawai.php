@@ -17,4 +17,9 @@ class Pegawai extends Model
         'email_pegawai',
         'password_pegawai',
     ];
+
+    public function role()
+    {
+        return $this->belongsTo(RolePegawai::class, 'id_role', 'id_role');
+    }
 }

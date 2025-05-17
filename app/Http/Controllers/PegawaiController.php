@@ -3,93 +3,87 @@
 namespace App\Http\Controllers;
 
 use App\Models\Pegawai;
+use App\Models\RolePegawai;
 use Illuminate\Http\Request;
 
 class PegawaiController extends Controller
 {
+    // Tampilkan semua pegawai
     public function index()
     {
-        return response()->json(Pegawai::all());
+        // Load pegawai dengan data role-nya (relasi 'role')
+        $pegawai = Pegawai::with('role')->get();
+        $roles = RolePegawai::all();
+        return view('pegawai.crud', compact('pegawai', 'roles'));
     }
 
+    // Tampilkan form tambah pegawai (opsional)
     public function create()
     {
         return view('pegawai.create');
     }
 
+    // Simpan pegawai baru
     public function store(Request $request)
     {
         $validated = $request->validate([
             'id_role' => 'required|integer',
             'nama_pegawai' => 'required|string|max:50',
             'nomor_telepon_pegawai' => 'required|string|max:50',
-            'email_pegawai' => 'required|email|max:50|unique:pegawai,email_pegawai', // Memastikan email unik
-            'password_pegawai' => 'required|string|min:8|max:50', // Pastikan password minimal 8 karakter
+            'email_pegawai' => 'required|email|max:50|unique:pegawai,email_pegawai',
+            'password_pegawai' => 'required|string|min:8|max:50',
         ]);
 
-        $pegawai = Pegawai::create($validated);
+        Pegawai::create($validated);
 
-        return response()->json(['message' => 'Pegawai berhasil ditambahkan', 'data' => $pegawai], 201);
+        return redirect()->route('pegawai.index')->with('success', 'Pegawai berhasil ditambahkan');
     }
 
-    public function show($nama)
-    {
-        // Mencari pegawai berdasarkan nama
-        $pegawai = Pegawai::where('nama_pegawai', 'like', '%' . $nama . '%')->get();
-        
-        if ($pegawai->isEmpty()) {
-            return response()->json(['message' => 'Pegawai tidak ditemukan'], 404);
-        }
-
-        return response()->json($pegawai);
-    }
-
+    // Tampilkan form edit pegawai
     public function edit($id)
     {
-        $pegawai = Pegawai::find($id);
+        $pegawai = Pegawai::findOrFail($id);
         return view('pegawai.edit', compact('pegawai'));
     }
 
+    // Update data pegawai
     public function update(Request $request, $id)
     {
-        $pegawai = Pegawai::find($id);
-        if (!$pegawai) {
-            return response()->json(['message' => 'Pegawai tidak ditemukan'], 404);
-        }
+        $pegawai = Pegawai::findOrFail($id);
 
         $validated = $request->validate([
             'id_role' => 'required|integer',
             'nama_pegawai' => 'required|string|max:50',
             'nomor_telepon_pegawai' => 'required|string|max:50',
-            'email_pegawai' => 'required|email|max:50|unique:pegawai,email_pegawai', // Memastikan email unik
-            'password_pegawai' => 'required|string|min:8|max:50', // Pastikan password minimal 8 karakter
+            'email_pegawai' => 'required|email|max:50|unique:pegawai,email_pegawai,' . $pegawai->id_pegawai . ',id_pegawai',
+            'password_pegawai' => 'required|string|min:8|max:50',
         ]);
 
         $pegawai->update($validated);
-        return response()->json(['message' => 'Pegawai berhasil diperbarui', 'data' => $pegawai]);
+
+        return redirect()->route('pegawai.index')->with('success', 'Pegawai berhasil diperbarui');
     }
 
+    // Hapus pegawai
     public function destroy($id)
     {
-        $pegawai = Pegawai::find($id);
-        if (!$pegawai) {
-            return response()->json(['message' => 'Pegawai tidak ditemukan'], 404);
-        }
-
+        $pegawai = Pegawai::findOrFail($id);
         $pegawai->delete();
-        return response()->json(['message' => 'Pegawai berhasil dihapus']);
+
+        return redirect()->route('pegawai.index')->with('success', 'Pegawai berhasil dihapus');
     }
 
-    public function search($keyword)
+    // Pencarian pegawai berdasarkan keyword
+    public function search(Request $request)
     {
-        // Melakukan pencarian pada beberapa atribut Pegawai
+        $keyword = $request->input('keyword');
+
         $results = Pegawai::where('nama_pegawai', 'like', "%$keyword%")
             ->orWhere('nomor_telepon_pegawai', 'like', "%$keyword%")
             ->orWhere('email_pegawai', 'like', "%$keyword%")
-            ->orWhere('id_role', 'like', "%$keyword%") // Menambahkan pencarian berdasarkan id_role
+            ->orWhere('id_role', 'like', "%$keyword%")
             ->get();
 
-        // Mengembalikan hasil pencarian dalam bentuk JSON
-        return response()->json($results, 200);
+        return view('pegawai.search', compact('results', 'keyword'));
     }
 }

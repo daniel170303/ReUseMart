@@ -8,6 +8,7 @@ use App\Http\Controllers\DiskusiProdukController;
 use App\Http\Controllers\RequestController;
 use App\Http\Controllers\DonasiController;
 use App\Http\Controllers\OrganisasiController;
+use App\Http\Controllers\PegawaiController;
 
 // Halaman landing page, ambil 3 barang titipan yang belum ada transaksi
 Route::get('/', function () {
@@ -64,6 +65,15 @@ Route::get('/organisasi/request-barang/search', [RequestController::class, 'sear
 Route::get('/organisasi/request-barang/{id}/edit', [RequestController::class, 'edit'])->name('organisasi.requestBarang.edit');
 Route::put('/organisasi/request-barang/{id}', [RequestController::class, 'update'])->name('organisasi.requestBarang.update');
 
+Route::get('/pegawai', [PegawaiController::class, 'index'])->name('pegawai.index');
+Route::post('/pegawai', [PegawaiController::class, 'store'])->name('pegawai.store');
+Route::get('/pegawai/create', [PegawaiController::class, 'create'])->name('pegawai.create');
+Route::get('/pegawai/{id}/edit', [PegawaiController::class, 'edit'])->name('pegawai.edit');
+Route::put('/pegawai/{id}', [PegawaiController::class, 'update'])->name('pegawai.update');
+Route::delete('/pegawai/{id}', [PegawaiController::class, 'destroy'])->name('pegawai.destroy');
+
+// Route khusus untuk pencarian
+Route::get('/pegawai/search', [PegawaiController::class, 'search'])->name('pegawai.search');
 //});
 
 Route::get('/barang-titipan', [BarangTitipanController::class, 'index'])->name('barang_titipan.index');
