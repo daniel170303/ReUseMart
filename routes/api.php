@@ -15,32 +15,6 @@ use App\Http\Controllers\{
     GambarBarangTitipanController
 };
 
-// Admin Routes
-Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->group(function () {
-    Route::get('/', [AdminController::class, 'dashboard'])->name('dashboard');
-    
-    // Pegawai Management Routes
-    Route::resource('pegawai', PegawaiController::class);
-    
-    // Penitip Management Routes
-    Route::resource('penitip', PenitipController::class);
-    
-    // Pembeli Management Routes
-    Route::resource('pembeli', PembeliController::class);
-    
-    // Organisasi Management Routes
-    Route::resource('organisasi', OrganisasiController::class);
-    
-    // Barang Titipan Management Routes
-    Route::resource('barang', BarangTitipanController::class);
-    
-    // Transaksi Management Routes
-    Route::resource('transaksi', TransaksiController::class);
-    
-    // Request Donasi Management Routes
-    Route::resource('request', RequestController::class);
-});
-
 // === AUTH ROUTES (TIDAK PERLU AUTENTIKASI) ===
 
 // Satu endpoint login untuk semua role (deteksi otomatis)
@@ -103,12 +77,12 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // Route untuk Pembeli
     Route::prefix('pembeli')->group(function () {
-        Route::get('/', [PembeliController::class, 'index'])->middleware('role:admin,owner,pegawai');
-        Route::post('/', [PembeliController::class, 'store'])->middleware('role:admin,owner,pegawai');
-        Route::get('/{id}', [PembeliController::class, 'show'])->middleware('role:admin,owner,pegawai,pembeli');
-        Route::put('/{id}', [PembeliController::class, 'update'])->middleware('role:admin,owner,pegawai,pembeli');
-        Route::delete('/{id}', [PembeliController::class, 'destroy'])->middleware('role:admin,owner');
-        Route::get('/search/{keyword}', [PembeliController::class, 'search'])->middleware('role:admin,owner,pegawai');
+        Route::get('/', [PembeliController::class, 'index']);
+        Route::post('/', [PembeliController::class, 'store']);
+        Route::get('/{id}', [PembeliController::class, 'show']);
+        Route::put('/{id}', [PembeliController::class, 'update']);
+        Route::delete('/{id}', [PembeliController::class, 'destroy']);
+        Route::get('/search/{keyword}', [PembeliController::class, 'search']);
         
         // Endpoint untuk data pembeli yang login
         Route::get('/profile/me', [PembeliController::class, 'profile'])->middleware('role:pembeli');
@@ -166,4 +140,33 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('/', [GambarBarangTitipanController::class, 'store'])->middleware('role:admin,owner,penitip');
         Route::delete('/destroy/{id}', [GambarBarangTitipanController::class, 'destroy'])->middleware('role:admin,owner,penitip');
     });
+});
+
+
+// Protected Routes - hanya bisa diakses jika sudah login
+Route::middleware('auth:sanctum')->group(function () {
+    
+    // Route untuk admin saja
+    Route::prefix('admin')->middleware('role:admin')->group(function () {
+        // Route untuk admin
+    });
+    
+    // Route untuk admin atau owner
+    Route::prefix('management')->middleware('role:admin,owner')->group(function () {
+        // Route untuk manajemen
+    });
+    
+    // Route untuk penitip saja
+    Route::prefix('penitip-area')->middleware('role:penitip')->group(function () {
+        // Route untuk penitip
+    });
+    
+    // Route untuk pembeli saja
+    Route::prefix('buyer-area')->middleware('role:pembeli')->group(function () {
+        // Route untuk pembeli
+    });
+    
+    // Route yang bisa diakses beberapa role
+    Route::get('/product/{id}', [ProductController::class, 'show'])
+        ->middleware('role:admin,penitip,pembeli');
 });

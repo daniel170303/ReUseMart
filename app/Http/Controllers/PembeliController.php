@@ -5,95 +5,68 @@ namespace App\Http\Controllers;
 use App\Models\Pembeli;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
-
+   
 class PembeliController extends Controller
 {
-    // Menampilkan semua data pembeli
     public function index()
-    {
-        return response()->json(Pembeli::all());
-    }
+{
+    $pembelis = Pembeli::all();
+    return view('pembelis.index', compact('pembelis'));
+}
 
-    public function store(Request $request)
-    {
-        $validated = $request->validate([
-            'nama_pembeli' => 'required|string|max:50',
-            'alamat_pembeli' => 'required|string|max:50',
-            'nomor_telepon_pembeli' => 'required|string|max:50',
-            'email_pembeli' => 'required|email|max:50|unique:pembeli,email_pembeli',
-            'password_pembeli' => 'required|string|min:6|max:50',
-        ]);
+public function create()
+{
+    return view('pembelis.create');
+}
 
+public function store(Request $request)
+{
+    $validated = $request->validate([
+        'nama_pembeli' => 'required|string|max:50',
+        'alamat_pembeli' => 'required|string|max:50',
+        'nomor_telepon_pembeli' => 'required|string|max:50',
+        'email_pembeli' => 'required|email|max:50|unique:pembeli,email_pembeli',
+        'password_pembeli' => 'required|string|max:255',
+    ]);
+
+    $validated['password_pembeli'] = Hash::make($validated['password_pembeli']);
+    Pembeli::create($validated);
+
+    return redirect()->route('pembelis.index');
+}
+
+public function edit(Pembeli $pembeli)
+{
+    return view('pembelis.edit', compact('pembeli'));
+}
+
+public function update(Request $request, Pembeli $pembeli)
+{
+    $validated = $request->validate([
+        'nama_pembeli' => 'required|string|max:50',
+        'alamat_pembeli' => 'required|string|max:50',
+        'nomor_telepon_pembeli' => 'required|string|max:50',
+        'email_pembeli' => 'required|email|max:50|unique:pembeli,email_pembeli,' . $pembeli->id_pembeli . ',id_pembeli',
+        'password_pembeli' => 'nullable|string|max:255',
+    ]);
+
+    if ($validated['password_pembeli']) {
         $validated['password_pembeli'] = Hash::make($validated['password_pembeli']);
-
-        $pembeli = Pembeli::create($validated);
-
-        return response()->json(['message' => 'Data pembeli berhasil ditambahkan', 'data' => $pembeli], 201);
+    } else {
+        unset($validated['password_pembeli']);
     }
 
-    public function show($id)
-    {
-        $pembeli = Pembeli::find($id);
+    $pembeli->update($validated);
+    return redirect()->route('pembelis.index');
+}
 
-        if (!$pembeli) {
-            return response()->json(['message' => 'Pembeli tidak ditemukan'], 404);
-        }
+public function destroy(Pembeli $pembeli)
+{
+    $pembeli->delete();
+    return redirect()->route('pembelis.index');
+}
 
-        return response()->json($pembeli);
-    }
+    
 
-    public function update(Request $request, $id)
-    {
-        $pembeli = Pembeli::find($id);
-
-        if (!$pembeli) {
-            return response()->json(['message' => 'Pembeli tidak ditemukan'], 404);
-        }
-
-        $validated = $request->validate([
-            'nama_pembeli' => 'required|string|max:50',
-            'alamat_pembeli' => 'required|string|max:50',
-            'nomor_telepon_pembeli' => 'required|string|max:50',
-            'email_pembeli' => 'required|email|max:50|unique:pembeli,email_pembeli,' . $pembeli->id_pembeli . ',id_pembeli',
-            'password_pembeli' => 'required|string|min:6|max:50',
-        ]);
-
-        $validated['password_pembeli'] = Hash::make($validated['password_pembeli']);
-
-        $pembeli->update($validated);
-
-        return response()->json(['message' => 'Data pembeli berhasil diperbarui', 'data' => $pembeli]);
-    }
-
-    public function destroy($id)
-    {
-        $pembeli = Pembeli::find($id);
-
-        if (!$pembeli) {
-            return response()->json(['message' => 'Pembeli tidak ditemukan'], 404);
-        }
-
-        $pembeli->delete();
-
-        return response()->json(['message' => 'Data pembeli berhasil dihapus']);
-    }
-
-    public function search($keyword)
-    {
-        $results = Pembeli::where('nama_pembeli', 'like', "%$keyword%")
-            ->orWhere('alamat_pembeli', 'like', "%$keyword%")
-            ->orWhere('nomor_telepon_pembeli', 'like', "%$keyword%")
-            ->orWhere('email_pembeli', 'like', "%$keyword%")
-            ->get();
-
-        if ($results->isEmpty()) {
-            return response()->json(['message' => 'Pembeli tidak ditemukan'], 404);
-        }
-
-        return response()->json([
-            'status' => 'success',
-            'total_results' => $results->count(),
-            'data' => $results
-        ], 200);
-    }
+    
 }

@@ -20,7 +20,7 @@
       border-radius: 10px;
       box-shadow: 0 5px 15px rgba(0,0,0,0.08);
     }
-    .form-control:focus {
+    .form-control:focus, .form-select:focus {
       border-color: #2E7D32;
       box-shadow: 0 0 0 0.25rem rgba(46, 125, 50, 0.25);
     }
@@ -40,6 +40,14 @@
       .login-image {
         border-radius: 0 0 10px 10px;
       }
+    }
+    .role-selector {
+      margin-bottom: 1rem;
+    }
+    .role-icon {
+      font-size: 1.5rem;
+      margin-right: 0.5rem;
+      color: #2E7D32;
     }
   </style>
 </head>
@@ -74,6 +82,41 @@
 
                 <form method="POST" action="{{ route('login') }}" class="needs-validation" novalidate>
                   @csrf
+
+                  <!-- Role Selection -->
+                  <div class="mb-4">
+                    <label for="role" class="form-label">Login sebagai</label>
+                    <select id="role" name="role" class="form-select @error('role') is-invalid @enderror" required>
+                      <option value="" disabled selected>-- Pilih Role --</option>
+                      <option value="admin" {{ old('role') == 'admin' ? 'selected' : '' }}>
+                        Admin
+                      </option>
+                      <option value="pegawai" {{ old('role') == 'pegawai' ? 'selected' : '' }}>
+                        Pegawai
+                      </option>
+                      <option value="owner" {{ old('role') == 'owner' ? 'selected' : '' }}>
+                        Owner
+                      </option>
+                      <option value="gudang" {{ old('role') == 'gudang' ? 'selected' : '' }}>
+                        Gudang
+                      </option>
+                      <option value="cs" {{ old('role') == 'cs' ? 'selected' : '' }}>
+                        Customer Service
+                      </option>
+                      <option value="penitip" {{ old('role') == 'penitip' ? 'selected' : '' }}>
+                        Penitip
+                      </option>
+                      <option value="pembeli" {{ old('role') == 'pembeli' ? 'selected' : '' }}>
+                        Pembeli
+                      </option>
+                      <option value="organisasi" {{ old('role') == 'organisasi' ? 'selected' : '' }}>
+                        Organisasi
+                      </option>
+                    </select>
+                    @error('role')
+                    <div class="invalid-feedback">{{ $message }}</div>
+                    @enderror
+                  </div>
 
                   <!-- Email -->
                   <div class="mb-3">
@@ -141,6 +184,48 @@
       }
     });
     
+    // Add role icons based on selection
+    document.getElementById('role').addEventListener('change', function() {
+      const selectedRole = this.value;
+      const roleIcon = document.createElement('i');
+      roleIcon.className = 'role-icon';
+      
+      // Set icon based on role
+      switch (selectedRole) {
+        case 'admin':
+          roleIcon.className = 'fas fa-user-shield role-icon';
+          break;
+        case 'pegawai':
+          roleIcon.className = 'fas fa-user-tie role-icon';
+          break;
+        case 'owner':
+          roleIcon.className = 'fas fa-crown role-icon';
+          break;
+        case 'gudang':
+          roleIcon.className = 'fas fa-warehouse role-icon';
+          break;
+        case 'cs':
+          roleIcon.className = 'fas fa-headset role-icon';
+          break;
+        case 'penitip':
+          roleIcon.className = 'fas fa-box-open role-icon';
+          break;
+        case 'pembeli':
+          roleIcon.className = 'fas fa-shopping-bag role-icon';
+          break;
+        case 'organisasi':
+          roleIcon.className = 'fas fa-building role-icon';
+          break;
+      }
+      
+      // Update form validation styles
+      if (this.value) {
+        this.classList.add('is-valid');
+      } else {
+        this.classList.remove('is-valid');
+      }
+    });
+    
     // Bootstrap form validation
     (function () {
       'use strict'
@@ -155,7 +240,7 @@
           
           form.classList.add('was-validated')
         }, false)
-      })
+      })  
     })()
   </script>
 </body>
