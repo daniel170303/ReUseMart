@@ -5,6 +5,8 @@ use App\Http\Controllers\BarangTitipanController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\LoginController;
 use App\Http\Controllers\PenitipController;
+use App\Http\Controllers\PembeliController;
+use App\Http\Controllers\TransaksiController;
 use App\Models\BarangTitipan;
 
 // Landing page, tampilkan 3 barang titipan
@@ -12,6 +14,8 @@ Route::get('/', function () {
     $barangTitipan = BarangTitipan::take(3)->get();
     return view('landingPage.landingPage', compact('barangTitipan'));
 });
+
+Route::get('/cek-garansi', [BarangTitipanController::class, 'cekGaransi'])->name('cek.garansi');
 
 // Form login umum
 Route::get('/login', [LoginController::class, 'showLoginForm'])->name('login');
@@ -74,3 +78,8 @@ Route::get('/customer-service', function () {
 
 Route::resource('penitip', PenitipController::class);
 
+Route::middleware('auth:pembeli')->group(function () {
+    Route::get('/pembeli', [PembeliController::class, 'dashboardPembeli'])->name('pembeli.dashboardPembeli');
+});
+
+Route::get('/history', [TransaksiController::class, 'history']);

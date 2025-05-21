@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Transaksi;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 
 class TransaksiController extends Controller
 {
@@ -106,5 +107,11 @@ class TransaksiController extends Controller
         }
 
         return response()->json($results);
+    }
+
+    public function history()
+    {
+        $transaksis = Transaksi::where('id_pembeli', 1)->take(5)->get();
+        return view('historyTransaksi.historyTransaksi', compact('transaksis'));
     }
 }

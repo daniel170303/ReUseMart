@@ -160,4 +160,24 @@ class PembeliController extends Controller
             'data' => $transaksi
         ]);
     }
+
+    public function profilePage()
+    {
+        $pembeli = Auth::guard('pembeli')->user();
+
+        if (!$pembeli) {
+            return redirect()->route('login')->with('error', 'Silakan login terlebih dahulu.');
+        }
+
+        $pembeli->load('rewards');
+        $totalPoin = $pembeli->rewards->sum('jumlah_poin_pembeli');
+
+        return view('pembeli.profilePage', compact('pembeli', 'totalPoin'));
+    }
+
+    public function dashboardPembeli()
+    {
+        $pembeli = Auth::guard('pembeli')->user();
+        return view('pembeli.dashboardPembeli', compact('pembeli'));
+    }
 }

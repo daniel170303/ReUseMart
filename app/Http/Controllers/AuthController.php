@@ -118,8 +118,8 @@ class AuthController extends Controller
                 'token' => $token,
             ]);
         } else {
-            Auth::login($pembeli);
-            return redirect()->route('dashboardPembeli');
+            Auth::guard('pembeli')->login($pembeli);
+            return redirect()->route('pembeli.dashboardPembeli');
         }
     }
 
