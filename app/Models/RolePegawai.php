@@ -2,23 +2,30 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class RolePegawai extends Model
 {
-    protected $table = 'role_pegawai';  // nama tabel di database
+    use HasFactory;
 
-    protected $primaryKey = 'id_role';  // primary key tabel
-
-    public $timestamps = false;  // jika tabel tidak pakai created_at dan updated_at
+    protected $table = 'role_pegawai';
+    protected $primaryKey = 'id_role';
+    public $timestamps = false;
 
     protected $fillable = [
         'nama_role',
     ];
 
-    // Relasi: satu role memiliki banyak pegawai
+    // Relationship dengan pegawai
     public function pegawai()
     {
         return $this->hasMany(Pegawai::class, 'id_role', 'id_role');
+    }
+
+    // Static method untuk mendapatkan semua role
+    public static function getAllRoles()
+    {
+        return self::all()->pluck('nama_role', 'id_role');
     }
 }

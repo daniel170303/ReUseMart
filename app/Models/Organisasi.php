@@ -2,18 +2,15 @@
 
 namespace App\Models;
 
-use Illuminate\Foundation\Auth\User as Authenticatable;
-use Laravel\Sanctum\HasApiTokens;
-use Illuminate\Notifications\Notifiable;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
 
-class Organisasi extends Authenticatable
+class Organisasi extends Model
 {
-    use HasApiTokens, Notifiable;
+    use HasFactory;
 
     protected $table = 'organisasi';
     protected $primaryKey = 'id_organisasi';
-    public $incrementing = true;
-    protected $keyType = 'int';
     public $timestamps = false;
 
     protected $fillable = [
@@ -21,16 +18,22 @@ class Organisasi extends Authenticatable
         'alamat_organisasi',
         'nomor_telepon_organisasi',
         'email_organisasi',
-        'password_organisasi'
+        'password_organisasi',
     ];
 
     protected $hidden = [
         'password_organisasi',
-        'remember_token',
     ];
 
-    public function getAuthPassword()
+    // Accessor untuk nama
+    public function getNameAttribute()
     {
-        return $this->password_organisasi;
+        return $this->nama_organisasi;
+    }
+
+    // Accessor untuk email
+    public function getEmailAttribute()
+    {
+        return $this->email_organisasi;
     }
 }

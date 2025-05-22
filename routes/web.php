@@ -15,71 +15,58 @@ Route::get('/', function () {
     return view('landingPage.landingPage', compact('barangTitipan'));
 });
 
-Route::get('/cek-garansi', [BarangTitipanController::class, 'cekGaransi'])->name('cek.garansi');
-
-// Form login umum
-Route::get('/login', [LoginController::class, 'showLoginForm'])->name('login');
-
-// Proses login (satu route POST untuk semua role)
-Route::post('/login', [LoginController::class, 'login'])->name('login.submit');
-
-// Logout (bisa digunakan untuk semua role)
-Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
-
-// Halaman register umum (pilih daftar sebagai pembeli atau organisasi)
+// Route untuk menampilkan form
+Route::get('/login', [AuthController::class, 'showLoginForm'])->name('login');
 Route::get('/register', function () {
-    return view('register.register'); // halaman pilihan register
+    return view('register.register');
 })->name('register');
-
-// Halaman register pembeli
 Route::get('/register/pembeli', function () {
     return view('register.registerPembeli');
 })->name('register.pembeli.form');
-
-// Halaman register organisasi
 Route::get('/register/organisasi', function () {
     return view('register.registerOrganisasi');
 })->name('register.organisasi.form');
 
-// Proses register pembeli
+// Route untuk proses registrasi
 Route::post('/register/pembeli', [AuthController::class, 'registerPembeli'])->name('register.pembeli.submit');
-
-// Proses register organisasi
 Route::post('/register/organisasi', [AuthController::class, 'registerOrganisasi'])->name('register.organisasi.submit');
 
-Route::middleware(['auth:pembeli'])->group(function () {
-    Route::get('/dashboard', [PembeliController::class, 'dashboard'])->name('dashboard.pembeli');
-    Route::get('/profile', [PembeliController::class, 'profile'])->name('pembeli.profile');
-    Route::get('/history', [PembeliController::class, 'historyTransaksi'])->name('pembeli.history');
+// Route untuk proses login
+Route::post('/login/penitip', [AuthController::class, 'loginPenitip'])->name('login.penitip');
+Route::post('/login/pembeli', [AuthController::class, 'loginPembeli'])->name('login.pembeli');
+Route::post('/login/organisasi', [AuthController::class, 'loginOrganisasi'])->name('login.organisasi');
+Route::post('/login/pegawai', [AuthController::class, 'loginPegawai'])->name('login.pegawai');
+
+// Route untuk logout
+Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
+
+// Dashboard routes (contoh, sesuaikan dengan aplikasi Anda)
+Route::middleware('auth')->group(function () {
+    Route::get('/dashboard/penitip', function () {
+        return view('dashboard.penitip');
+    })->name('dashboardPenitip');
+    
+    Route::get('/dashboard/pembeli', function () {
+        return view('dashboard.pembeli');
+    })->name('pembeli.dashboardPembeli');
+    
+    Route::get('/dashboard/organisasi', function () {
+        return view('dashboard.organisasi');
+    })->name('dashboardOrganisasi');
+    
+    Route::get('/dashboard/admin', function () {
+        return view('dashboard.admin');
+    })->name('dashboardAdmin');
+    
+    Route::get('/dashboard/owner', function () {
+        return view('dashboard.owner');
+    })->name('dashboardOwner');
+    
+    Route::get('/dashboard/cs', function () {
+        return view('dashboard.cs');
+    })->name('dashboardCs');
+    
+    Route::get('/dashboard/gudang', function () {
+        return view('dashboard.gudang');
+    })->name('dashboardGudang');
 });
-
-// Dashboard organisasi, pakai middleware auth dengan guard organisasi
-Route::middleware(['auth:organisasi'])->group(function () {
-    Route::get('/dashboard-organisasi', function () {
-        return view('organisasi.dashboardOrganisasi');
-    })->name('dashboard.organisasi');
-});
-
-// Dashboard admin/pegawai, pakai middleware auth dengan guard pegawai
-Route::middleware(['auth:pegawai'])->group(function () {
-    Route::get('/dashboard-admin', function () {
-        return view('admin.dashboardAdmin');
-    })->name('dashboard.admin');
-});
-
-// Detail barang titipan (bisa diakses tanpa login)
-Route::get('/barang/{id}', [BarangTitipanController::class, 'showDetail'])->name('barang.show');
-
-// Halaman Customer Service menampilkan list penitip dan form CRUD
-Route::get('/customer-service', function () {
-    $penitips = \App\Models\Penitip::all();
-    return view('customerService.customerService', compact('penitips'));
-})->name('customerService.index');
-
-Route::resource('penitip', PenitipController::class);
-
-Route::middleware('auth:pembeli')->group(function () {
-    Route::get('/pembeli', [PembeliController::class, 'dashboardPembeli'])->name('pembeli.dashboardPembeli');
-});
-
-Route::get('/history', [TransaksiController::class, 'history']);

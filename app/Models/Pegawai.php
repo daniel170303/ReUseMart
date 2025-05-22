@@ -2,12 +2,12 @@
 
 namespace App\Models;
 
-use Illuminate\Foundation\Auth\User as Authenticatable;
-use Laravel\Sanctum\HasApiTokens;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
 
-class Pegawai extends Authenticatable
+class Pegawai extends Model
 {
-    use HasApiTokens;
+    use HasFactory;
 
     protected $table = 'pegawai';
     protected $primaryKey = 'id_pegawai';
@@ -21,8 +21,50 @@ class Pegawai extends Authenticatable
         'password_pegawai',
     ];
 
-    public function role()
+    protected $hidden = [
+        'password_pegawai',
+    ];
+
+    // Relationship dengan role_pegawai
+    public function rolePegawai()
     {
         return $this->belongsTo(RolePegawai::class, 'id_role', 'id_role');
+    }
+
+    // Accessor untuk mendapatkan nama role
+    public function getRoleNameAttribute()
+    {
+        return $this->rolePegawai ? $this->rolePegawai->nama_role : 'Unknown';
+    }
+
+    // Method untuk mengecek role specific
+    public function isOwner()
+    {
+        return $this->rolePegawai && $this->rolePegawai->nama_role === 'Owner';
+    }
+
+    public function isAdmin()
+    {
+        return $this->rolePegawai && $this->rolePegawai->nama_role === 'Admin';
+    }
+
+    public function isCS()
+    {
+        return $this->rolePegawai && $this->rolePegawai->nama_role === 'Customer Service';
+    }
+
+    public function isGudang()
+    {
+        return $this->rolePegawai && $this->rolePegawai->nama_role === 'Gudang';
+    }
+
+    public function isHunter()
+    {
+        return $this->rolePegawai && $this->rolePegawai->nama_role === 'Hunter';
+    }
+
+    public function isKurir()
+    {
+        return $this->rolePegawai && $this->rolePegawai->nama_role === 'Kurir';
     }
 }

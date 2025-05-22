@@ -2,12 +2,12 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Laravel\Sanctum\HasApiTokens;
 
 class Penitip extends Model
 {
-    use HasApiTokens;
+    use HasFactory;
 
     protected $table = 'penitip';
     protected $primaryKey = 'id_penitip';
@@ -18,10 +18,22 @@ class Penitip extends Model
         'nik_penitip',
         'nomor_telepon_penitip',
         'email_penitip',
-        'password_penitip'
+        'password_penitip',
     ];
 
     protected $hidden = [
         'password_penitip',
     ];
+
+    // Accessor untuk nama
+    public function getNameAttribute()
+    {
+        return $this->nama_penitip;
+    }
+
+    // Accessor untuk email
+    public function getEmailAttribute()
+    {
+        return $this->email_penitip;
+    }
 }
