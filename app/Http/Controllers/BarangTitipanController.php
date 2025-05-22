@@ -6,6 +6,7 @@ use App\Models\BarangTitipan;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
+use Carbon\Carbon;
 
 class BarangTitipanController extends Controller
 {
@@ -89,6 +90,15 @@ class BarangTitipanController extends Controller
     public function showDetail($id)
     {
         $barang = BarangTitipan::with(['gambarBarang', 'transaksiTerakhir'])->findOrFail($id);
+
+        // Hitung tanggal habis garansi jika ada transaksi terakhir
+        if ($barang->transaksiTerakhir && $barang->garansi_bulan !== null) {
+            $tanggalPelunasan = Carbon::parse($barang->transaksiTerakhir->tanggal_pelunasan);
+            $tanggalHabisGaransi = $tanggalPelunasan->addMonths($barang->garansi_bulan);
+            $barang->tanggal_habis_garansi = $tanggalHabisGaransi->translatedFormat('d F Y');
+        } else {
+            $barang->tanggal_habis_garansi = 'Tidak ada garansi atau belum terjual';
+        }
 
         $diskusi = DB::table('diskusi_produk')
             ->where('id_barang', $id)
