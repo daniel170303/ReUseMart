@@ -9,13 +9,11 @@ use Illuminate\Support\Facades\Auth;
 
 class PenitipController extends Controller
 {
-    // Menampilkan semua data penitip
     public function index()
     {
         return response()->json(Penitip::all());
     }
 
-    // Menyimpan data penitip baru
     public function store(Request $request)
     {
         $validated = $request->validate([
@@ -31,27 +29,6 @@ class PenitipController extends Controller
         $penitip = Penitip::create($validated);
 
         return response()->json(['message' => 'Penitip berhasil ditambahkan', 'data' => $penitip], 201);
-    }
-
-    // Login penitip
-    public function login(Request $request)
-    {
-        $credentials = $request->validate([
-            'email_penitip' => 'required|email',
-            'password_penitip' => 'required|string|min:8',
-        ]);
-
-        $penitip = Penitip::where('email_penitip', $credentials['email_penitip'])->first();
-
-        if ($penitip && Hash::check($credentials['password_penitip'], $penitip->password_penitip)) {
-            // Simulasikan login, atau tambahkan Sanctum/token jika API
-            return response()->json([
-                'message' => 'Login berhasil',
-                'penitip' => $penitip
-            ]);
-        }
-
-        return response()->json(['message' => 'Email atau password salah'], 401);
     }
 
     public function show($id)

@@ -5,80 +5,182 @@ use App\Http\Controllers\BarangTitipanController;
 use App\Http\Controllers\AuthController;
 use App\Models\BarangTitipan;
 use App\Http\Controllers\DiskusiProdukController;
-use App\Http\Controllers\RequestController;
-use App\Http\Controllers\DonasiController;
+use App\Http\Controllers\PasswordResetController;
+use App\Http\Controllers\LoginController;
 use App\Http\Controllers\OrganisasiController;
-use App\Http\Controllers\PegawaiController;
 
-// Halaman landing page, ambil 3 barang titipan yang belum ada transaksi
+use App\Http\Controllers\ProfileController;
+
+use App\Http\Controllers\ProfilePembeliController;
+
+Route::get('/profil-pembeli', [ProfilePembeliController::class, 'index'])->name('profil.pembeli');
+Route::get('/profil-pembeli/{id}', [ProfilePembeliController::class, 'show'])->name('profil.pembeli.show');
+
+
+
+
+use App\Http\Controllers\PembeliController;
+
+Route::resource('pembelis', PembeliController::class);
+
+
+use App\Http\Controllers\AlamatPembeliController;
+
+// Routes untuk Alamat Pembeli (tanpa auth protection)
+Route::get('/alamat', [AlamatPembeliController::class, 'index'])->name('alamat.index');
+Route::get('/alamat/create', [AlamatPembeliController::class, 'create'])->name('alamat.create');
+Route::post('/alamat', [AlamatPembeliController::class, 'store'])->name('alamat.store');
+Route::get('/alamat/{id}/edit', [AlamatPembeliController::class, 'edit'])->name('alamat.edit');
+Route::put('/alamat/{id}', [AlamatPembeliController::class, 'update'])->name('alamat.update');
+Route::delete('/alamat/{id}', [AlamatPembeliController::class, 'destroy'])->name('alamat.destroy');
+Route::post('/alamat/{id}/main', [AlamatPembeliController::class, 'setAsMain'])->name('alamat.set-main');
+Route::get('/alamat/search', [AlamatPembeliController::class, 'search'])->name('alamat.search');
+
+
+
+
+
+
+// // Menggunakan middleware api dan menambahkan prefix 'api'
+// Route::prefix('api')->middleware('api')->group(function () {
+
 Route::get('/', function () {
-    $barangTitipan = BarangTitipan::whereDoesntHave('transaksi')->take(3)->get();
+    $barangTitipan = BarangTitipan::take(3)->get();
     return view('landingPage.landingPage', compact('barangTitipan'));
 });
 
-Route::get('/livecode', function () {
-    $barangTitipan = BarangTitipan::whereDoesntHave('transaksi')->take(3)->get();
-    return view('livecode', compact('barangTitipan'));
-});
-
-// Cek garansi
-Route::get('/cek-garansi', [BarangTitipanController::class, 'cekGaransi'])->name('cek.garansi');
-
-// Halaman login & proses login
 Route::get('/login', function () {
     return view('login.login');
 })->name('login');
+
 Route::post('/login', [AuthController::class, 'login']);
 
-// Halaman admin
-Route::get('/admin', function () {
-    return view('admin.admin');
-})->name('admin');
-
-// Halaman register & proses register
+// Tampilkan halaman register
 Route::get('/register', function () {
     return view('register.register');
 })->name('register');
-Route::post('/register', [AuthController::class, 'register']);
 
-// Detail barang titipan
+// Proses data register
+Route::post('/register', [AuthController::class, 'apiRegister']);
+
+
+Route::get('/admin', function () {
+    return view('admin');
+})->name('admin');
+
 Route::get('/barang/{id}', [BarangTitipanController::class, 'showDetail'])->name('barang.show');
 
-// Halaman owner untuk kelola request & donasi
-Route::get('/owner', [RequestController::class, 'ownerPage'])->name('owner.page');
-
-// Terima request donasi
-Route::post('/request/terima/{id_request}', [RequestController::class, 'terimaRequest'])->name('request.terima');
-
-// Update data donasi (via form)
-Route::put('/donasi/{id}/update', [DonasiController::class, 'update'])->name('donasi.update');
-
-// Diskusi produk
 Route::post('/diskusi/{id_barang}', [DiskusiProdukController::class, 'store'])->name('diskusi.store');
 
-//Route::middleware(['auth', 'role:organisasi'])->group(function () {
-Route::get('/organisasi/request-barang', [RequestController::class, 'index'])->name('organisasi.requestBarang.index');
-Route::get('/organisasi/request-barang/create', [RequestController::class, 'create'])->name('organisasi.requestBarang.create');
-Route::post('/organisasi/request-barang', [RequestController::class, 'store'])->name('organisasi.requestBarang.store');
+// Route untuk reset password pegawai (hanya admin yang bisa akses)
+Route::middleware(['auth:sanctum', 'can:manage-pegawai'])->post(
+    '/admin/pegawai/{id}/reset-password', 
+    [PegawaiController::class, 'resetPasswordToBirthDate']
+)->name('pegawai.reset-password');
 
-Route::get('/organisasi/request-barang/{id}/edit', [RequestController::class, 'edit'])->name('organisasi.requestBarang.edit');
-Route::put('/organisasi/request-barang/{id}', [RequestController::class, 'update'])->name('organisasi.requestBarang.update');
-Route::delete('/organisasi/request-barang/{id}', [RequestController::class, 'destroy'])->name('organisasi.requestBarang.destroy');
 
-Route::get('/organisasi/request-barang/search', [RequestController::class, 'search'])->name('organisasi.requestBarang.search');
+// Routes untuk reset password pembeli
+Route::get('/forgot-password', [PasswordResetController::class, 'showRequestForm'])
+    ->name('password.request');
+    
+Route::post('/forgot-password', [PasswordResetController::class, 'sendResetLinkEmail'])
+    ->name('password.email');
+    
+Route::get('/reset-password/{token}', [PasswordResetController::class, 'showResetForm'])
+    ->name('password.reset');
+    
+Route::post('/reset-password', [PasswordResetController::class, 'resetPassword'])
+    ->name('password.update');
 
-Route::get('/organisasi/request-barang/{id}/edit', [RequestController::class, 'edit'])->name('organisasi.requestBarang.edit');
-Route::put('/organisasi/request-barang/{id}', [RequestController::class, 'update'])->name('organisasi.requestBarang.update');
 
-Route::get('/pegawai', [PegawaiController::class, 'index'])->name('pegawai.index');
-Route::post('/pegawai', [PegawaiController::class, 'store'])->name('pegawai.store');
-Route::get('/pegawai/create', [PegawaiController::class, 'create'])->name('pegawai.create');
-Route::get('/pegawai/{id}/edit', [PegawaiController::class, 'edit'])->name('pegawai.edit');
-Route::put('/pegawai/{id}', [PegawaiController::class, 'update'])->name('pegawai.update');
-Route::delete('/pegawai/{id}', [PegawaiController::class, 'destroy'])->name('pegawai.destroy');
+    // Authentication routes
+Route::get('/login', function () {
+    return view('login.login');
+})->name('login');
+Route::post('/login', [LoginController::class, 'login']);
+Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 
-// Route khusus untuk pencarian
-Route::get('/pegawai/search', [PegawaiController::class, 'search'])->name('pegawai.search');
-//});
+// Dashboard routes - protected by auth middleware
+Route::middleware(['auth'])->group(function () {
+    // Profile routes for all authenticated users
+    Route::get('/profile', [ProfileController::class, 'show'])->name('profile.show');
+    Route::put('/profile', [ProfileController::class, 'update'])->name('profile.update');
+    
+    // Admin routes
+    Route::prefix('admin')->group(function () {
+        Route::get('/dashboard', [DashboardController::class, 'adminDashboard'])->name('admin.dashboard');
+        Route::get('/users', [AdminController::class, 'users'])->name('admin.users');
+        Route::get('/products', [AdminController::class, 'products'])->name('admin.products');
+        Route::get('/transactions', [AdminController::class, 'transactions'])->name('admin.transactions');
+        // Other admin routes...
+    });
+    
+    // Pembeli routes
+    Route::prefix('pembeli')->group(function () {
+        Route::get('/dashboard', [DashboardController::class, 'pembeliDashboard'])->name('pembeli.dashboard');
+        Route::get('/products', [BarangTitipanController::class, 'index'])->name('pembeli.products');
+        Route::get('/transactions', [TransaksiController::class, 'myTransactions'])->name('pembeli.transactions');
+        // Other pembeli routes...
+    });
+    
+    // Other role dashboards...
+    Route::get('/pegawai/dashboard', [DashboardController::class, 'pegawaiDashboard'])->name('pegawai.dashboard');
+    Route::get('/owner/dashboard', [DashboardController::class, 'ownerDashboard'])->name('owner.dashboard');
+    Route::get('/penitip/dashboard', [DashboardController::class, 'penitipDashboard'])->name('penitip.dashboard');
+    Route::get('/organisasi/dashboard', [DashboardController::class, 'organisasiDashboard'])->name('organisasi.dashboard');
+});
 
-Route::get('/barang-titipan', [BarangTitipanController::class, 'index'])->name('barang_titipan.index');
+
+
+
+Route::prefix('admin/organisasi')->name('admin.organisasi.')->group(function () {
+    Route::get('/', [OrganisasiController::class, 'index'])->name('index');
+    Route::get('/create', [OrganisasiController::class, 'create'])->name('create');
+    Route::post('/store', [OrganisasiController::class, 'store'])->name('store');
+    Route::get('/{id}/edit', [OrganisasiController::class, 'edit'])->name('edit');
+    Route::get('/{id}', [OrganisasiController::class, 'show'])->name('show'); // ← ini tambahan
+    Route::put('/{id}', [OrganisasiController::class, 'update'])->name('update');
+    Route::delete('/{id}', [OrganisasiController::class, 'destroy'])->name('destroy');
+});
+
+// routes/web.php
+
+
+
+// Organization management routes without auth middleware
+Route::prefix('admin')->name('admin.')->group(function () {
+    // List all organizations with search
+    Route::get('/organisasi', [OrganisasiController::class, 'index'])->name('organisasi.index');
+    
+    // Show form to create a new organization
+    Route::get('/organisasi/create', [OrganisasiController::class, 'create'])->name('organisasi.create');
+    
+    // Store a new organization
+    Route::post('/organisasi', [OrganisasiController::class, 'store'])->name('organisasi.store');
+    
+    // Show organization details
+    Route::get('/organisasi/{id}', [OrganisasiController::class, 'show'])->name('organisasi.show');
+    
+    // Show form to edit an organization
+    Route::get('/organisasi/{id}/edit', [OrganisasiController::class, 'edit'])->name('organisasi.edit');
+    
+    // Update an organization
+    Route::put('/organisasi/{id}', [OrganisasiController::class, 'update'])->name('organisasi.update');
+    
+    // Delete an organization
+    Route::delete('/organisasi/{id}', [OrganisasiController::class, 'destroy'])->name('organisasi.destroy');
+});
+
+// You can also add a direct search route for convenience
+Route::get('/search-organisasi', function(\Illuminate\Http\Request $request) {
+    return redirect()->route('admin.organisasi.index', ['search' => $request->query('q')]);
+})->name('search.organisasi');
+
+// Optional: API route for AJAX search
+Route::get('/api/organisasi/search', [OrganisasiController::class, 'search'])->name('api.organisasi.search');
+
+
+Route::prefix('admin')->group(function () {
+    Route::resource('alamat-pembeli', AlamatPembeliController::class)->names('alamat');
+});
+

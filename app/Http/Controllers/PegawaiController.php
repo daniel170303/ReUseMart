@@ -86,4 +86,33 @@ class PegawaiController extends Controller
 
         return view('pegawai.search', compact('results', 'keyword'));
     }
+
+    /**
+ * Reset password pegawai ke tanggal lahir
+ */
+public function resetPasswordToBirthDate(Request $request, $id)
+{
+    // Cek apakah pegawai ditemukan
+    $pegawai = Pegawai::find($id);
+    if (!$pegawai) {
+        return response()->json(['message' => 'Pegawai tidak ditemukan'], 404);
+    }
+    
+    // Validasi input tanggal lahir
+    $request->validate([
+        'tanggal_lahir' => 'required|date_format:Y-m-d',
+    ]);
+    
+    // Format tanggal lahir menjadi ddmmyyyy untuk password
+    $birthDate = date('dmY', strtotime($request->tanggal_lahir));
+    
+    // Hash password dan update
+    $pegawai->password_pegawai = Hash::make($birthDate);
+    $pegawai->save();
+    
+    return response()->json([
+        'success' => true,
+        'message' => 'Password pegawai berhasil direset ke tanggal lahir'
+    ]);
+}
 }
