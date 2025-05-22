@@ -16,6 +16,11 @@ Route::get('/', function () {
     return view('landingPage.landingPage', compact('barangTitipan'));
 });
 
+Route::get('/livecode', function () {
+    $barangTitipan = BarangTitipan::whereDoesntHave('transaksi')->take(3)->get();
+    return view('livecode', compact('barangTitipan'));
+});
+
 // Cek garansi
 Route::get('/cek-garansi', [BarangTitipanController::class, 'cekGaransi'])->name('cek.garansi');
 
