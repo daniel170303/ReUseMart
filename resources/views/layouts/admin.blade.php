@@ -1,185 +1,108 @@
-<!-- resources/views/layouts/admin.blade.php -->
 <!DOCTYPE html>
 <html lang="id">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>@yield('title') - Admin ReuseMart</title>
+    <title>ReuseMart Admin</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <style>
-        :root {
-            --primary-color: #2E7D32;
-            --light-color: #E8F5E9;
-        }
-        
-        .sidebar {
-            position: fixed;
-            top: 0;
-            bottom: 0;
-            left: 0;
-            z-index: 100;
-            padding: 0;
-            box-shadow: 0 2px 5px rgba(0,0,0,.05);
-            width: 250px;
-            background-color: #fff;
-        }
-        
-        .sidebar-heading {
-            padding: 1rem 1.5rem;
-            font-size: 1.5rem;
-            font-weight: 700;
-            color: var(--primary-color);
-            background-color: var(--light-color);
-        }
-        
-        .sidebar .nav-link {
-            color: #212121;
-            padding: 0.75rem 1.5rem;
-            font-weight: 500;
-            border-left: 4px solid transparent;
-        }
-        
-        .sidebar .nav-link i {
-            margin-right: 10px;
-            width: 20px;
-        }
-        
-        .sidebar .nav-link.active {
-            background-color: var(--light-color);
-            color: var(--primary-color);
-            border-left: 4px solid var(--primary-color);
-        }
-        
-        .main-content {
-            margin-left: 250px;
-            padding: 20px;
-            padding-top: 80px;
-        }
-        
-        .navbar {
-            position: fixed;
-            top: 0;
-            right: 0;
-            left: 250px;
-            z-index: 99;
-            background-color: #fff;
-            box-shadow: 0 2px 5px rgba(0,0,0,.05);
-        }
-        
-        .profile-dropdown {
-            cursor: pointer;
-        }
-        
-        .btn-primary {
-            background-color: var(--primary-color);
-            border-color: var(--primary-color);
-        }
-    </style>
 </head>
-<body>
+
+<body class="bg-gray-100">
+
+    <!-- Overlay (untuk mobile sidebar) -->
+    <div id="overlay" class="fixed inset-0 bg-black bg-opacity-50 z-40 hidden lg:hidden"></div>
+
     <!-- Sidebar -->
-    <nav class="sidebar">
-        <div class="sidebar-heading d-flex align-items-center">
-            <i class="fas fa-recycle me-2"></i>
-            <span>ReuseMart</span>
+    <aside id="sidebar"
+        class="fixed top-0 left-0 w-64 h-full bg-white border-r border-gray-200 transform -translate-x-full lg:translate-x-0 transition-transform duration-300 ease-in-out z-50">
+        <div class="flex items-center justify-between px-6 py-4 border-b border-gray-200">
+            <a href="/" class="text-green-600 text-xl font-bold">
+                <i class="fas fa-recycle mr-2"></i>ReuseMart
+            </a>
+            <button id="sidebarClose" class="text-gray-600 hover:text-red-600 lg:hidden">
+                <i class="fas fa-times text-xl"></i>
+            </button>
         </div>
-        
-        <div class="nav flex-column">
-            <a href="{{ route('admin.dashboard') }}" class="nav-link {{ request()->routeIs('admin.dashboard') ? 'active' : '' }}">
-                <i class="fas fa-tachometer-alt"></i>
-                <span>Dashboard</span>
-            </a>
-            
-            <a href="{{ route('admin.users') }}" class="nav-link {{ request()->routeIs('admin.users*') ? 'active' : '' }}">
-                <i class="fas fa-users"></i>
-                <span>Users</span>
-            </a>
-            
-            <a href="{{ route('admin.products') }}" class="nav-link {{ request()->routeIs('admin.products*') ? 'active' : '' }}">
-                <i class="fas fa-box"></i>
-                <span>Products</span>
-            </a>
-            
-            <a href="{{ route('admin.transactions') }}" class="nav-link {{ request()->routeIs('admin.transactions*') ? 'active' : '' }}">
-                <i class="fas fa-shopping-cart"></i>
-                <span>Transactions</span>
-            </a>
-            
-            <a href="{{ route('profile.show') }}" class="nav-link {{ request()->routeIs('profile.show') ? 'active' : '' }}">
-                <i class="fas fa-user"></i>
-                <span>My Profile</span>
-            </a>
-            
-            <a href="{{ route('logout') }}" class="nav-link" onclick="event.preventDefault(); document.getElementById('logout-form').submit();">
-                <i class="fas fa-sign-out-alt"></i>
-                <span>Logout</span>
-            </a>
-            <form id="logout-form" action="{{ route('logout') }}" method="POST" class="d-none">
+        <nav class="mt-4">
+            <ul class="space-y-2 px-4">
+                <li>
+                    <a href="{{ route('admin.dashboard') }}"
+                        class="block py-2 px-3 rounded hover:bg-green-100 text-gray-700 {{ request()->routeIs('admin.dashboard') ? 'bg-green-200 font-semibold' : '' }}">
+                        <i class="fas fa-tachometer-alt mr-2"></i>Dashboard
+                    </a>
+                </li>
+                <li>
+                    <a href="{{ route('admin.organisasi.index') }}"
+                        class="block py-2 px-3 rounded hover:bg-green-100 text-gray-700 {{ request()->routeIs('admin.organisasi.*') ? 'bg-green-200 font-semibold' : '' }}">
+                        <i class="fas fa-building mr-2"></i>Organisasi
+                    </a>
+                </li>
+                <li>
+                    <a href="{{ route('admin.pegawai.index') }}"
+                        class="block py-2 px-3 rounded hover:bg-green-100 text-gray-700 {{ request()->routeIs('admin.pegawai.*') ? 'bg-green-200 font-semibold' : '' }}">
+                        <i class="fas fa-users mr-2"></i>Pegawai
+                    </a>
+                </li>
+                <li>
+                    <a href="{{ route('admin.barang.index') }}"
+                        class="block py-2 px-3 rounded hover:bg-green-100 text-gray-700 {{ request()->routeIs('admin.barang.*') ? 'bg-green-200 font-semibold' : '' }}">
+                        <i class="fas fa-box-open mr-2"></i>Barang Titipan
+                    </a>
+                </li>
+            </ul>
+        </nav>
+        <div class="px-4 py-4 mt-auto border-t border-gray-200">
+            <form method="POST" action="{{ route('logout') }}">
                 @csrf
+                <button type="submit" class="w-full py-2 px-4 bg-red-600 text-white rounded hover:bg-red-700">
+                    <i class="fas fa-sign-out-alt mr-2"></i>Logout
+                </button>
             </form>
         </div>
-    </nav>
+    </aside>
 
     <!-- Top Navbar -->
-    <nav class="navbar">
-        <div class="container-fluid">
-            <div class="d-flex w-100 justify-content-between align-items-center">
-                <button type="button" class="btn d-md-none" id="sidebarToggle">
-                    <i class="fas fa-bars"></i>
-                </button>
-                
-                <div class="dropdown profile-dropdown">
-                    <div class="d-flex align-items-center" id="profileDropdown" data-bs-toggle="dropdown">
-                        <img src="https://via.placeholder.com/32" alt="User" class="rounded-circle me-2" width="32" height="32">
-                        <span>{{ Auth::user()->name ?? 'Admin' }}</span>
-                        <i class="fas fa-chevron-down ms-2 small"></i>
-                    </div>
-                    <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="profileDropdown">
-                        <li><a class="dropdown-item" href="{{ route('profile.show') }}"><i class="fas fa-user me-2"></i> Profile</a></li>
-                        <li><hr class="dropdown-divider"></li>
-                        <li>
-                            <a class="dropdown-item" href="{{ route('logout') }}" 
-                               onclick="event.preventDefault(); document.getElementById('logout-form-nav').submit();">
-                                <i class="fas fa-sign-out-alt me-2"></i> Logout
-                            </a>
-                            <form id="logout-form-nav" action="{{ route('logout') }}" method="POST" class="d-none">
-                                @csrf
-                            </form>
-                        </li>
-                    </ul>
-                </div>
-            </div>
-        </div>
-    </nav>
+    <header class="bg-white shadow-sm p-4 flex justify-between items-center sticky top-0 z-40">
+        <button id="sidebarToggle" class="lg:hidden text-gray-600 hover:text-green-600">
+            <i class="fas fa-bars text-xl"></i>
+        </button>
+        <h1 class="text-lg font-semibold text-gray-800">Panel Admin</h1>
+    </header>
 
     <!-- Main Content -->
-    <main class="main-content">
-        @if(session('success'))
-        <div class="alert alert-success alert-dismissible fade show" role="alert">
-            {{ session('success') }}
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-        </div>
-        @endif
-
-        @if(session('error'))
-        <div class="alert alert-danger alert-dismissible fade show" role="alert">
-            {{ session('error') }}
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-        </div>
-        @endif
-
+    <main class="ml-0 lg:ml-64 p-4">
         @yield('content')
     </main>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Script Toggle -->
     <script>
-        // Mobile sidebar toggle
-        document.getElementById('sidebarToggle')?.addEventListener('click', function() {
-            document.querySelector('.sidebar').classList.toggle('show');
+        const sidebar = document.getElementById('sidebar');
+        const toggleBtn = document.getElementById('sidebarToggle');
+        const closeBtn = document.getElementById('sidebarClose');
+        const overlay = document.getElementById('overlay');
+
+        toggleBtn?.addEventListener('click', () => {
+            sidebar.classList.remove('-translate-x-full');
+            overlay.classList.remove('hidden');
+        });
+
+        closeBtn?.addEventListener('click', () => {
+            sidebar.classList.add('-translate-x-full');
+            overlay.classList.add('hidden');
+        });
+
+        overlay?.addEventListener('click', () => {
+            sidebar.classList.add('-translate-x-full');
+            overlay.classList.add('hidden');
         });
     </script>
-    @stack('scripts')
+
+    {{-- Tambahkan ini --}}
+    @yield('scripts')
+
 </body>
+
 </html>

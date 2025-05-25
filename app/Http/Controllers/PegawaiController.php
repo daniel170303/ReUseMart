@@ -5,45 +5,35 @@ namespace App\Http\Controllers;
 use App\Models\Pegawai;
 use App\Models\RolePegawai;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Validation\Rule;
 
 class PegawaiController extends Controller
 {
     // Tampilkan semua pegawai
     public function index()
     {
-        // Load pegawai dengan data role-nya (relasi 'role')
         $pegawai = Pegawai::with('role')->get();
         $roles = RolePegawai::all();
         return view('pegawai.crud', compact('pegawai', 'roles'));
-    }
-
-    // Tampilkan form tambah pegawai (opsional)
-    public function create()
-    {
-        return view('pegawai.create');
     }
 
     // Simpan pegawai baru
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'id_role' => 'required|integer',
+            'id_role' => 'required|integer|exists:role_pegawai,id_role',
             'nama_pegawai' => 'required|string|max:50',
             'nomor_telepon_pegawai' => 'required|string|max:50',
             'email_pegawai' => 'required|email|max:50|unique:pegawai,email_pegawai',
-            'password_pegawai' => 'required|string|min:8|max:50',
+            'password_pegawai' => 'required|string|min:8|max:50|confirmed',
         ]);
+
+        $validated['password_pegawai'] = Hash::make($validated['password_pegawai']);
 
         Pegawai::create($validated);
 
         return redirect()->route('pegawai.index')->with('success', 'Pegawai berhasil ditambahkan');
-    }
-
-    // Tampilkan form edit pegawai
-    public function edit($id)
-    {
-        $pegawai = Pegawai::findOrFail($id);
-        return view('pegawai.edit', compact('pegawai'));
     }
 
     // Update data pegawai
@@ -52,12 +42,24 @@ class PegawaiController extends Controller
         $pegawai = Pegawai::findOrFail($id);
 
         $validated = $request->validate([
-            'id_role' => 'required|integer',
+            'id_role' => 'required|integer|exists:role_pegawai,id_role',
             'nama_pegawai' => 'required|string|max:50',
             'nomor_telepon_pegawai' => 'required|string|max:50',
-            'email_pegawai' => 'required|email|max:50|unique:pegawai,email_pegawai,' . $pegawai->id_pegawai . ',id_pegawai',
-            'password_pegawai' => 'required|string|min:8|max:50',
+            'email_pegawai' => [
+                'required',
+                'email',
+                'max:50',
+                Rule::unique('pegawai', 'email_pegawai')->ignore($pegawai->id_pegawai, 'id_pegawai'),
+            ],
         ]);
+
+        // Jika ingin ubah password, validasi dan hash
+        if ($request->filled('password_pegawai')) {
+            $request->validate([
+                'password_pegawai' => 'nullable|string|min:8|max:50|confirmed',
+            ]);
+            $pegawai->password_pegawai = Hash::make($request->password_pegawai);
+        }
 
         $pegawai->update($validated);
 
@@ -88,31 +90,26 @@ class PegawaiController extends Controller
     }
 
     /**
- * Reset password pegawai ke tanggal lahir
- */
-public function resetPasswordToBirthDate(Request $request, $id)
-{
-    // Cek apakah pegawai ditemukan
-    $pegawai = Pegawai::find($id);
-    if (!$pegawai) {
-        return response()->json(['message' => 'Pegawai tidak ditemukan'], 404);
+     * Reset password pegawai ke tanggal lahir
+     */
+    public function resetPasswordToBirthDate(Request $request, $id)
+    {
+        $pegawai = Pegawai::find($id);
+        if (!$pegawai) {
+            return response()->json(['message' => 'Pegawai tidak ditemukan'], 404);
+        }
+
+        $request->validate([
+            'tanggal_lahir' => 'required|date_format:Y-m-d',
+        ]);
+
+        $birthDate = date('dmY', strtotime($request->tanggal_lahir));
+        $pegawai->password_pegawai = Hash::make($birthDate);
+        $pegawai->save();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Password pegawai berhasil direset ke tanggal lahir',
+        ]);
     }
-    
-    // Validasi input tanggal lahir
-    $request->validate([
-        'tanggal_lahir' => 'required|date_format:Y-m-d',
-    ]);
-    
-    // Format tanggal lahir menjadi ddmmyyyy untuk password
-    $birthDate = date('dmY', strtotime($request->tanggal_lahir));
-    
-    // Hash password dan update
-    $pegawai->password_pegawai = Hash::make($birthDate);
-    $pegawai->save();
-    
-    return response()->json([
-        'success' => true,
-        'message' => 'Password pegawai berhasil direset ke tanggal lahir'
-    ]);
-}
 }

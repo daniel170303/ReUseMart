@@ -20,4 +20,9 @@ class DashboardController extends Controller
             'jumlahOrganisasi' => DB::table('organisasi')->count(),
         ]);
     }
+
+    public function adminDashboard()
+{
+    return view('admin.dashboard'); // pastikan file view-nya ada, misalnya: resources/views/admin/dashboard.blade.php
+}
 }
