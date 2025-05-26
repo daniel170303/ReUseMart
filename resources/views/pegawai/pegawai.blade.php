@@ -121,11 +121,32 @@
             margin-top: -8px;
             margin-bottom: 8px;
         }
+
+        .info-button {
+            background-color: #28a745;
+        }
+
+        .info-button:hover {
+            background-color: #218838;
+        }
     </style>
 
     <h1>👤 Manajemen Pegawai</h1>
 
     <button onclick="showForm('create')">+ Tambah Pegawai</button>
+
+    <form action="{{ route('pegawai.index') }}" method="GET" style="margin-top: 16px; margin-bottom: 12px;">
+        <input type="text" name="keyword" placeholder="🔍 Cari pegawai..." value="{{ request('keyword') }}"
+            style="padding: 8px; width: 250px; border-radius: 4px; border: 1px solid #ccc;">
+        <button type="submit" style="padding: 8px 12px; margin-left: 4px;">Cari</button>
+
+        @if (request('keyword'))
+            <a href="{{ route('pegawai.index') }}"
+                style="padding: 8px 12px; background-color: #6c757d; color: white; text-decoration: none; border-radius: 4px; margin-left: 8px;">
+                Reset
+            </a>
+        @endif
+    </form>
 
     @if (session('success'))
         <div class="success-message">{{ session('success') }}</div>
@@ -151,7 +172,7 @@
                     <td>{{ $p->email_pegawai }}</td>
                     <td>{{ $p->role->nama_role ?? '-' }}</td>
                     <td>
-                        <button onclick="showForm('show', {{ $p->id_pegawai }})">Detail</button>
+                        <button class="info-button" onclick="showForm('show', {{ $p->id_pegawai }})">Detail</button>
                         <button onclick="showForm('edit', {{ $p->id_pegawai }})">Edit</button>
                         <form action="{{ route('admin.pegawai.destroy', $p->id_pegawai) }}" method="POST"
                             style="display:inline" onsubmit="return confirm('Yakin ingin menghapus?')">
@@ -267,37 +288,53 @@
                 showModal();
             } else if (type === 'edit' && id) {
                 fetch(`/admin/pegawai/${id}`)
-                    .then(res => res.json())
-                    .then(data => {
-                        const d = data[0];
+                    .then(response => response.json())
+                    .then(d => {
+                        if (d.message === "Pegawai tidak ditemukan") {
+                            alert("Pegawai tidak ditemukan");
+                            return;
+                        }
+
                         document.getElementById('modal-title').textContent = 'Edit Pegawai';
-                        document.getElementById('form-method').value = 'PUT';
                         document.getElementById('form-create-edit').action = `/admin/pegawai/${id}`;
+                        document.getElementById('form-method').value = 'PUT';
+
+                        // Isi data ke form
                         document.getElementById('id_role').value = d.id_role;
                         document.getElementById('nama_pegawai').value = d.nama_pegawai;
                         document.getElementById('nomor_telepon_pegawai').value = d.nomor_telepon_pegawai;
                         document.getElementById('email_pegawai').value = d.email_pegawai;
+
+                        // Password tidak wajib diisi saat edit
                         document.getElementById('password_pegawai').required = false;
+                        document.getElementById('password_pegawai').value = '';
                         document.getElementById('password_pegawai_confirmation').required = false;
-                        document.getElementById('form-create-edit').style.display = 'block';
+                        document.getElementById('password_pegawai_confirmation').value = '';
+
                         document.getElementById('submit-button').textContent = 'Update';
+                        document.getElementById('form-create-edit').style.display = 'block';
                         showModal();
                     });
             } else if (type === 'show' && id) {
                 fetch(`/admin/pegawai/${id}`)
-                    .then(res => res.json())
-                    .then(data => {
-                        const d = data[0];
+                    .then(response => response.json())
+                    .then(d => {
+                        if (d.message === "Pegawai tidak ditemukan") {
+                            alert("Pegawai tidak ditemukan");
+                            return;
+                        }
+
                         document.getElementById('modal-title').textContent = 'Detail Pegawai';
                         document.getElementById('detail-id').textContent = d.id_pegawai;
                         document.getElementById('detail-nama').textContent = d.nama_pegawai;
                         document.getElementById('detail-telepon').textContent = d.nomor_telepon_pegawai;
                         document.getElementById('detail-email').textContent = d.email_pegawai;
-                        const role = @json($roles).find(r => r.id_role === d.id_role);
-                        document.getElementById('detail-role').textContent = role ? role.nama_role : '-';
+                        document.getElementById('detail-role').textContent = d.role?.nama_role || '-';
+
                         document.getElementById('show-detail').style.display = 'block';
                         showModal();
                     });
+
             }
         }
 

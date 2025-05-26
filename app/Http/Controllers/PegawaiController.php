@@ -11,11 +11,21 @@ use Illuminate\Validation\Rule;
 class PegawaiController extends Controller
 {
     // Tampilkan semua pegawai
-    public function index()
+    public function index(Request $request)
     {
-        $pegawai = Pegawai::with('role')->get();
+        $keyword = $request->input('keyword');
+
+        $pegawai = Pegawai::with('role')
+            ->when($keyword, function ($query, $keyword) {
+                $query->where('nama_pegawai', 'like', "%{$keyword}%")
+                    ->orWhere('nomor_telepon_pegawai', 'like', "%{$keyword}%")
+                    ->orWhere('email_pegawai', 'like', "%{$keyword}%");
+            })
+            ->get();
+
         $roles = RolePegawai::all();
-        return view('pegawai.crud', compact('pegawai', 'roles'));
+
+        return view('pegawai.pegawai', compact('pegawai', 'roles'));
     }
 
     // Simpan pegawai baru
@@ -87,6 +97,17 @@ class PegawaiController extends Controller
             ->get();
 
         return view('pegawai.search', compact('results', 'keyword'));
+    }
+
+    public function show($id)
+    {
+        $pegawai = Pegawai::with('role')->find($id);
+        
+        if (!$pegawai) {
+            return response()->json(['message' => 'Pegawai tidak ditemukan'], 404);
+        }
+
+        return response()->json($pegawai);
     }
 
     /**

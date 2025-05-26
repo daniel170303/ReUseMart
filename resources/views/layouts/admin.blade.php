@@ -26,7 +26,7 @@
                 <i class="fas fa-times text-xl"></i>
             </button>
         </div>
-        <nav class="mt-4">
+        <nav class="mt-2 mb-2">
             <ul class="space-y-2 px-4">
                 <li>
                     <a href="{{ route('admin.dashboard') }}"
@@ -47,11 +47,12 @@
                     </a>
                 </li>
                 <li>
-                    <a href="{{ route('admin.barang.index') }}"
-                        class="block py-2 px-3 rounded hover:bg-green-100 text-gray-700 {{ request()->routeIs('admin.barang.*') ? 'bg-green-200 font-semibold' : '' }}">
-                        <i class="fas fa-box-open mr-2"></i>Barang Titipan
+                    <a href="{{ route('admin.penitip.index') }}"
+                        class="block py-2 px-3 rounded hover:bg-green-100 text-gray-700 {{ request()->routeIs('admin.penitip.*') ? 'bg-green-200 font-semibold' : '' }}">
+                        <i class="fas fa-user-friends mr-2"></i>Penitip
                     </a>
                 </li>
+
             </ul>
         </nav>
         <div class="px-4 py-4 mt-auto border-t border-gray-200">
@@ -63,14 +64,6 @@
             </form>
         </div>
     </aside>
-
-    <!-- Top Navbar -->
-    <header class="bg-white shadow-sm p-4 flex justify-between items-center sticky top-0 z-40">
-        <button id="sidebarToggle" class="lg:hidden text-gray-600 hover:text-green-600">
-            <i class="fas fa-bars text-xl"></i>
-        </button>
-        <h1 class="text-lg font-semibold text-gray-800">Panel Admin</h1>
-    </header>
 
     <!-- Main Content -->
     <main class="ml-0 lg:ml-64 p-4">

@@ -9,9 +9,22 @@ use Illuminate\Support\Facades\Auth;
 
 class PenitipController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        return response()->json(Penitip::all());
+        $keyword = $request->keyword;
+
+        $query = Penitip::query();
+
+        if ($keyword) {
+            $query->where('nama_penitip', 'like', "%$keyword%")
+                ->orWhere('nik_penitip', 'like', "%$keyword%")
+                ->orWhere('email_penitip', 'like', "%$keyword%")
+                ->orWhere('nomor_telepon_penitip', 'like', "%$keyword%");
+        }
+
+        $penitip = $query->get();
+
+        return view('penitip.penitip', compact('penitip'));
     }
 
     public function store(Request $request)

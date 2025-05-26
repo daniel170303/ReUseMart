@@ -11,7 +11,7 @@ use App\Http\Controllers\OrganisasiController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\PegawaiController;
 use App\Http\Controllers\ProfileController;
-
+use App\Http\Controllers\PenitipController;
 use App\Http\Controllers\ProfilePembeliController;
 
 Route::get('/profil-pembeli', [ProfilePembeliController::class, 'index'])->name('profil.pembeli');
@@ -133,46 +133,9 @@ Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
     Route::get('/organisasi/dashboard', [DashboardController::class, 'organisasiDashboard'])->name('organisasi.dashboard');
 // });
 
-
-
-
-Route::prefix('admin/organisasi')->name('admin.organisasi.')->group(function () {
-    Route::get('/', [OrganisasiController::class, 'index'])->name('index');
-    Route::get('/create', [OrganisasiController::class, 'create'])->name('create');
-    Route::post('/store', [OrganisasiController::class, 'store'])->name('store');
-    Route::get('/{id}/edit', [OrganisasiController::class, 'edit'])->name('edit');
-    Route::get('/{id}', [OrganisasiController::class, 'show'])->name('show'); // ← ini tambahan
-    Route::put('/{id}', [OrganisasiController::class, 'update'])->name('update');
-    Route::delete('/{id}', [OrganisasiController::class, 'destroy'])->name('destroy');
-});
-
 // routes/web.php
 
 
-
-// Organization management routes without auth middleware
-Route::prefix('admin')->name('admin.')->group(function () {
-    // List all organizations with search
-    Route::get('/organisasi', [OrganisasiController::class, 'index'])->name('organisasi.index');
-    
-    // Show form to create a new organization
-    Route::get('/organisasi/create', [OrganisasiController::class, 'create'])->name('organisasi.create');
-    
-    // Store a new organization
-    Route::post('/organisasi', [OrganisasiController::class, 'store'])->name('organisasi.store');
-    
-    // Show organization details
-    Route::get('/organisasi/{id}', [OrganisasiController::class, 'show'])->name('organisasi.show');
-    
-    // Show form to edit an organization
-    Route::get('/organisasi/{id}/edit', [OrganisasiController::class, 'edit'])->name('organisasi.edit');
-    
-    // Update an organization
-    Route::put('/organisasi/{id}', [OrganisasiController::class, 'update'])->name('organisasi.update');
-    
-    // Delete an organization
-    Route::delete('/organisasi/{id}', [OrganisasiController::class, 'destroy'])->name('organisasi.destroy');
-});
 
 Route::prefix('admin')->name('admin.')->group(function () {
     // Dashboard
@@ -198,7 +161,7 @@ Route::prefix('admin')->name('admin.')->group(function () {
     ]);
 
     // Penitip (gunakan resource untuk pembeli)
-    Route::resource('/penitip', PembeliController::class)->names([
+    Route::resource('/penitip', PenitipController::class)->names([
         'index'   => 'penitip.index',
         'create'  => 'penitip.create',
         'store'   => 'penitip.store',
@@ -207,13 +170,6 @@ Route::prefix('admin')->name('admin.')->group(function () {
         'update'  => 'penitip.update',
         'destroy' => 'penitip.destroy',
     ]);
-
-    // Barang Titipan
-    Route::get('/barang-titipan', [BarangTitipanController::class, 'index'])->name('barang.index');
-    Route::get('/barang-titipan/{id}', [BarangTitipanController::class, 'show'])->name('barang.show');
-    Route::get('/barang-titipan/{id}/edit', [BarangTitipanController::class, 'edit'])->name('barang.edit');
-    Route::put('/barang-titipan/{id}', [BarangTitipanController::class, 'update'])->name('barang.update');
-    Route::delete('/barang-titipan/{id}', [BarangTitipanController::class, 'destroy'])->name('barang.destroy');
 });
 
 // You can also add a direct search route for convenience
