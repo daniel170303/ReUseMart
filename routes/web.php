@@ -203,6 +203,13 @@ Route::prefix('pegawai')->name('pegawai.')->group(function () {
     Route::get('/gudang', [BarangTitipanController::class, 'index'])->name('gudang');
 });
 
+Route::prefix('penitip')->group(function () {
+    Route::get('/profile/{id}', [PenitipController::class, 'profileById'])->name('penitip.profile.id');
+    Route::get('/barang-titipan/{id}', [PenitipController::class, 'barangTitipan']);
+
+});
+
+
 Route::get('/search-organisasi', function(\Illuminate\Http\Request $request) {
     return redirect()->route('admin.organisasi.index', ['search' => $request->query('q')]);
 })->name('search.organisasi');

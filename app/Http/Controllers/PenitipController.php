@@ -105,4 +105,18 @@ class PenitipController extends Controller
 
         return response()->json($results, 200);
     }
+
+    public function profileById($id)
+    {
+        $penitip = Penitip::find($id);
+
+        if (!$penitip) {
+            return abort(404, 'Penitip tidak ditemukan.');
+        }
+
+        $barangTitipan = $penitip->barangTitipan ?? collect();
+        $riwayatPenitipan = $penitip->riwayatPenitipan ?? collect();
+
+        return view('penitip.profilePenitip', compact('penitip', 'barangTitipan', 'riwayatPenitipan'));
+    }
 }
