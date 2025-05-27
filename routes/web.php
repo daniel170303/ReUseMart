@@ -12,6 +12,7 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\PegawaiController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\PenitipController;
+use App\Http\Controllers\PenitipanController;
 use App\Http\Controllers\ProfilePembeliController;
 
 Route::get('/profil-pembeli', [ProfilePembeliController::class, 'index'])->name('profil.pembeli');
@@ -172,7 +173,36 @@ Route::prefix('admin')->name('admin.')->group(function () {
     ]);
 });
 
-// You can also add a direct search route for convenience
+Route::prefix('gudang')->name('gudang.')->group(function () {
+    Route::get('/', [BarangTitipanController::class, 'index'])->name('index');
+    Route::post('/', [BarangTitipanController::class, 'store'])->name('store');
+    Route::get('/edit/{id}', [BarangTitipanController::class, 'edit'])->name('edit');
+    Route::put('/{id}', [BarangTitipanController::class, 'update'])->name('update');
+    Route::delete('/destroy/{id}', [BarangTitipanController::class, 'destroy'])->name('destroy');
+});
+
+// Penitipan Routes (Tanpa middleware dan resource controller lengkap)
+Route::prefix('penitipan')->name('penitipan.')->group(function () {
+    Route::get('/', [PenitipanController::class, 'index'])->name('index');
+    Route::get('/create', [PenitipanController::class, 'create'])->name('create');
+    Route::post('/', [PenitipanController::class, 'store'])->name('store');
+    Route::get('/{id}/edit', [PenitipanController::class, 'edit'])->name('edit');
+    Route::put('/{id}', [PenitipanController::class, 'update'])->name('update');
+    Route::delete('/{id}', [PenitipanController::class, 'destroy'])->name('destroy');
+});
+
+// Detail Penitipan Routes
+Route::prefix('detail-penitipan')->name('detail-penitipan.')->group(function () {
+    Route::get('/', [DetailPenitipanController::class, 'index'])->name('index');
+    Route::get('/create', [DetailPenitipanController::class, 'create'])->name('create');
+    Route::post('/', [DetailPenitipanController::class, 'store'])->name('store');
+    Route::delete('/{id_barang}/{id_penitipan}', [DetailPenitipanController::class, 'destroy'])->name('destroy');
+});
+
+Route::prefix('pegawai')->name('pegawai.')->group(function () {
+    Route::get('/gudang', [BarangTitipanController::class, 'index'])->name('gudang');
+});
+
 Route::get('/search-organisasi', function(\Illuminate\Http\Request $request) {
     return redirect()->route('admin.organisasi.index', ['search' => $request->query('q')]);
 })->name('search.organisasi');

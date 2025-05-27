@@ -27,7 +27,7 @@ class BarangTitipanController extends Controller
             }
         }
 
-        return response()->json($barangTitipan);
+        return view('pegawai.gudang', compact('barangTitipan'));
     }
 
     // Menyimpan barang baru
@@ -51,10 +51,7 @@ class BarangTitipanController extends Controller
 
         $barang = BarangTitipan::create($validatedData);
 
-        return response()->json([
-            'message' => 'Barang Titipan berhasil ditambahkan',
-            'data' => $barang
-        ], 201);
+        return redirect()->route('gudang.index')->with('success', 'Barang berhasil ditambahkan');
     }
 
     // Fitur pencarian
@@ -157,7 +154,7 @@ class BarangTitipanController extends Controller
 
         $barang->delete();
 
-        return response()->json(['message' => 'Barang berhasil dihapus']);
+        return redirect()->route('gudang.index')->with('success', 'Barang berhasil dihapus');
     }
 
     public function cekGaransi(Request $request)
