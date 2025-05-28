@@ -27,7 +27,7 @@ class BarangTitipanController extends Controller
             }
         }
 
-        return view('pegawai.gudang', compact('barangTitipan'));
+        return view('pegawai.gudang.manajemenBarangTitipan', compact('barangTitipan'));
     }
 
     // Menyimpan barang baru
