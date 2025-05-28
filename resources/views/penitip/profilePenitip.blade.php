@@ -1,36 +1,75 @@
 @extends('layouts.penitip')
 
 @section('content')
-    <div class="container mt-4">
-        <h2>Profil Penitip</h2>
-        <div class="card mb-4">
-            <div class="card-body">
-                <p><strong>Nama:</strong> {{ $penitip->nama_penitip }}</p>
-                <p><strong>NIK:</strong> {{ $penitip->nik_penitip }}</p>
-                <p><strong>Email:</strong> {{ $penitip->email_penitip }}</p>
-                <p><strong>No. Telepon:</strong> {{ $penitip->nomor_telepon_penitip }}</p>
+    <div class="container d-flex justify-content-center align-items-start min-vh-100 py-5">
+        <div class="w-100" style="max-width: 900px;">
+            <!-- Profil Penitip -->
+            <div class="card mb-4 shadow-sm border-0">
+                <div class="card-header bg-primary text-white text-center">
+                    <h3 class="mb-0"><i class="fas fa-user-circle me-2"></i>Profil Penitip</h3>
+                </div>
+                <div class="card-body">
+                    <div class="row mb-2">
+                        <div class="col-sm-4 text-muted">Nama</div>
+                        <div class="col-sm-8">{{ $penitip->nama_penitip }}</div>
+                    </div>
+                    <div class="row mb-2">
+                        <div class="col-sm-4 text-muted">NIK</div>
+                        <div class="col-sm-8">{{ $penitip->nik_penitip }}</div>
+                    </div>
+                    <div class="row mb-2">
+                        <div class="col-sm-4 text-muted">Email</div>
+                        <div class="col-sm-8">{{ $penitip->email_penitip }}</div>
+                    </div>
+                    <div class="row">
+                        <div class="col-sm-4 text-muted">No. Telepon</div>
+                        <div class="col-sm-8">{{ $penitip->nomor_telepon_penitip }}</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Barang Titipan -->
+            <div class="card mb-4 shadow-sm border-0">
+                <div class="card-header bg-success text-white text-center">
+                    <h4 class="mb-0"><i class="fas fa-box-open me-2"></i>Barang Titipan</h4>
+                </div>
+                <div class="card-body p-0">
+                    @if ($barangTitipan->isEmpty())
+                        <div class="p-3 text-center text-muted">Belum ada barang yang dititipkan.</div>
+                    @else
+                        <ul class="list-group list-group-flush">
+                            @foreach ($barangTitipan as $barang)
+                                <li class="list-group-item d-flex justify-content-between align-items-center">
+                                    {{ $barang->nama_barang_titipan }}
+                                    <span class="badge bg-info text-dark">{{ $barang->status_barang }}</span>
+                                </li>
+                            @endforeach
+                        </ul>
+                    @endif
+                </div>
+            </div>
+
+            <!-- Riwayat Penitipan -->
+            <div class="card shadow-sm border-0">
+                <div class="card-header bg-secondary text-white text-center">
+                    <h4 class="mb-0"><i class="fas fa-history me-2"></i>Riwayat Penitipan</h4>
+                </div>
+                <div class="card-body p-0">
+                    @if ($riwayatPenitipan->isEmpty())
+                        <div class="p-3 text-center text-muted">Belum ada riwayat penitipan.</div>
+                    @else
+                        <ul class="list-group list-group-flush">
+                            @foreach ($riwayatPenitipan as $riwayat)
+                                <li class="list-group-item">
+                                    <i class="fas fa-calendar-alt text-primary me-2"></i>
+                                    <strong>{{ $riwayat->created_at->format('d M Y') }}</strong> —
+                                    {{ $riwayat->barang->nama_barang_titipan ?? 'Barang tidak ditemukan' }}
+                                </li>
+                            @endforeach
+                        </ul>
+                    @endif
+                </div>
             </div>
         </div>
-
-        <h4>Barang Titipan</h4>
-        <ul class="list-group mb-4">
-            @forelse ($barangTitipan as $barang)
-                <li class="list-group-item">{{ $barang->nama_barang_titipan }}</li>
-            @empty
-                <li class="list-group-item text-muted">Belum ada barang yang dititipkan.</li>
-            @endforelse
-        </ul>
-
-        <h4>Riwayat Penitipan</h4>
-        <ul class="list-group">
-            @forelse ($riwayatPenitipan as $riwayat)
-                <li class="list-group-item">
-                    {{ $riwayat->created_at->format('d M Y') }} -
-                    {{ $riwayat->barang->nama_barang_titipan ?? 'Barang tidak ditemukan' }}
-                </li>
-            @empty
-                <li class="list-group-item text-muted">Belum ada riwayat penitipan.</li>
-            @endforelse
-        </ul>
     </div>
 @endsection

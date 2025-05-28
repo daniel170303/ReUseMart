@@ -31,29 +31,31 @@ class PenitipanController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'id_penitip' => 'required|integer',
-            'barang_ids' => 'required|array',
+            'id_penitip' => 'required|exists:penitip,id_penitip',
+            'id_barang' => 'required|array',
+            'id_barang.*' => 'exists:barang_titipan,id_barang',
         ]);
 
-        // Buat penitipan baru
+        $tanggalPenitipan = now();
+        $tanggalSelesai = $tanggalPenitipan->copy()->addDays(30);
+        $tanggalBatasPengambilan = $tanggalSelesai->copy()->addDays(3);
+
         $penitipan = Penitipan::create([
             'id_penitip' => $request->id_penitip,
-            'tanggal_penitipan' => now(),
-            'tanggal_selesai_penitipan' => now()->addMonths(1),
-            'tanggal_batas_pengambilan' => now()->addMonths(2),
-            'status_perpanjangan' => 'belum',
-            'status_barang' => 'ready',
+            'tanggal_penitipan' => $tanggalPenitipan,
+            'tanggal_selesai_penitipan' => $tanggalSelesai,
+            'tanggal_batas_pengambilan' => $tanggalBatasPengambilan,
+            'status_perpanjangan' => 'ya',
         ]);
 
-        // Tambahkan barang-barang ke detail_penitipan
-        foreach ($request->barang_ids as $id_barang) {
+        foreach ($request->id_barang as $id_barang) {
             DetailPenitipan::create([
                 'id_penitipan' => $penitipan->id_penitipan,
                 'id_barang' => $id_barang,
             ]);
         }
 
-        return redirect()->route('pegawai.penitipan')->with('success', 'Penitipan berhasil ditambahkan.');
+        return redirect()->route('penitipan.index')->with('success', 'Data penitipan berhasil disimpan.');
     }
 
     public function create()

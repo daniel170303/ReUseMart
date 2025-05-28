@@ -27,5 +27,10 @@ class Penitipan extends Model
     {
         return $this->belongsTo(Penitip::class, 'id_penitip');
     }
+
+    public function detailPenitipan()
+    {
+        return $this->hasMany(DetailPenitipan::class, 'id_penitipan');
+    }
     
 }

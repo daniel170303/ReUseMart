@@ -3,6 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Models\Penitip;
+use App\Models\DetailPenitipan;
+use App\Models\BarangTitipan;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Auth;
@@ -119,4 +121,27 @@ class PenitipController extends Controller
 
         return view('penitip.profilePenitip', compact('penitip', 'barangTitipan', 'riwayatPenitipan'));
     }
+
+    public function barangTitipanPenitip($id_penitip)
+    {
+        // Ambil semua barang titipan milik penitip tertentu
+        $barangTitipan = BarangTitipan::whereHas('detailPenitipan.penitipan', function ($query) use ($id_penitip) {
+            $query->where('id_penitip', $id_penitip);
+        })->with(['transaksiTerakhir', 'gambarBarang'])->get();
+
+        foreach ($barangTitipan as $barang) {
+            if ($barang->sisa_garansi === null) {
+                $barang->status_garansi = 'Tanpa Garansi';
+            } elseif ($barang->garansi_masih_berlaku) {
+                $tanggalHabis = now()->addMonths($barang->sisa_garansi);
+                $barang->status_garansi = 'Masih Bergaransi sampai ' . $tanggalHabis->translatedFormat('d M Y');
+            } else {
+                $tanggalHabis = now()->subMonths(abs($barang->sisa_garansi));
+                $barang->status_garansi = 'Garansi Habis pada ' . $tanggalHabis->translatedFormat('d M Y');
+            }
+        }
+
+        return view('penitip.barangTitipanPenitip', compact('barangTitipan'));
+    }
+
 }

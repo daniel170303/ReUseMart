@@ -205,7 +205,7 @@ Route::prefix('pegawai')->name('pegawai.')->group(function () {
 
 Route::prefix('penitip')->group(function () {
     Route::get('/profile/{id}', [PenitipController::class, 'profileById'])->name('penitip.profile.id');
-    Route::get('/barang-titipan/{id}', [PenitipController::class, 'barangTitipan']);
+    Route::get('/{id}/barang-titipan', [PenitipController::class, 'barangTitipanPenitip'])->name('penitip.barangTitipan');
 
 });
 

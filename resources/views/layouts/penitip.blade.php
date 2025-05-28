@@ -6,6 +6,7 @@
     <title>Dashboard Penitip</title>
     <link rel="stylesheet" href="{{ asset('css/app.css') }}">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         * {
             box-sizing: border-box;
@@ -75,7 +76,8 @@
                 </a>
             </li>
             <li>
-                <a href="{{ route('penitipan.index') }}" class="{{ request()->is('penitipan') ? 'active' : '' }}">
+                <a href="{{ url('penitip/11/barang-titipan') }}"
+                    class="{{ request()->is('penitip/11/barang-titipan') ? 'active' : '' }}">
                     Barang Titipan
                 </a>
             </li>

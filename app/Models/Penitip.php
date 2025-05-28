@@ -24,4 +24,10 @@ class Penitip extends Model
     protected $hidden = [
         'password_penitip',
     ];
+
+    public function penitipan()
+    {
+        return $this->hasMany(Penitipan::class, 'id_penitip', 'id_penitip');
+    }
+
 }

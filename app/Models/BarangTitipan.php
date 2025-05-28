@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\DetailPenitipan;
 use Illuminate\Database\Eloquent\Model;
 use Carbon\Carbon;
 
@@ -99,5 +100,10 @@ class BarangTitipan extends Model
         }
 
         return $sisa > 0;
+    }
+
+    public function detailPenitipan()
+    {
+        return $this->hasMany(DetailPenitipan::class, 'id_barang', 'id_barang');
     }
 }
