@@ -17,6 +17,7 @@ class Penitipan extends Model
         'id_penitip',
         'tanggal_penitipan',
         'tanggal_selesai_penitipan',
+        'tanggal_pengambilan',
         'tanggal_batas_pengambilan',
         'status_perpanjangan',
         'tanggal_terjual',

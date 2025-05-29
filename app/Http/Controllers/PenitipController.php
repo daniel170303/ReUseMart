@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Penitip;
 use App\Models\DetailPenitipan;
+use App\Models\Penitipan;
 use App\Models\BarangTitipan;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
@@ -142,6 +143,37 @@ class PenitipController extends Controller
         }
 
         return view('penitip.barangTitipanPenitip', compact('barangTitipan'));
+    }
+
+    public function perpanjang($id_penitipan)
+    {
+        $penitipan = Penitipan::findOrFail($id_penitipan);
+
+        if ($penitipan->status_perpanjangan == 'ya') {
+            $tanggalSelesai = \Carbon\Carbon::parse($penitipan->tanggal_selesai_penitipan);
+            $penitipan->tanggal_selesai_penitipan = $tanggalSelesai->addDays(30);
+            $penitipan->save();
+
+            return redirect()->back()->with('success', 'Masa penitipan berhasil diperpanjang 30 hari.');
+        }
+
+        return redirect()->back()->with('error', 'Penitipan tidak bisa diperpanjang.');
+    }
+
+    public function jadwalPengambilan(Request $request)
+    {
+        $request->validate([
+            'id_penitipan' => 'required|exists:penitipan,id_penitipan',
+            'tanggal_pengambilan' => 'required|date|after_or_equal:today',
+        ]);
+
+        $penitipan = Penitipan::findOrFail($request->id_penitipan);
+        
+        // Simpan tanggal pengambilan yang dijadwalkan penitip
+        $penitipan->tanggal_pengambilan = $request->tanggal_pengambilan;
+        $penitipan->save();
+
+        return redirect()->back()->with('success', 'Jadwal pengambilan berhasil disimpan.');
     }
 
 }

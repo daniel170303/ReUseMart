@@ -189,6 +189,8 @@ Route::prefix('penitipan')->name('penitipan.')->group(function () {
     Route::get('/{id}/edit', [PenitipanController::class, 'edit'])->name('edit');
     Route::put('/{id}', [PenitipanController::class, 'update'])->name('update');
     Route::delete('/{id}', [PenitipanController::class, 'destroy'])->name('destroy');
+    Route::post('/{id}/konfirmasi-pengambilan', [PenitipanController::class, 'konfirmasiPengambilan'])
+        ->name('konfirmasiPengambilan');
 });
 
 // Detail Penitipan Routes
@@ -206,7 +208,8 @@ Route::prefix('pegawai')->name('pegawai.')->group(function () {
 Route::prefix('penitip')->group(function () {
     Route::get('/profile/{id}', [PenitipController::class, 'profileById'])->name('penitip.profile.id');
     Route::get('/{id}/barang-titipan', [PenitipController::class, 'barangTitipanPenitip'])->name('penitip.barangTitipan');
-
+    Route::post('penitipan/perpanjang/{id_penitipan}', [PenitipanController::class, 'perpanjang'])->name('penitip.penitipan.perpanjang');
+    Route::post('/jadwal-pengambilan', [PenitipController::class, 'jadwalPengambilan'])->name('penitip.jadwalPengambilan');
 });
 
 

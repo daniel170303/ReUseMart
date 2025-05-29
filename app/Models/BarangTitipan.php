@@ -104,6 +104,19 @@ class BarangTitipan extends Model
 
     public function detailPenitipan()
     {
-        return $this->hasMany(DetailPenitipan::class, 'id_barang', 'id_barang');
+        return $this->hasOne(DetailPenitipan::class, 'id_barang', 'id_barang');
     }
+
+    public function penitipan()
+    {
+        return $this->hasOneThrough(
+            \App\Models\Penitipan::class,
+            \App\Models\DetailPenitipan::class,
+            'id_barang',   
+            'id_penitipan',
+            'id_barang',  
+            'id_penitipan'
+        );
+    }
+
 }

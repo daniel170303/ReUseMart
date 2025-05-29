@@ -80,16 +80,18 @@
                                         <span class="text-muted">Tidak ada gambar</span>
                                     @endif
                                 </td>
-
                                 <td>{{ $barang->nama_barang_titipan }}</td>
                                 <td>Rp{{ number_format($barang->harga_barang, 0, ',', '.') }}</td>
                                 <td>{{ $barang->jenis_barang }}</td>
                                 <td>{{ $barang->berat_barang }} g</td>
                                 <td>{{ ucfirst($barang->status_barang) }}</td>
-                                <td>{{ $barang->garansi_barang }}</td>
+                                <td>{{ $barang->garansi_barang ?? '-' }}</td>
                                 <td>
+                                    {{-- Edit --}}
                                     <a href="{{ route('gudang.edit', $barang->id_barang) }}"
                                         class="btn btn-sm btn-warning">Edit</a>
+
+                                    {{-- Hapus --}}
                                     <form action="{{ route('gudang.destroy', $barang->id_barang) }}" method="POST"
                                         style="display:inline-block;">
                                         @csrf
@@ -97,8 +99,23 @@
                                         <button onclick="return confirm('Yakin hapus barang ini?')"
                                             class="btn btn-sm btn-danger">Hapus</button>
                                     </form>
+
+                                    {{-- Detail --}}
                                     <a href="{{ route('barang.show', $barang->id_barang) }}"
                                         class="btn btn-sm btn-info">Detail</a>
+
+                                    {{-- Konfirmasi Pengambilan
+                                    @if (optional($barang->penitipan)->tanggal_pengambilan)
+                                        <form
+                                            action="{{ route('penitipan.konfirmasiPengambilan', $barang->penitipan->id_penitipan) }}"
+                                            method="POST" style="display:inline-block;">
+                                            @csrf
+                                            <button type="submit" class="btn btn-success btn-sm"
+                                                onclick="return confirm('Konfirmasi pengambilan barang ini?')">
+                                                Konfirmasi Pengambilan
+                                            </button>
+                                        </form>
+                                    @endif --}}
                                 </td>
                             </tr>
                         @endforeach
@@ -106,5 +123,64 @@
                 </table>
             </div>
         </div>
+        {{-- Tabel Barang dengan Jadwal Pengembalian --}}
+        <div class="card mt-5">
+            <div class="card-header bg-success text-white">Barang dengan Jadwal Pengembalian</div>
+            <div class="card-body">
+                @php
+                    $barangDenganJadwal = $barangTitipan->filter(function ($barang) {
+                        return optional($barang->penitipan)->tanggal_pengambilan !== null;
+                    });
+                @endphp
+
+                @if ($barangDenganJadwal->count() > 0)
+                    <table class="table table-bordered table-striped">
+                        <thead>
+                            <tr>
+                                <th>Gambar</th>
+                                <th>Nama</th>
+                                <th>Jenis</th>
+                                <th>Status</th>
+                                <th>Tanggal Pengambilan</th>
+                                <th>Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach ($barangDenganJadwal as $barang)
+                                <tr>
+                                    <td>
+                                        @if ($barang->gambar_barang && file_exists(public_path('storage/' . $barang->gambar_barang)))
+                                            <img src="{{ asset('storage/' . $barang->gambar_barang) }}" alt="Gambar"
+                                                width="80">
+                                        @else
+                                            <span class="text-muted">Tidak ada gambar</span>
+                                        @endif
+                                    </td>
+                                    <td>{{ $barang->nama_barang_titipan }}</td>
+                                    <td>{{ $barang->jenis_barang }}</td>
+                                    <td>{{ ucfirst($barang->status_barang) }}</td>
+                                    <td>{{ \Carbon\Carbon::parse($barang->penitipan->tanggal_pengambilan)->format('d M Y') }}
+                                    </td>
+                                    <td>
+                                        <form
+                                            action="{{ route('penitipan.konfirmasiPengambilan', $barang->penitipan->id_penitipan) }}"
+                                            method="POST">
+                                            @csrf
+                                            <button type="submit" class="btn btn-success btn-sm"
+                                                onclick="return confirm('Yakin ingin mengonfirmasi pengambilan barang ini?')">
+                                                Konfirmasi Pengambilan
+                                            </button>
+                                        </form>
+                                    </td>
+                                </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                @else
+                    <p class="text-muted">Tidak ada barang yang dijadwalkan untuk pengambilan saat ini.</p>
+                @endif
+            </div>
+        </div>
+
     </div>
 @endsection

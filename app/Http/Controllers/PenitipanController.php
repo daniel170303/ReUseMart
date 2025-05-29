@@ -38,7 +38,7 @@ class PenitipanController extends Controller
 
         $tanggalPenitipan = now();
         $tanggalSelesai = $tanggalPenitipan->copy()->addDays(30);
-        $tanggalBatasPengambilan = $tanggalSelesai->copy()->addDays(3);
+        $tanggalBatasPengambilan = $tanggalSelesai->copy()->addDays(7);
 
         $penitipan = Penitipan::create([
             'id_penitip' => $request->id_penitip,
@@ -46,6 +46,7 @@ class PenitipanController extends Controller
             'tanggal_selesai_penitipan' => $tanggalSelesai,
             'tanggal_batas_pengambilan' => $tanggalBatasPengambilan,
             'status_perpanjangan' => 'ya',
+            'tanggal_pengambilan' => null, // default saat baru dititipkan
         ]);
 
         foreach ($request->id_barang as $id_barang) {
@@ -79,6 +80,7 @@ class PenitipanController extends Controller
             'tanggal_selesai_penitipan' => 'required|date',
             'tanggal_batas_pengambilan' => 'required|date',
             'status_perpanjangan' => 'required|string|max:20',
+            'tanggal_pengambilan' => 'nullable|date',
             'tanggal_terjual' => 'nullable|date',
             'status_barang' => 'nullable|string|max:255',
         ]);
@@ -101,4 +103,37 @@ class PenitipanController extends Controller
         $penitipan = Penitipan::with('penitip')->findOrFail($id);
         return view('penitipan.show', compact('penitipan'));
     }
+
+    public function perpanjang($id_penitipan)
+    {
+        $penitipan = Penitipan::findOrFail($id_penitipan);
+
+        if ($penitipan->status_perpanjangan === 'ya') {
+            $tanggalSelesai = \Carbon\Carbon::parse($penitipan->tanggal_selesai_penitipan)->addDays(30);
+            $tanggalBatasPengambilan = $tanggalSelesai->copy()->addDays(7);
+
+            $penitipan->update([
+                'tanggal_selesai_penitipan' => $tanggalSelesai,
+                'tanggal_batas_pengambilan' => $tanggalBatasPengambilan,
+                'status_perpanjangan' => 'tidak',
+            ]);
+
+            return redirect()->back()->with('success', 'Masa penitipan berhasil diperpanjang 30 hari.');
+        }
+
+        return redirect()->back()->with('error', 'Penitipan tidak bisa diperpanjang.');
+    }
+
+    public function konfirmasiPengambilan($id)
+    {
+        $penitipan = Penitipan::findOrFail($id);
+        
+        // Contoh update data, sesuaikan field sesuai kebutuhanmu
+        $penitipan->status_pengambilan = 'selesai'; // atau set tanggal_pengambilan = now()
+        $penitipan->tanggal_pengambilan = now();
+        $penitipan->save();
+
+        return back()->with('success', 'Pengambilan barang berhasil dikonfirmasi.');
+    }
+
 }
