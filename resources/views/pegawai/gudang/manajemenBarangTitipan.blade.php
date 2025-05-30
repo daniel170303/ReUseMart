@@ -175,6 +175,73 @@
             </div>
         </div>
 
+        <h3 class="mt-10 mb-4 text-xl font-semibold">Jadwal Pengiriman & Pengambilan</h3>
+
+        <table class="min-w-full divide-y divide-gray-300 border border-gray-300 rounded-lg shadow-sm">
+            <thead class="bg-gray-100">
+                <tr>
+                    @foreach (['ID Transaksi', 'Nama Barang', 'Status Transaksi', 'Tanggal Pengiriman', 'Tanggal Pengambilan', 'Foto Barang', 'Aksi'] as $header)
+                        <th class="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wide">
+                            {{ $header }}
+                        </th>
+                    @endforeach
+                </tr>
+            </thead>
+            <tbody class="bg-white divide-y divide-gray-200">
+                @forelse ($transaksiProses as $transaksi)
+                    <tr class="hover:bg-gray-50 transition duration-150">
+                        <td class="px-6 py-4 whitespace-nowrap font-medium text-gray-900">{{ $transaksi->id }}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-gray-800">
+                            {{ $transaksi->barangTitipan->nama_barang_titipan ?? '-' }}</td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <span
+                                class="inline-block px-3 py-1 rounded-full text-xs font-semibold
+                        {{ $transaksi->status_transaksi == 'Dikirim' ? 'bg-yellow-100 text-yellow-800' : '' }}
+                        {{ $transaksi->status_transaksi == 'Diambil' ? 'bg-green-100 text-green-800' : '' }}">
+                                {{ $transaksi->status_transaksi }}
+                            </span>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-gray-700">{{ $transaksi->tanggal_pengiriman ?? '-' }}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-gray-700">{{ $transaksi->tanggal_pengambilan ?? '-' }}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap flex space-x-3">
+                            @if ($transaksi->barangTitipan && $transaksi->barangTitipan->gambar_barang)
+                                <img src="{{ asset('storage/' . $transaksi->barangTitipan->gambar_barang) }}"
+                                    alt="Foto utama"
+                                    class="w-16 h-16 object-cover rounded border border-gray-300 shadow-sm">
+                            @endif
+                            @if ($transaksi->barangTitipan && $transaksi->barangTitipan->gambarBarangTitipan)
+                                @foreach ($transaksi->barangTitipan->gambarBarangTitipan->take(1) as $gambar)
+                                    <img src="{{ asset('storage/gambar_barang_titipan/' . $gambar->nama_file_gambar) }}"
+                                        alt="Foto tambahan"
+                                        class="w-16 h-16 object-cover rounded border border-gray-300 shadow-sm">
+                                @endforeach
+                            @endif
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap flex space-x-4">
+                            <a href="{{ route('gudang.barang.showDetail', $transaksi->barangTitipan->id_barang ?? '') }}"
+                                class="text-indigo-600 hover:text-indigo-900 font-semibold transition">
+                                Detail
+                            </a>
+
+                            @if ($transaksi->status_transaksi == 'Dikirim')
+                                <button onclick="openScheduleModal({{ $transaksi->id }})"
+                                    class="ml-2 inline-block px-4 py-2 text-sm text-white bg-blue-600 hover:bg-blue-700 rounded">
+                                    Jadwalkan Pengiriman
+                                </button>
+                            @endif
+                        </td>
+                    </tr>
+                @empty
+                    <tr>
+                        <td colspan="7" class="px-6 py-6 text-center text-gray-500 italic">Tidak ada transaksi dengan
+                            status 'Dikirim' atau 'Diambil'</td>
+                    </tr>
+                @endforelse
+            </tbody>
+        </table>
+
         {{-- Modal Edit --}}
         <div class="modal fade" id="editModal" tabindex="-1" role="dialog" aria-labelledby="editModalLabel"
             aria-hidden="true">
@@ -252,6 +319,40 @@
         </div>
     </div>
 
+    {{-- Modal Penjadwalan --}}
+    <!-- Modal -->
+    <div id="scheduleModal" class="fixed inset-0 z-50 hidden overflow-y-auto bg-black bg-opacity-50">
+        <div class="bg-white rounded-lg shadow-lg max-w-md mx-auto mt-20 p-6 relative">
+            <h2 class="text-xl font-semibold mb-4">Penjadwalan Pengiriman</h2>
+            <form id="scheduleForm" method="POST" action="{{ route('gudang.schedulePengiriman') }}">
+                @csrf
+                <input type="hidden" name="transaksi_id" id="transaksiIdField">
+
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-700">Tanggal & Waktu Pengiriman</label>
+                    <input type="datetime-local" name="jadwal_pengiriman" class="mt-1 block w-full border rounded p-2"
+                        required>
+                </div>
+
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-700">Pilih Kurir</label>
+                    <select name="kurir_id" class="mt-1 block w-full border rounded p-2" required>
+                        @foreach ($kurirs as $kurir)
+                            <option value="{{ $kurir->id }}">{{ $kurir->nama }}</option>
+                        @endforeach
+                    </select>
+                </div>
+
+                <div class="flex justify-end">
+                    <button type="button" onclick="closeScheduleModal()"
+                        class="px-4 py-2 mr-2 bg-gray-300 hover:bg-gray-400 rounded">Batal</button>
+                    <button type="submit"
+                        class="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded">Jadwalkan</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             const editButtons = document.querySelectorAll('.btn-edit-barang');
@@ -286,6 +387,29 @@
                     $('#editModal').modal('show');
                 });
             });
+        });
+
+        function openScheduleModal(transaksiId) {
+            document.getElementById('scheduleModal').classList.remove('hidden');
+            document.getElementById('transaksiIdField').value = transaksiId;
+        }
+
+        function closeScheduleModal() {
+            document.getElementById('scheduleModal').classList.add('hidden');
+        }
+
+        document.getElementById('scheduleForm').addEventListener('submit', function(e) {
+            const jadwalInput = this.querySelector('[name="jadwal_pengiriman"]');
+            const selectedDate = new Date(jadwalInput.value);
+            const now = new Date();
+
+            if (
+                selectedDate.toDateString() === now.toDateString() &&
+                selectedDate.getHours() >= 16
+            ) {
+                e.preventDefault();
+                alert('Pengiriman di atas jam 4 sore tidak bisa dijadwalkan di hari yang sama.');
+            }
         });
     </script>
 @endsection

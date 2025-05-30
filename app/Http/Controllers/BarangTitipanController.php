@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\BarangTitipan;
+use App\Models\Transaksi;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
@@ -27,7 +28,12 @@ class BarangTitipanController extends Controller
             }
         }
 
-        return view('pegawai.gudang.manajemenBarangTitipan', compact('barangTitipan'));
+        // Ambil transaksi yang statusnya 'Dikirim' atau 'Diambil'
+        $transaksiProses = Transaksi::with(['barangTitipan', 'barangTitipan.gambarBarang'])
+            ->whereIn('status_transaksi', ['Dikirim', 'Diambil'])
+            ->get();
+
+        return view('pegawai.gudang.manajemenBarangTitipan', compact('barangTitipan', 'transaksiProses'));
     }
 
     // Menyimpan barang baru

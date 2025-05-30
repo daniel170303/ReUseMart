@@ -178,9 +178,11 @@ Route::prefix('admin')->name('admin.')->group(function () {
 Route::prefix('gudang')->name('gudang.')->group(function () {
     Route::get('/', [BarangTitipanController::class, 'index'])->name('index');
     Route::post('/', [BarangTitipanController::class, 'store'])->name('store');
+    Route::get('/barang/{id}/detail', [BarangTitipanController::class, 'showDetail'])->name('barang.showDetail');
     //Route::get('/edit/{id}', [BarangTitipanController::class, 'edit'])->name('edit');
-    Route::put('/barang/{id}', [BarangTitipanController::class, 'update'])->name('gudang.update');
+    Route::put('/barang/{id}', [BarangTitipanController::class, 'update'])->name('update');
     Route::delete('/destroy/{id}', [BarangTitipanController::class, 'destroy'])->name('destroy');
+    Route::post('/schedule-pengiriman', [TransaksiController::class, 'jadwalkanPengiriman'])->name('gudang.schedulePengiriman');
 });
 
 //download Nota
