@@ -172,4 +172,25 @@ class PenitipanController extends Controller
         return back()->with('success', 'Pengambilan barang berhasil dikonfirmasi dan status diperbarui.');
     }
 
+    public function jadwalkanPengiriman(Request $request)
+    {
+        $request->validate([
+            'transaksi_id' => 'required|exists:transaksi,id',
+            'jadwal_pengiriman' => 'required|date',
+            'kurir_id' => 'required|exists:kurirs,id',
+        ]);
+
+        $transaksi = Transaksi::findOrFail($request->transaksi_id);
+        $transaksi->jadwal_pengiriman = $request->jadwal_pengiriman;
+        $transaksi->kurir_id = $request->kurir_id;
+        $transaksi->save();
+
+        // Kirim notifikasi ke penitip, pembeli, dan kurir
+        Notification::route('mail', $transaksi->penitip->email)->notify(new JadwalPengirimanNotification($transaksi));
+        Notification::route('mail', $transaksi->pembeli->email)->notify(new JadwalPengirimanNotification($transaksi));
+        Notification::route('mail', $transaksi->kurir->email)->notify(new JadwalPengirimanNotification($transaksi));
+
+        return redirect()->back()->with('success', 'Pengiriman berhasil dijadwalkan.');
+    }
+
 }

@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\BarangTitipan;
 use App\Models\Transaksi;
+use App\Models\Pegawai;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
@@ -32,6 +33,8 @@ class BarangTitipanController extends Controller
         $transaksiProses = Transaksi::with(['barangTitipan', 'barangTitipan.gambarBarang'])
             ->whereIn('status_transaksi', ['Dikirim', 'Diambil'])
             ->get();
+
+         $kurirs = Pegawai::where('id_role', 6)->get();
 
         return view('pegawai.gudang.manajemenBarangTitipan', compact('barangTitipan', 'transaksiProses'));
     }

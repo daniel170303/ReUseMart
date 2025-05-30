@@ -226,8 +226,9 @@
                             </a>
 
                             @if ($transaksi->status_transaksi == 'Dikirim')
-                                <button onclick="openScheduleModal({{ $transaksi->id }})"
-                                    class="ml-2 inline-block px-4 py-2 text-sm text-white bg-blue-600 hover:bg-blue-700 rounded">
+                                <button data-id="{{ $barang->id_barang }}"
+                                    data-nama="{{ $barang->nama_barang_titipan }}" data-bs-toggle="modal"
+                                    data-bs-target="#modalPenjadwalan" class="btn btn-primary btn-sm btnJadwal">
                                     Jadwalkan Pengiriman
                                 </button>
                             @endif
@@ -321,33 +322,38 @@
 
     {{-- Modal Penjadwalan --}}
     <!-- Modal -->
-    <div id="scheduleModal" class="fixed inset-0 z-50 hidden overflow-y-auto bg-black bg-opacity-50">
-        <div class="bg-white rounded-lg shadow-lg max-w-md mx-auto mt-20 p-6 relative">
-            <h2 class="text-xl font-semibold mb-4">Penjadwalan Pengiriman</h2>
-            <form id="scheduleForm" method="POST" action="{{ route('gudang.schedulePengiriman') }}">
+    <div class="modal fade" id="modalPenjadwalan" tabindex="-1">
+        <div class="modal-dialog">
+            <form action="{{ route('gudang.schedulePengiriman') }}" method="POST">
                 @csrf
-                <input type="hidden" name="transaksi_id" id="transaksiIdField">
-
-                <div class="mb-4">
-                    <label class="block text-sm font-medium text-gray-700">Tanggal & Waktu Pengiriman</label>
-                    <input type="datetime-local" name="jadwal_pengiriman" class="mt-1 block w-full border rounded p-2"
-                        required>
-                </div>
-
-                <div class="mb-4">
-                    <label class="block text-sm font-medium text-gray-700">Pilih Kurir</label>
-                    <select name="kurir_id" class="mt-1 block w-full border rounded p-2" required>
-                        @foreach ($kurirs as $kurir)
-                            <option value="{{ $kurir->id }}">{{ $kurir->nama }}</option>
-                        @endforeach
-                    </select>
-                </div>
-
-                <div class="flex justify-end">
-                    <button type="button" onclick="closeScheduleModal()"
-                        class="px-4 py-2 mr-2 bg-gray-300 hover:bg-gray-400 rounded">Batal</button>
-                    <button type="submit"
-                        class="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded">Jadwalkan</button>
+                <input type="hidden" name="id_barang" id="jadwal-id-barang">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Jadwal Pengiriman</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <p>Barang: <span id="jadwal-nama-barang"></span></p>
+                        <div class="mb-3">
+                            <label>Tanggal Pengiriman</label>
+                            <input type="date" name="tanggal_pengiriman" class="form-control" required>
+                        </div>
+                        <div class="mb-3">
+                            <label>Jam Pengiriman</label>
+                            <input type="time" name="jam_pengiriman" class="form-control" required>
+                        </div>
+                        <div class="mb-3">
+                            <label>Pilih Kurir</label>
+                            <select name="id_kurir" class="form-select" required>
+                                @foreach ($kurirs as $kurir)
+                                    <option value="{{ $kurir->id_pegawai }}">{{ $kurir->nama_pegawai }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button class="btn btn-success" type="submit">Jadwalkan</button>
+                    </div>
                 </div>
             </form>
         </div>

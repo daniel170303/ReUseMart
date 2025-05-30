@@ -182,7 +182,7 @@ Route::prefix('gudang')->name('gudang.')->group(function () {
     //Route::get('/edit/{id}', [BarangTitipanController::class, 'edit'])->name('edit');
     Route::put('/barang/{id}', [BarangTitipanController::class, 'update'])->name('update');
     Route::delete('/destroy/{id}', [BarangTitipanController::class, 'destroy'])->name('destroy');
-    Route::post('/schedule-pengiriman', [TransaksiController::class, 'jadwalkanPengiriman'])->name('gudang.schedulePengiriman');
+    Route::post('/schedule-pengiriman', [TransaksiController::class, 'jadwalkanPengiriman'])->name('schedulePengiriman');
 });
 
 //download Nota
