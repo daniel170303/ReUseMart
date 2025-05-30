@@ -34,4 +34,9 @@ class Penitipan extends Model
         return $this->hasMany(DetailPenitipan::class, 'id_penitipan');
     }
     
+    public function transaksi()
+    {
+        return $this->hasOne(Transaksi::class, 'id_penitipan');
+    }
+
 }

@@ -31,7 +31,7 @@
 <body>
     <h2>Nota Penitipan Barang</h2>
     <p><strong>ID Penitipan:</strong> {{ $penitipan->id_penitipan }}</p>
-    <p><strong>Nama Penitip:</strong> {{ $penitip->nama_penitip }}</p>
+    <p><strong>Nama Penitip:</strong> {{ $penitipan->penitip->nama_penitip }}</p>
     <p><strong>Tanggal Penitipan:</strong> {{ $penitipan->tanggal_penitipan }}</p>
     <p><strong>Tanggal Selesai:</strong> {{ $penitipan->tanggal_selesai_penitipan }}</p>
 
@@ -45,11 +45,11 @@
             </tr>
         </thead>
         <tbody>
-            @foreach ($barangList as $index => $barang)
+            @foreach ($penitipan->detailPenitipan as $index => $detail)
                 <tr>
                     <td>{{ $index + 1 }}</td>
-                    <td>{{ $barang->nama_barang_titipan }}</td>
-                    <td>{{ $barang->status_barang }}</td>
+                    <td>{{ $detail->barang->nama_barang_titipan }}</td>
+                    <td>{{ $detail->barang->status_barang }}</td>
                 </tr>
             @endforeach
         </tbody>

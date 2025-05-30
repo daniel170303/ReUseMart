@@ -6,6 +6,7 @@ use App\Models\Penitipan;
 use App\Models\DetailPenitipan;
 use App\Models\Penitip;
 use App\Models\BarangTitipan;
+use App\Models\Pegawai;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Session;
 use Barryvdh\DomPDF\Facade\Pdf;
@@ -22,12 +23,14 @@ class PenitipanController extends Controller
         $barangSudahDititipkan = DetailPenitipan::pluck('id_barang')->toArray();
 
         $barangList = BarangTitipan::whereNotIn('id_barang', $barangSudahDititipkan)->get();
+        $kurirs = Pegawai::where('id_role', 6)->get();
 
         return view('pegawai.gudang.penitipan', compact(
             'penitipanList', 
             'detailPenitipan', 
             'barangList',
-            'penitipList'
+            'penitipList',
+            'kurirs'
         ));
     }
 
@@ -43,11 +46,9 @@ class PenitipanController extends Controller
         $tanggalSelesai = $tanggalPenitipan->copy()->addDays(30);
         $tanggalBatasPengambilan = $tanggalSelesai->copy()->addDays(7);
 
-        // Ambil status_barang dari barang pertama yang dipilih
         $barangPertama = BarangTitipan::find($request->id_barang[0]);
         $statusBarang = $barangPertama ? $barangPertama->status_barang : 'dijual';
 
-        // Simpan data penitipan
         $penitipan = Penitipan::create([
             'id_penitip' => $request->id_penitip,
             'tanggal_penitipan' => $tanggalPenitipan,
@@ -58,7 +59,6 @@ class PenitipanController extends Controller
             'status_barang' => $statusBarang,
         ]);
 
-                // Simpan relasi ke detail_penitipan
         foreach ($request->id_barang as $id_barang) {
             DetailPenitipan::create([
                 'id_penitipan' => $penitipan->id_penitipan,
@@ -66,11 +66,20 @@ class PenitipanController extends Controller
             ]);
         }
 
-        // Tambahan: Generate dan simpan file PDF nota penitipan
+        // Muat relasi penitip dan barang
         $penitipan->load(['penitip', 'detailPenitipan.barang']);
 
+        // Ambil penitip dan daftar barang
+        $penitip = $penitipan->penitip;
+        $barangList = $penitipan->detailPenitipan->map(function ($detail) {
+            return $detail->barang;
+        });
+
+        // Generate PDF
         $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('pdf.nota_penitipan', [
-            'penitipan' => $penitipan
+            'penitipan' => $penitipan,
+            'penitip' => $penitip,
+            'barangList' => $barangList,
         ]);
 
         $fileName = 'nota_penitipan_' . $penitipan->id_penitipan . '.pdf';
@@ -78,10 +87,24 @@ class PenitipanController extends Controller
 
         return redirect()->route('penitipan.index')->with([
             'success' => 'Data penitipan berhasil disimpan.',
-            'nota_id' => $penitipan->id_penitipan,
-            'nota_path' => $fileName
+            'nota_path' => $fileName,
+            'last_penitipan_id' => $penitipan->id_penitipan
         ]);
     }
+
+    public function downloadNota($id_penitipan)
+    {
+        $penitipan = Penitipan::with(['penitip', 'detailPenitipan.barang'])->findOrFail($id_penitipan);
+
+        $pdf = Pdf::loadView('pdf.nota_penitipan', [
+            'penitipan' => $penitipan,
+            'penitip' => $penitipan->penitip,
+            'barangList' => $penitipan->detailPenitipan->pluck('barang'),
+        ]);
+
+        return $pdf->download('nota_penitipan_' . $id_penitipan . '.pdf');
+    }
+
 
     public function create()
     {
@@ -175,20 +198,22 @@ class PenitipanController extends Controller
     public function jadwalkanPengiriman(Request $request)
     {
         $request->validate([
-            'transaksi_id' => 'required|exists:transaksi,id',
-            'jadwal_pengiriman' => 'required|date',
-            'kurir_id' => 'required|exists:kurirs,id',
+            'id_penitipan' => 'required|exists:penitipan,id',
+            'tanggal_pengiriman' => 'required|date',
+            'kurir_id' => 'required|exists:pegawai,id_pegawai',
         ]);
 
-        $transaksi = Transaksi::findOrFail($request->transaksi_id);
-        $transaksi->jadwal_pengiriman = $request->jadwal_pengiriman;
-        $transaksi->kurir_id = $request->kurir_id;
-        $transaksi->save();
+        $penitipan = Penitipan::with('transaksi')->findOrFail($request->id_penitipan); // pastikan ini id_penitipan
 
-        // Kirim notifikasi ke penitip, pembeli, dan kurir
-        Notification::route('mail', $transaksi->penitip->email)->notify(new JadwalPengirimanNotification($transaksi));
-        Notification::route('mail', $transaksi->pembeli->email)->notify(new JadwalPengirimanNotification($transaksi));
-        Notification::route('mail', $transaksi->kurir->email)->notify(new JadwalPengirimanNotification($transaksi));
+        // Validasi status transaksi dulu
+        if ($penitipan->transaksi && $penitipan->transaksi->status_transaksi !== 'Dikirim') {
+            return redirect()->back()->withErrors(['Hanya transaksi dengan status Dikirim yang bisa dijadwalkan.']);
+        }
+
+        // Baru update penitipan
+        $penitipan->tanggal_pengiriman = $request->tanggal_pengiriman;
+        $penitipan->kurir_id = $request->kurir_id;
+        $penitipan->save();
 
         return redirect()->back()->with('success', 'Pengiriman berhasil dijadwalkan.');
     }

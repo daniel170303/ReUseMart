@@ -59,7 +59,7 @@
                         <td>
                         <td>
                             @if (session('nota_path') && session('last_penitipan_id') == $penitipan->id_penitipan)
-                                <a href="{{ asset('storage/nota/' . session('nota_path')) }}" target="_blank"
+                                <a href="{{ route('penitipan.download', $penitipan->id_penitipan) }}" target="_blank"
                                     class="btn btn-primary">Download Nota</a>
                             @endif
                         </td>
@@ -69,4 +69,17 @@
             </tbody>
         </table>
     </div>
+    @if (session('nota_path'))
+        <script>
+            window.onload = function() {
+                const link = document.createElement('a');
+                link.href = "{{ asset('storage/nota/' . session('nota_path')) }}";
+                link.download = "";
+                link.style.display = 'none';
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+            };
+        </script>
+    @endif
 @endsection

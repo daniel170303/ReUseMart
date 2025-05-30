@@ -56,6 +56,24 @@
             </div>
         </div>
 
+        {{-- Form Pencarian Barang Titipan --}}
+        <div class="card mb-4">
+            <div class="card-header">Cari Barang Titipan</div>
+            <div class="card-body">
+                <form action="{{ route('gudang.index') }}" method="GET">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <input type="text" class="form-control" name="search" placeholder="Cari barang..."
+                                value="{{ request()->get('search') }}">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <button type="submit" class="btn btn-primary">Cari</button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+
         {{-- Tabel Daftar Barang --}}
         <div class="card">
             <div class="card-header">Daftar Barang Titipan</div>
@@ -103,8 +121,10 @@
                                         <button onclick="return confirm('Yakin hapus barang ini?')"
                                             class="btn btn-sm btn-danger">Hapus</button>
                                     </form>
-                                    <a href="{{ route('barang.show', $barang->id_barang) }}"
-                                        class="btn btn-sm btn-info">Detail</a>
+                                    <button type="button" class="btn btn-sm btn-info btn-detail-barang"
+                                        data-barang='@json($barang)'>
+                                        Detail
+                                    </button>
                                 </td>
                             </tr>
                         @endforeach
@@ -226,12 +246,12 @@
                             </a>
 
                             @if ($transaksi->status_transaksi == 'Dikirim')
-                                <button data-id="{{ $barang->id_barang }}"
-                                    data-nama="{{ $barang->nama_barang_titipan }}" data-bs-toggle="modal"
-                                    data-bs-target="#modalPenjadwalan" class="btn btn-primary btn-sm btnJadwal">
+                                <button class="btn btn-success btn-sm"
+                                    onclick="openScheduleModal({{ $transaksi->id_penitipan }})" type="button">
                                     Jadwalkan Pengiriman
                                 </button>
                             @endif
+
                         </td>
                     </tr>
                 @empty
@@ -287,8 +307,8 @@
                             <div class="col-md-6 mb-3">
                                 <label for="edit_status_barang">Status</label>
                                 <select class="form-control" name="status_barang" id="edit_status_barang" required>
-                                    <option value="ready">Ready</option>
-                                    <option value="terjual">Terjual</option>
+                                    <option value="dijual">dijual</option>
+                                    <option value="barang untuk donasi">barang untuk donasi</option>
                                 </select>
                             </div>
                             <div class="col-md-12 mb-3">
@@ -320,42 +340,99 @@
         </div>
     </div>
 
-    {{-- Modal Penjadwalan --}}
-    <!-- Modal -->
-    <div class="modal fade" id="modalPenjadwalan" tabindex="-1">
-        <div class="modal-dialog">
-            <form action="{{ route('gudang.schedulePengiriman') }}" method="POST">
-                @csrf
-                <input type="hidden" name="id_barang" id="jadwal-id-barang">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h5 class="modal-title">Jadwal Pengiriman</h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+    {{-- Modal Detail Barang --}}
+    <div class="modal fade" id="detailModal" tabindex="-1" role="dialog" aria-labelledby="detailModalLabel"
+        aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="detailModalLabel">Detail Barang Titipan</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <!-- Menampilkan Detail Barang -->
+                    <div class="form-group">
+                        <label for="detail_nama_barang">Nama Barang</label>
+                        <input type="text" class="form-control" id="detail_nama_barang" disabled>
                     </div>
+                    <div class="form-group">
+                        <label for="detail_harga_barang">Harga</label>
+                        <input type="text" class="form-control" id="detail_harga_barang" disabled>
+                    </div>
+                    <div class="form-group">
+                        <label for="detail_jenis_barang">Jenis Barang</label>
+                        <input type="text" class="form-control" id="detail_jenis_barang" disabled>
+                    </div>
+                    <div class="form-group">
+                        <label for="detail_garansi_barang">Garansi</label>
+                        <input type="text" class="form-control" id="detail_garansi_barang" disabled>
+                    </div>
+                    <div class="form-group">
+                        <label for="detail_berat_barang">Berat</label>
+                        <input type="text" class="form-control" id="detail_berat_barang" disabled>
+                    </div>
+                    <div class="form-group">
+                        <label for="detail_status_barang">Status</label>
+                        <input type="text" class="form-control" id="detail_status_barang" disabled>
+                    </div>
+                    <div class="form-group">
+                        <label for="detail_deskripsi_barang">Deskripsi</label>
+                        <textarea class="form-control" id="detail_deskripsi_barang" rows="3" disabled></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="detail_gambar_barang">Gambar Utama</label>
+                        <img id="detail_gambar_barang" width="100" alt="Gambar Utama">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Tutup</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Jadwalkan Pengiriman -->
+    <div class="modal fade" id="scheduleModal" tabindex="-1" role="dialog" aria-labelledby="scheduleModalLabel"
+        aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <form id="scheduleForm" method="POST" action="{{ route('gudang.penitipan.jadwalkanPengiriman') }}">
+                    @csrf
+                    <input type="hidden" name="id_penitipan" id="penitipanIdField">
+
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="scheduleModalLabel">Jadwalkan Pengiriman</h5>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+
                     <div class="modal-body">
-                        <p>Barang: <span id="jadwal-nama-barang"></span></p>
-                        <div class="mb-3">
-                            <label>Tanggal Pengiriman</label>
-                            <input type="date" name="tanggal_pengiriman" class="form-control" required>
+                        <div class="form-group mb-3">
+                            <label for="tanggal_pengiriman">Tanggal & Waktu Pengiriman</label>
+                            <input type="datetime-local" class="form-control" name="tanggal_pengiriman"
+                                id="tanggal_pengiriman" required>
                         </div>
-                        <div class="mb-3">
-                            <label>Jam Pengiriman</label>
-                            <input type="time" name="jam_pengiriman" class="form-control" required>
-                        </div>
-                        <div class="mb-3">
-                            <label>Pilih Kurir</label>
-                            <select name="id_kurir" class="form-select" required>
+
+                        <div class="form-group mb-3">
+                            <label for="kurir_id">Pilih Kurir</label>
+                            <select class="form-control" name="kurir_id" id="kurir_id" required>
+                                <option value="" disabled selected>-- Pilih Kurir --</option>
                                 @foreach ($kurirs as $kurir)
                                     <option value="{{ $kurir->id_pegawai }}">{{ $kurir->nama_pegawai }}</option>
                                 @endforeach
                             </select>
                         </div>
                     </div>
+
                     <div class="modal-footer">
-                        <button class="btn btn-success" type="submit">Jadwalkan</button>
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Batal</button>
+                        <button type="submit" class="btn btn-primary">Simpan Jadwal</button>
                     </div>
-                </div>
-            </form>
+                </form>
+            </div>
         </div>
     </div>
 
@@ -366,7 +443,9 @@
                 button.addEventListener('click', function() {
                     const barang = JSON.parse(this.getAttribute('data-barang'));
                     const form = document.getElementById('editForm');
-                    form.action = `/gudang/${barang.id_barang}`;
+
+                    form.action = `/gudang/barang/${barang.id_barang}`;
+
                     document.getElementById('edit_id_barang').value = barang.id_barang;
                     document.getElementById('edit_nama_barang_titipan').value = barang
                         .nama_barang_titipan;
@@ -395,17 +474,50 @@
             });
         });
 
-        function openScheduleModal(transaksiId) {
-            document.getElementById('scheduleModal').classList.remove('hidden');
-            document.getElementById('transaksiIdField').value = transaksiId;
+        document.addEventListener('DOMContentLoaded', function() {
+            // Menangani tombol Detail
+            const detailButtons = document.querySelectorAll('.btn-detail-barang');
+
+            detailButtons.forEach(button => {
+                button.addEventListener('click', function() {
+                    const barang = JSON.parse(this.getAttribute('data-barang'));
+
+                    // Set data barang ke dalam modal
+                    document.getElementById('detail_nama_barang').value = barang
+                        .nama_barang_titipan;
+                    document.getElementById('detail_harga_barang').value =
+                        `Rp ${barang.harga_barang.toLocaleString()}`;
+                    document.getElementById('detail_jenis_barang').value = barang.jenis_barang;
+                    document.getElementById('detail_garansi_barang').value = barang
+                        .garansi_barang ?? '-';
+                    document.getElementById('detail_berat_barang').value = barang.berat_barang +
+                        ' g';
+                    document.getElementById('detail_status_barang').value = barang.status_barang;
+                    document.getElementById('detail_deskripsi_barang').value = barang
+                        .deskripsi_barang;
+
+                    // Menampilkan gambar utama
+                    const gambarBarang = barang.gambar_barang ? `/storage/${barang.gambar_barang}` :
+                        '/path/to/default-image.jpg';
+                    document.getElementById('detail_gambar_barang').src = gambarBarang;
+
+                    // Tampilkan modal detail
+                    $('#detailModal').modal('show');
+                });
+            });
+        });
+
+        function openScheduleModal(penitipanId) {
+            $('#scheduleModal').modal('show');
+            document.getElementById('penitipanIdField').value = penitipanId;
         }
 
         function closeScheduleModal() {
-            document.getElementById('scheduleModal').classList.add('hidden');
+            $('#scheduleModal').modal('hide');
         }
 
         document.getElementById('scheduleForm').addEventListener('submit', function(e) {
-            const jadwalInput = this.querySelector('[name="jadwal_pengiriman"]');
+            const jadwalInput = this.querySelector('[name="tanggal_pengiriman"]');
             const selectedDate = new Date(jadwalInput.value);
             const now = new Date();
 

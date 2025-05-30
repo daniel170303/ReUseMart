@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\BarangTitipan;
 use App\Models\Transaksi;
+use App\Models\GambarBarangTitipan;
 use App\Models\Pegawai;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -13,10 +14,31 @@ use Carbon\Carbon;
 class BarangTitipanController extends Controller
 {
     // Menampilkan semua barang
-    public function index()
+    public function index(Request $request)
     {
-        $barangTitipan = BarangTitipan::whereDoesntHave('transaksi')->with(['transaksiTerakhir'])->get();
+        // Mulai query untuk barang titipan tanpa filter transaksi
+        $query = BarangTitipan::with(['transaksiTerakhir']);
 
+        // Jika ada parameter pencarian
+        if ($request->has('search') && $request->search != '') {
+            $keyword = $request->search;
+
+            // Filter berdasarkan keyword
+            $query->where(function($q) use ($keyword) {
+                $q->where('nama_barang_titipan', 'like', "%$keyword%")
+                ->orWhere('harga_barang', 'like', "%$keyword%")
+                ->orWhere('deskripsi_barang', 'like', "%$keyword%")
+                ->orWhere('jenis_barang', 'like', "%$keyword%")
+                ->orWhere('garansi_barang', 'like', "%$keyword%")
+                ->orWhere('berat_barang', 'like', "%$keyword%")
+                ->orWhere('status_barang', 'like', "%$keyword%");
+            });
+        }
+
+        // Ambil semua barang titipan tanpa pagination
+        $barangTitipan = $query->get(); // Pastikan menggunakan get() untuk mengambil semua data
+
+        // Proses status garansi
         foreach ($barangTitipan as $barang) {
             if ($barang->sisa_garansi === null) {
                 $barang->status_garansi = 'Tanpa Garansi';
@@ -34,9 +56,11 @@ class BarangTitipanController extends Controller
             ->whereIn('status_transaksi', ['Dikirim', 'Diambil'])
             ->get();
 
-         $kurirs = Pegawai::where('id_role', 6)->get();
+        // Ambil data kurir
+        $kurirs = Pegawai::where('id_role', 6)->get();
 
-        return view('pegawai.gudang.manajemenBarangTitipan', compact('barangTitipan', 'transaksiProses'));
+        // Kembalikan tampilan dengan data
+        return view('pegawai.gudang.manajemenBarangTitipan', compact('barangTitipan', 'transaksiProses', 'kurirs'));
     }
 
     // Menyimpan barang baru

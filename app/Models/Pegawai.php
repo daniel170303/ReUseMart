@@ -22,4 +22,10 @@ class Pegawai extends Model
     {
         return $this->belongsTo(RolePegawai::class, 'id_role', 'id_role');
     }
+
+    public function kurir()
+    {
+        return $this->belongsTo(Pegawai::class, 'kurir_id', 'id_pegawai');
+    }
+
 }

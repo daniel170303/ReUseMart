@@ -182,7 +182,7 @@ Route::prefix('gudang')->name('gudang.')->group(function () {
     //Route::get('/edit/{id}', [BarangTitipanController::class, 'edit'])->name('edit');
     Route::put('/barang/{id}', [BarangTitipanController::class, 'update'])->name('update');
     Route::delete('/destroy/{id}', [BarangTitipanController::class, 'destroy'])->name('destroy');
-    Route::post('/schedule-pengiriman', [TransaksiController::class, 'jadwalkanPengiriman'])->name('schedulePengiriman');
+    Route::post('/penitipan/jadwalkan-pengiriman', [PenitipanController::class, 'jadwalkanPengiriman'])->name('penitipan.jadwalkanPengiriman');
 });
 
 //download Nota
@@ -206,6 +206,8 @@ Route::prefix('penitipan')->name('penitipan.')->group(function () {
     Route::delete('/{id}', [PenitipanController::class, 'destroy'])->name('destroy');
     Route::post('/{id}/konfirmasi-pengambilan', [PenitipanController::class, 'konfirmasiPengambilan'])
         ->name('konfirmasiPengambilan');
+    Route::get('/{id}/download', [PenitipanController::class, 'downloadNota'])->name('download');
+
 });
 
 // Detail Penitipan Routes

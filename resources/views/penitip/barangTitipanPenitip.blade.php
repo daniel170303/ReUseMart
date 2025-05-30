@@ -50,6 +50,19 @@
                             </td>
                             <td class="px-4 py-3 text-sm text-gray-600">{{ $barang->deskripsi_barang }}</td>
                             <td class="px-4 py-3 text-center">
+                                @if (
+                                    $barang->detailPenitipan &&
+                                        $barang->detailPenitipan->penitipan &&
+                                        $barang->detailPenitipan->penitipan->status_perpanjangan == 'ya')
+                                    <form method="POST"
+                                        action="{{ route('penitip.penitipan.perpanjang', $barang->detailPenitipan->penitipan->id_penitipan) }}">
+                                        @csrf
+                                        <button type="submit"
+                                            class="bg-blue-500 hover:bg-blue-600 text-white text-xs px-3 py-1 rounded w-full">
+                                            Perpanjang 30 hari
+                                        </button>
+                                    </form>
+                                @endif
                                 <button type="button"
                                     onclick="openModal({{ $barang->id_barang }}, '{{ $barang->nama_barang_titipan }}', {{ $barang->detailPenitipan->id_penitipan ?? 'null' }})"
                                     class="px-3 py-1 bg-blue-600 text-white rounded hover:bg-blue-700">
