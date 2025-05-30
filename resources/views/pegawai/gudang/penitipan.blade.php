@@ -41,6 +41,7 @@
                     <th>ID Penitipan</th>
                     <th>ID Penitip</th>
                     <th>Barang Titipan</th>
+                    <th>Aksi</th> {{-- Tambahkan kolom aksi --}}
                 </tr>
             </thead>
             <tbody>
@@ -54,6 +55,14 @@
                                     <li>{{ $detail->barang->nama_barang_titipan ?? 'Barang tidak ditemukan' }}</li>
                                 @endforeach
                             </ul>
+                        </td>
+                        <td>
+                        <td>
+                            @if (session('nota_path') && session('last_penitipan_id') == $penitipan->id_penitipan)
+                                <a href="{{ asset('storage/nota/' . session('nota_path')) }}" target="_blank"
+                                    class="btn btn-primary">Download Nota</a>
+                            @endif
+                        </td>
                         </td>
                     </tr>
                 @endforeach

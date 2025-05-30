@@ -7,6 +7,9 @@ use App\Models\DetailPenitipan;
 use App\Models\Penitip;
 use App\Models\BarangTitipan;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Session;
+use Barryvdh\DomPDF\Facade\Pdf;
+use Illuminate\Support\Facades\Storage;
 
 class PenitipanController extends Controller
 {
@@ -40,15 +43,22 @@ class PenitipanController extends Controller
         $tanggalSelesai = $tanggalPenitipan->copy()->addDays(30);
         $tanggalBatasPengambilan = $tanggalSelesai->copy()->addDays(7);
 
+        // Ambil status_barang dari barang pertama yang dipilih
+        $barangPertama = BarangTitipan::find($request->id_barang[0]);
+        $statusBarang = $barangPertama ? $barangPertama->status_barang : 'dijual';
+
+        // Simpan data penitipan
         $penitipan = Penitipan::create([
             'id_penitip' => $request->id_penitip,
             'tanggal_penitipan' => $tanggalPenitipan,
             'tanggal_selesai_penitipan' => $tanggalSelesai,
             'tanggal_batas_pengambilan' => $tanggalBatasPengambilan,
             'status_perpanjangan' => 'ya',
-            'tanggal_pengambilan' => null, // default saat baru dititipkan
+            'tanggal_pengambilan' => null,
+            'status_barang' => $statusBarang,
         ]);
 
+                // Simpan relasi ke detail_penitipan
         foreach ($request->id_barang as $id_barang) {
             DetailPenitipan::create([
                 'id_penitipan' => $penitipan->id_penitipan,
@@ -56,7 +66,21 @@ class PenitipanController extends Controller
             ]);
         }
 
-        return redirect()->route('penitipan.index')->with('success', 'Data penitipan berhasil disimpan.');
+        // Tambahan: Generate dan simpan file PDF nota penitipan
+        $penitipan->load(['penitip', 'detailPenitipan.barang']);
+
+        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('pdf.nota_penitipan', [
+            'penitipan' => $penitipan
+        ]);
+
+        $fileName = 'nota_penitipan_' . $penitipan->id_penitipan . '.pdf';
+        Storage::put('public/nota/' . $fileName, $pdf->output());
+
+        return redirect()->route('penitipan.index')->with([
+            'success' => 'Data penitipan berhasil disimpan.',
+            'nota_id' => $penitipan->id_penitipan,
+            'nota_path' => $fileName
+        ]);
     }
 
     public function create()
@@ -127,13 +151,25 @@ class PenitipanController extends Controller
     public function konfirmasiPengambilan($id)
     {
         $penitipan = Penitipan::findOrFail($id);
-        
-        // Contoh update data, sesuaikan field sesuai kebutuhanmu
-        $penitipan->status_pengambilan = 'selesai'; // atau set tanggal_pengambilan = now()
-        $penitipan->tanggal_pengambilan = now();
-        $penitipan->save();
 
-        return back()->with('success', 'Pengambilan barang berhasil dikonfirmasi.');
+        // Update penitipan: status pengambilan, tanggal pengambilan, dan status_barang
+        $penitipan->update([
+            'tanggal_pengambilan' => now(),
+            'status_barang' => 'sudah diambil penitip', // sekarang sudah valid
+        ]);
+
+        // Update semua barang terkait menjadi "sudah diambil penitip"
+        $detailBarang = DetailPenitipan::where('id_penitipan', $id)->get();
+
+        foreach ($detailBarang as $detail) {
+            $barang = BarangTitipan::find($detail->id_barang);
+            if ($barang) {
+                $barang->status_barang = 'sudah diambil penitip';
+                $barang->save();
+            }
+        }
+
+        return back()->with('success', 'Pengambilan barang berhasil dikonfirmasi dan status diperbarui.');
     }
 
 }

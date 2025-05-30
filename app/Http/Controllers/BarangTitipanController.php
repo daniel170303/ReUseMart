@@ -40,7 +40,7 @@ class BarangTitipanController extends Controller
             'jenis_barang' => 'required|string',
             'garansi_barang' => 'required|string|max:50',
             'berat_barang' => 'required|integer',
-            'status_barang' => 'required|in:ready,terjual',
+            'status_barang' => 'required|in:dijual,terjual,sudah diambil penitip, sudah didonasikan, barang untuk donasi',
             'gambar_barang' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
         ]);
 
@@ -108,36 +108,57 @@ class BarangTitipanController extends Controller
     // Update barang
     public function update(Request $request, $id)
     {
-        $barang = BarangTitipan::find($id);
-        if (!$barang) {
-            return response()->json(['message' => 'Barang tidak ditemukan'], 404);
-        }
+        $barang = BarangTitipan::findOrFail($id);
 
-        $validatedData = $request->validate([
+        $request->validate([
             'nama_barang_titipan' => 'required|string|max:255',
             'harga_barang' => 'required|numeric',
-            'deskripsi_barang' => 'required|string',
             'jenis_barang' => 'required|string',
-            'garansi_barang' => 'required|string|max:50',
-            'berat_barang' => 'required|integer',
-            'status_barang' => 'required|in:ready,terjual',
+            'garansi_barang' => 'nullable|string',
+            'berat_barang' => 'required|numeric',
+            'status_barang' => 'required|string|in:dijual,terjual,sudah diambil penitip, sudah didonasikan, barang untuk donasi',
+            'deskripsi_barang' => 'required|string',
             'gambar_barang' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+            'gambar.*' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
         ]);
 
+        // Update field utama
+        $barang->update($request->only([
+            'nama_barang_titipan',
+            'harga_barang',
+            'jenis_barang',
+            'garansi_barang',
+            'berat_barang',
+            'status_barang',
+            'deskripsi_barang',
+        ]));
+
+        // Ganti gambar utama jika ada
         if ($request->hasFile('gambar_barang')) {
-            if ($barang->gambar_barang) {
-                Storage::disk('public')->delete($barang->gambar_barang);
+            // Hapus gambar lama
+            if ($barang->gambar_barang && file_exists(storage_path('app/public/' . $barang->gambar_barang))) {
+                \Storage::delete('public/' . $barang->gambar_barang);
             }
-            $path = $request->file('gambar_barang')->store('gambar_barang', 'public');
-            $validatedData['gambar_barang'] = $path;
+
+            // Upload baru
+            $path = $request->file('gambar_barang')->store('gambar_barang_titipan', 'public');
+            $barang->gambar_barang = $path;
+            $barang->save();
         }
 
-        $barang->update($validatedData);
+        // Simpan gambar tambahan baru jika ada
+        if ($request->hasFile('gambar')) {
+            foreach ($request->file('gambar') as $file) {
+                $path = $file->store('gambar_barang_titipan', 'public');
 
-        return response()->json([
-            'message' => 'Barang berhasil diperbarui',
-            'data' => $barang
-        ]);
+                GambarBarangTitipan::create([
+                    'id_barang' => $barang->id_barang,
+                    'nama_file_gambar' => basename($path),
+                ]);
+            }
+        }
+
+        return redirect()->back()->with('success', 'Barang berhasil diperbarui.');
     }
 
     // Hapus barang

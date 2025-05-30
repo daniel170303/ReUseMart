@@ -14,6 +14,8 @@ use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\PenitipController;
 use App\Http\Controllers\PenitipanController;
 use App\Http\Controllers\ProfilePembeliController;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Response;
 
 Route::get('/profil-pembeli', [ProfilePembeliController::class, 'index'])->name('profil.pembeli');
 Route::get('/profil-pembeli/{id}', [ProfilePembeliController::class, 'show'])->name('profil.pembeli.show');
@@ -176,10 +178,21 @@ Route::prefix('admin')->name('admin.')->group(function () {
 Route::prefix('gudang')->name('gudang.')->group(function () {
     Route::get('/', [BarangTitipanController::class, 'index'])->name('index');
     Route::post('/', [BarangTitipanController::class, 'store'])->name('store');
-    Route::get('/edit/{id}', [BarangTitipanController::class, 'edit'])->name('edit');
-    Route::put('/{id}', [BarangTitipanController::class, 'update'])->name('update');
+    //Route::get('/edit/{id}', [BarangTitipanController::class, 'edit'])->name('edit');
+    Route::put('/barang/{id}', [BarangTitipanController::class, 'update'])->name('gudang.update');
     Route::delete('/destroy/{id}', [BarangTitipanController::class, 'destroy'])->name('destroy');
 });
+
+//download Nota
+Route::get('/nota/{filename}', function ($filename) {
+    $path = storage_path('app/public/nota/' . $filename);
+
+    if (!file_exists($path)) {
+        abort(404);
+    }
+
+    return response()->file($path);
+})->name('nota.download');
 
 // Penitipan Routes (Tanpa middleware dan resource controller lengkap)
 Route::prefix('penitipan')->name('penitipan.')->group(function () {

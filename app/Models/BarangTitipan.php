@@ -19,7 +19,6 @@ class BarangTitipan extends Model
 
     // Kolom yang bisa diisi massal
     protected $fillable = [
-        'gambar_barang',
         'nama_barang_titipan',
         'harga_barang',
         'deskripsi_barang',
@@ -27,6 +26,7 @@ class BarangTitipan extends Model
         'garansi_barang',
         'berat_barang',
         'status_barang',
+        'gambar_barang',
     ];
 
     /**
