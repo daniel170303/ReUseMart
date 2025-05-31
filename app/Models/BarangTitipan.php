@@ -30,16 +30,27 @@ class BarangTitipan extends Model
     ];
 
     /**
-     * Relasi ke tabel gambar_barang_titipan
+     * Relasi ke tabel gambar_barang_titipan (gambar tambahan)
      */
+    public function gambarBarangTitipan()
+    {
+        return $this->hasMany(GambarBarangTitipan::class, 'id_barang', 'id_barang');
+    }
+
+    // Alias untuk backward compatibility
     public function gambarBarang()
     {
-        return $this->hasMany(GambarBarangTitipan::class, 'id_barang');
+        return $this->gambarBarangTitipan();
     }
 
     public function transaksi()
     {
         return $this->hasMany(Transaksi::class, 'id_barang', 'id_barang');
+    }
+
+    public function rating()
+    {
+        return $this->hasOne(Rating::class, 'id_barang', 'id_barang');  // Setiap barang hanya memiliki satu rating
     }
 
     /**
@@ -118,5 +129,4 @@ class BarangTitipan extends Model
             'id_penitipan'
         );
     }
-
 }

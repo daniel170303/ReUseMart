@@ -21,6 +21,6 @@ class GambarBarangTitipan extends Model
     // Relasi ke BarangTitipan
     public function barangTitipan()
     {
-        return $this->belongsTo(BarangTitipan::class, 'barang_titipan_id', 'id_barang');
+        return $this->belongsTo(BarangTitipan::class, 'id_barang', 'id_barang');
     }
 }

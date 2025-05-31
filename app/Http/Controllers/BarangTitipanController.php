@@ -16,8 +16,8 @@ class BarangTitipanController extends Controller
     // Menampilkan semua barang
     public function index(Request $request)
     {
-        // Mulai query untuk barang titipan tanpa filter transaksi
-        $query = BarangTitipan::with(['transaksiTerakhir']);
+        // Mulai query untuk barang titipan dengan relasi gambar tambahan
+        $query = BarangTitipan::with(['transaksiTerakhir', 'gambarBarangTitipan']);
 
         // Jika ada parameter pencarian
         if ($request->has('search') && $request->search != '') {
@@ -35,8 +35,8 @@ class BarangTitipanController extends Controller
             });
         }
 
-        // Ambil semua barang titipan tanpa pagination
-        $barangTitipan = $query->get(); // Pastikan menggunakan get() untuk mengambil semua data
+        // Ambil semua barang titipan
+        $barangTitipan = $query->get();
 
         // Proses status garansi
         foreach ($barangTitipan as $barang) {
@@ -52,7 +52,7 @@ class BarangTitipanController extends Controller
         }
 
         // Ambil transaksi yang statusnya 'Dikirim' atau 'Diambil'
-        $transaksiProses = Transaksi::with(['barangTitipan', 'barangTitipan.gambarBarang'])
+        $transaksiProses = Transaksi::with(['barangTitipan', 'barangTitipan.gambarBarangTitipan'])
             ->whereIn('status_transaksi', ['Dikirim', 'Diambil'])
             ->get();
 
@@ -74,15 +74,30 @@ class BarangTitipanController extends Controller
             'garansi_barang' => 'required|string|max:50',
             'berat_barang' => 'required|integer',
             'status_barang' => 'required|in:dijual,terjual,sudah diambil penitip, sudah didonasikan, barang untuk donasi',
-            'gambar_barang' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+            'gambar_barang' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048', // Gambar utama
+            'gambar.*' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048', // Gambar tambahan
         ]);
 
+        // Upload gambar utama jika ada (masuk ke kolom gambar_barang di tabel barang_titipan)
         if ($request->hasFile('gambar_barang')) {
             $path = $request->file('gambar_barang')->store('gambar_barang', 'public');
             $validatedData['gambar_barang'] = $path;
         }
 
+        // Simpan data barang utama
         $barang = BarangTitipan::create($validatedData);
+
+        // Simpan gambar tambahan jika ada (masuk ke tabel gambar_barang_titipan)
+        if ($request->hasFile('gambar')) {
+            foreach ($request->file('gambar') as $file) {
+                $path = $file->store('gambar_barang_titipan', 'public');
+                
+                GambarBarangTitipan::create([
+                    'id_barang' => $barang->id_barang,
+                    'nama_file_gambar' => basename($path),
+                ]);
+            }
+        }
 
         return redirect()->route('gudang.index')->with('success', 'Barang berhasil ditambahkan');
     }
@@ -119,7 +134,7 @@ class BarangTitipanController extends Controller
     // Menampilkan detail barang + gambar + diskusi
     public function showDetail($id)
     {
-        $barang = BarangTitipan::with(['gambarBarang', 'transaksiTerakhir'])->findOrFail($id);
+        $barang = BarangTitipan::with(['gambarBarangTitipan', 'transaksiTerakhir'])->findOrFail($id);
 
         // Hitung tanggal habis garansi jika ada transaksi terakhir
         if ($barang->transaksiTerakhir && $barang->garansi_bulan !== null) {

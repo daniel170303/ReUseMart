@@ -78,66 +78,69 @@ Route::get('/barang/{id}', [BarangTitipanController::class, 'showDetail'])->name
 
 Route::post('/diskusi/{id_barang}', [DiskusiProdukController::class, 'store'])->name('diskusi.store');
 
-// Route untuk reset password pegawai (hanya admin yang bisa akses)
-Route::middleware(['auth:sanctum', 'can:manage-pegawai'])->post(
-    '/admin/pegawai/{id}/reset-password', 
-    [PegawaiController::class, 'resetPasswordToBirthDate']
-)->name('pegawai.reset-password');
+// Route untuk menampilkan form
+Route::get('/login', [LoginController::class, 'showLoginForm'])->name('login');
+Route::get('/register', function () {
+    return view('register.register');
+})->name('register');
+Route::get('/register/pembeli', function () {
+    return view('register.registerPembeli');
+})->name('register.pembeli.form');
+Route::get('/register/organisasi', function () {
+    return view('register.registerOrganisasi');
+})->name('register.organisasi.form');
 
+// Route untuk proses registrasi
+Route::post('/register/pembeli', [LoginController::class, 'registerPembeli'])->name('register.pembeli.submit');
+Route::post('/register/organisasi', [LoginController::class, 'registerOrganisasi'])->name('register.organisasi.submit');
 
-// Routes untuk reset password pembeli
-Route::get('/forgot-password', [PasswordResetController::class, 'showRequestForm'])
-    ->name('password.request');
-    
-Route::post('/forgot-password', [PasswordResetController::class, 'sendResetLinkEmail'])
-    ->name('password.email');
-    
-Route::get('/reset-password/{token}', [PasswordResetController::class, 'showResetForm'])
-    ->name('password.reset');
-    
-Route::post('/reset-password', [PasswordResetController::class, 'resetPassword'])
-    ->name('password.update');
+// Route untuk proses login (gunakan LoginController)
+Route::post('/login', [LoginController::class, 'login'])->name('login.submit');
 
+// Route untuk logout (gunakan LoginController)
+Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
 
-    // Authentication routes
-Route::get('/login', function () {
-    return view('login.login');
-})->name('login');
-Route::post('/login', [LoginController::class, 'login']);
-Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
-
-// Dashboard routes - protected by auth middleware
-// Route::middleware(['auth'])->group(function () {
-    // Profile routes for all authenticated users
-    Route::get('/profile', [ProfileController::class, 'show'])->name('profile.show');
-    Route::put('/profile', [ProfileController::class, 'update'])->name('profile.update');
-    
-    // Admin routes
-    Route::prefix('admin')->group(function () {
-        Route::get('/dashboard', [DashboardController::class, 'adminDashboard'])->name('admin.dashboard');
-        Route::get('/users', [AdminController::class, 'users'])->name('admin.users');
-        Route::get('/products', [AdminController::class, 'products'])->name('admin.products');
-        Route::get('/transactions', [AdminController::class, 'transactions'])->name('admin.transactions');
-        // Other admin routes...
+// Route dengan middleware multiauth
+Route::middleware(['multiauth'])->group(function () {
+    //PENITIP
+    Route::get('/penitip', function () {
+        return redirect()->route('penitip.dashboard');
     });
-    
-    // Pembeli routes
-    Route::prefix('pembeli')->group(function () {
-        Route::get('/dashboard', [DashboardController::class, 'pembeliDashboard'])->name('pembeli.dashboard');
-        Route::get('/products', [BarangTitipanController::class, 'index'])->name('pembeli.products');
-        Route::get('/transactions', [TransaksiController::class, 'myTransactions'])->name('pembeli.transactions');
-        // Other pembeli routes...
+    Route::get('/penitip/profile', function () {
+        $id = session('user_id');
+        return redirect()->route('penitip.profile.id', ['id' => $id]);
     });
-    
-    // Other role dashboards...
-    Route::get('/pegawai/dashboard', [DashboardController::class, 'pegawaiDashboard'])->name('pegawai.dashboard');
-    Route::get('/owner/dashboard', [DashboardController::class, 'ownerDashboard'])->name('owner.dashboard');
-    Route::get('/penitip/dashboard', [DashboardController::class, 'penitipDashboard'])->name('penitip.dashboard');
-    Route::get('/organisasi/dashboard', [DashboardController::class, 'organisasiDashboard'])->name('organisasi.dashboard');
-// });
+    Route::get('/penitip/dashboard', function () {
+        return view('penitip.dashboardPenitip');
+    })->name('penitip.dashboard');
+    Route::prefix('penitip')->group(function () {
+        Route::get('/profile/{id}', [PenitipController::class, 'profileById'])->name('penitip.profile.id');
+        Route::get('/{id}/barang-titipan', [PenitipController::class, 'barangTitipanPenitip'])->name('penitip.barangTitipan');
+        Route::post('penitipan/perpanjang/{id_penitipan}', [PenitipanController::class, 'perpanjang'])->name('penitip.penitipan.perpanjang');
+        Route::post('/jadwal-pengambilan', [PenitipController::class, 'jadwalPengambilan'])->name('penitip.jadwalPengambilan');
+    });
+    Route::post('/penitipan/perpanjang', [PenitipanController::class, 'perpanjang'])->name('penitipan.perpanjang');
 
-// routes/web.php
-
+    //CUSTOMER SERVICE
+    Route::get('/cs', function () {
+        return redirect()->route('cs.dashboard');
+    });
+    Route::get('/cs/dashboard', [PegawaiController::class, 'dashboardCs'])->name('cs.dashboard');
+    Route::prefix('cs')->middleware('auth:pegawai')->group(function () {
+        Route::get('/penitip', [PenitipController::class, 'index'])->name('cs.penitip');
+        Route::post('/penitip', [PenitipController::class, 'store'])->name('penitip.store');
+        Route::get('/penitip/{id}', [PenitipController::class, 'show'])->name('penitip.show');
+        Route::put('/penitip/{id}', [PenitipController::class, 'update'])->name('penitip.update');
+        Route::delete('/penitip/{id}', [PenitipController::class, 'destroy'])->name('penitip.destroy');
+        Route::get('/penitip/search/{keyword}', [PenitipController::class, 'search'])->name('penitip.search');
+        Route::post('/logout', function () {
+            Auth::guard('pegawai')->logout();
+            session()->invalidate();
+            session()->regenerateToken();
+            return redirect()->route('login')->with('success', 'Logout berhasil!');
+        })->name('cs.logout');
+    });
+});
 
 
 Route::prefix('admin')->name('admin.')->group(function () {

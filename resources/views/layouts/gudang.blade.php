@@ -14,19 +14,30 @@
 
     {{-- Custom CSS --}}
     <style>
+        html,
         body {
-            background-color: #f8f9fa;
+            height: 100%;
+            margin: 0;
+            font-family: Arial, sans-serif;
         }
 
-        .navbar-brand {
-            font-weight: bold;
+        body {
+            background-color: #f8f9fa;
+            display: flex;
+            flex-direction: row;
+            min-height: 100vh;
         }
 
         .sidebar {
             background-color: #343a40;
             color: #fff;
             height: 100vh;
+            width: 250px;
+            position: fixed;
+            top: 0;
+            left: 0;
             padding-top: 1rem;
+            overflow-y: auto;
         }
 
         .sidebar a {
@@ -34,50 +45,65 @@
             display: block;
             padding: 0.75rem 1.25rem;
             text-decoration: none;
+            font-size: 1rem;
         }
 
         .sidebar a:hover {
             background-color: #495057;
             color: #fff;
         }
+
+        .content-wrapper {
+            margin-left: 250px;
+            padding-top: 2rem;
+            width: 100%;
+            overflow-y: auto;
+        }
+
+        .navbar {
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            background-color: #fff;
+        }
+
+        main {
+            padding: 2rem;
+            height: 100%;
+            overflow-y: auto;
+        }
     </style>
 </head>
 
 <body>
 
-    <div class="d-flex">
-        {{-- Sidebar --}}
-        <div class="sidebar p-3">
-            <h4 class="text-white mb-4">Gudang</h4>
-            <a href="{{ route('pegawai.gudang') }}"><i class="fas fa-boxes"></i> Barang Titipan</a>
-            <a href="{{ route('penitipan.index') }}"><i class="fas fa-clipboard-list"></i> Penitipan</a>
-            <a href="{{ route('logout') }}"
-                onclick="event.preventDefault(); document.getElementById('logout-form').submit();">
-                <i class="fas fa-sign-out-alt"></i> Logout
-            </a>
-            <form id="logout-form" action="{{ route('logout') }}" method="POST" style="display: none;">
-                @csrf
-            </form>
-        </div>
+    <div class="sidebar p-3">
+        <h4 class="text-white mb-4">Gudang</h4>
+        <a href="{{ route('pegawai.gudang') }}"><i class="fas fa-boxes"></i> Barang Titipan</a>
+        <a href="{{ route('penitipan.index') }}"><i class="fas fa-clipboard-list"></i> Penitipan</a>
+        <a href="{{ route('logout') }}"
+            onclick="event.preventDefault(); document.getElementById('logout-form').submit();">
+            <i class="fas fa-sign-out-alt"></i> Logout
+        </a>
+        <form id="logout-form" action="{{ route('logout') }}" method="POST" style="display: none;">
+            @csrf
+        </form>
+    </div>
 
-        {{-- Content --}}
-        <div class="flex-grow-1">
-            {{-- Navbar --}}
-            <nav class="navbar navbar-light bg-light">
-                <div class="container-fluid">
-                    <span class="navbar-brand mb-0 h1">Sistem Gudang</span>
-                </div>
-            </nav>
+    <div class="content-wrapper">
+        {{-- Navbar --}}
+        <nav class="navbar navbar-light bg-light">
+            <div class="container-fluid">
+                <span class="navbar-brand mb-0 h1">Sistem Gudang</span>
+            </div>
+        </nav>
 
-            <main class="p-4">
-                @yield('content')
-            </main>
-        </div>
+        <main class="p-4">
+            @yield('content')
+        </main>
     </div>
 
     <!-- jQuery (tambahkan ini!) -->
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    
+
     {{-- Bootstrap JS --}}
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
