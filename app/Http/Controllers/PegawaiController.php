@@ -189,4 +189,22 @@ class PegawaiController extends Controller
         return view('owner.dashboardOwner', compact('owner'));
     }
 
+    public function dashboardHunter()
+    {
+        // Cek apakah user yang login adalah pegawai
+        if (!Auth::guard('pegawai')->check()) {
+            return redirect()->route('login')->withErrors(['access_denied' => 'Anda tidak diizinkan mengakses halaman ini.']);
+        }
+
+        $hunter = Auth::guard('pegawai')->user();
+        
+        // Pastikan role-nya adalah Owner
+        if (!$hunter->rolePegawai || $hunter->rolePegawai->nama_role !== 'Hunter') {
+            return redirect('/')->withErrors(['access_denied' => 'Anda tidak memiliki hak akses sebagai Hunter.']);
+        }
+
+        // Jika role sesuai, tampilkan dashboard Owner dengan data owner
+        return view('pegawai.hunter.dashboardHunter', compact('hunter'));
+    }
+
 }

@@ -6,6 +6,7 @@ use App\Models\Penitipan;
 use App\Models\DetailPenitipan;
 use App\Models\Penitip;
 use App\Models\BarangTitipan;
+use App\Models\BarangTitipanHunter;
 use App\Models\Pegawai;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Session;
@@ -20,9 +21,21 @@ class PenitipanController extends Controller
         $detailPenitipan = DetailPenitipan::with('barang')->get();
         $penitipList = Penitip::all();
 
+        // Ambil ID barang yang sudah dititipkan
         $barangSudahDititipkan = DetailPenitipan::pluck('id_barang')->toArray();
+        
+        // Ambil ID barang yang terhubung dengan hunter
+        $barangHunter = BarangTitipanHunter::pluck('id_barang')->toArray();
+        
+        // Gabungkan kedua array untuk mengecualikan barang yang sudah dititipkan DAN barang hunter
+        $barangTidakTersedia = array_merge($barangSudahDititipkan, $barangHunter);
 
-        $barangList = BarangTitipan::whereNotIn('id_barang', $barangSudahDititipkan)->get();
+        // Ambil barang yang TIDAK ada di list barang yang sudah dititipkan DAN TIDAK terhubung dengan hunter
+        $barangList = BarangTitipan::whereNotIn('id_barang', $barangTidakTersedia)
+            ->where('status_barang', '!=', 'sudah diambil penitip') // Tambahan filter status
+            ->where('status_barang', '!=', 'sudah didonasikan')     // Tambahan filter status
+            ->get();
+
         $kurirs = Pegawai::where('id_role', 6)->get();
 
         return view('pegawai.gudang.penitipan', compact(
@@ -54,7 +67,7 @@ class PenitipanController extends Controller
             'tanggal_penitipan' => $tanggalPenitipan,
             'tanggal_selesai_penitipan' => $tanggalSelesai,
             'tanggal_batas_pengambilan' => $tanggalBatasPengambilan,
-            'status_perpanjangan' => 'ya',
+            'status_perpanjangan' => 'tidak',
             'tanggal_pengambilan' => null,
             'status_barang' => $statusBarang,
         ]);
@@ -69,20 +82,14 @@ class PenitipanController extends Controller
         // Muat relasi penitip dan barang
         $penitipan->load(['penitip', 'detailPenitipan.barang']);
 
-        // Ambil penitip dan daftar barang
-        $penitip = $penitipan->penitip;
-        $barangList = $penitipan->detailPenitipan->map(function ($detail) {
-            return $detail->barang;
-        });
-
-        // Generate PDF
+        // Generate PDF dengan format nota yang baru
         $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('pdf.nota_penitipan', [
             'penitipan' => $penitipan,
-            'penitip' => $penitip,
-            'barangList' => $barangList,
         ]);
 
-        $fileName = 'nota_penitipan_' . $penitipan->id_penitipan . '.pdf';
+        // Buat nama file dengan format: nota_penitipan_YYYY.MM.ID.pdf
+        $fileName = 'nota_penitipan_' . date('Y.m', strtotime($penitipan->tanggal_penitipan)) . '.' . $penitipan->id_penitipan . '.pdf';
+        
         Storage::put('public/nota/' . $fileName, $pdf->output());
 
         return redirect()->route('penitipan.index')->with([
@@ -98,11 +105,12 @@ class PenitipanController extends Controller
 
         $pdf = Pdf::loadView('pdf.nota_penitipan', [
             'penitipan' => $penitipan,
-            'penitip' => $penitipan->penitip,
-            'barangList' => $penitipan->detailPenitipan->pluck('barang'),
         ]);
 
-        return $pdf->download('nota_penitipan_' . $id_penitipan . '.pdf');
+        // Buat nama file dengan format: nota_penitipan_YYYY.MM.ID.pdf
+        $fileName = 'nota_penitipan_' . date('Y.m', strtotime($penitipan->tanggal_penitipan)) . '.' . $penitipan->id_penitipan . '.pdf';
+
+        return $pdf->download($fileName);
     }
 
 

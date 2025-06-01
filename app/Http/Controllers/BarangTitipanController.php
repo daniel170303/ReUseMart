@@ -7,6 +7,7 @@ use App\Models\Transaksi;
 use App\Models\GambarBarangTitipan;
 use App\Models\PencatatanPegawaiGudang;
 use App\Models\Pegawai;
+use App\Models\BarangTitipanHunter;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
@@ -15,9 +16,17 @@ use Carbon\Carbon;
 
 class BarangTitipanController extends Controller
 {
+    // HAPUS constructor middleware - tidak diperlukan karena sudah ada di routes
+
     // Menampilkan semua barang
     public function index(Request $request)
     {
+        // Cek apakah user adalah pegawai gudang (role_id = 4 atau sesuai dengan sistem Anda)
+        $pegawai = Auth::guard('pegawai')->user();
+        if (!$pegawai || !in_array($pegawai->id_role, [4, 1])) { // 4 = gudang, 1 = owner (bisa akses semua)
+            return redirect()->route('login')->with('error', 'Akses ditolak. Anda bukan pegawai gudang.');
+        }
+
         // Mulai query untuk barang titipan dengan relasi gambar tambahan
         $query = BarangTitipan::with(['transaksiTerakhir', 'gambarBarangTitipan']);
 
@@ -61,14 +70,31 @@ class BarangTitipanController extends Controller
         // Ambil data kurir
         $kurirs = Pegawai::where('id_role', 6)->get();
 
+        // Ambil data hunter - PASTIKAN ROLE ID BENAR
+        // Ganti angka 5 dengan role ID yang sesuai untuk hunter di database Anda
+        $hunters = Pegawai::where('id_role', 5)->get(); // Sesuaikan dengan role hunter
+
+        // Debug: Cek apakah ada data hunter
+        \Log::info('Jumlah hunter ditemukan: ' . $hunters->count());
+        foreach ($hunters as $hunter) {
+            \Log::info('Hunter: ' . $hunter->nama_pegawai . ' (ID: ' . $hunter->id_pegawai . ')');
+        }
+
         // Kembalikan tampilan dengan data
-        return view('pegawai.gudang.manajemenBarangTitipan', compact('barangTitipan', 'transaksiProses', 'kurirs'));
+        return view('pegawai.gudang.manajemenBarangTitipan', compact('barangTitipan', 'transaksiProses', 'kurirs', 'hunters'));
     }
 
     // Menyimpan barang baru
     public function store(Request $request)
     {
-        $validatedData = $request->validate([
+        // Cek apakah user adalah pegawai gudang
+        $pegawai = Auth::guard('pegawai')->user();
+        if (!$pegawai || !in_array($pegawai->id_role, [4, 1])) {
+            return redirect()->back()->with('error', 'Akses ditolak. Anda bukan pegawai gudang.');
+        }
+
+        // Validasi berbeda berdasarkan mode
+        $rules = [
             'nama_barang_titipan' => 'required|string|max:255',
             'harga_barang' => 'required|numeric',
             'deskripsi_barang' => 'required|string',
@@ -76,23 +102,35 @@ class BarangTitipanController extends Controller
             'garansi_barang' => 'required|string|max:50',
             'berat_barang' => 'required|integer',
             'status_barang' => 'required|in:dijual,terjual,sudah diambil penitip, sudah didonasikan, barang untuk donasi',
-            'gambar_barang' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048', // Gambar utama
-            'gambar.*' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048', // Gambar tambahan
-        ]);
+            'gambar_barang' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+            'gambar.*' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+            'mode' => 'required|in:penitip,hunter',
+        ];
+
+        // Jika mode hunter, hunter_id wajib diisi
+        if ($request->mode === 'hunter') {
+            $rules['hunter_id'] = 'required|exists:pegawai,id_pegawai';
+        }
+
+        $validatedData = $request->validate($rules);
 
         try {
             DB::beginTransaction();
 
-            // Upload gambar utama jika ada (masuk ke kolom gambar_barang di tabel barang_titipan)
+            // Upload gambar utama jika ada
             if ($request->hasFile('gambar_barang')) {
                 $path = $request->file('gambar_barang')->store('gambar_barang', 'public');
                 $validatedData['gambar_barang'] = $path;
             }
 
-            // Simpan data barang utama
-            $barang = BarangTitipan::create($validatedData);
+            // Hapus field yang tidak ada di tabel barang_titipan
+            $barangData = $validatedData;
+            unset($barangData['mode'], $barangData['hunter_id']);
 
-            // Simpan gambar tambahan jika ada (masuk ke tabel gambar_barang_titipan)
+            // Simpan data barang utama
+            $barang = BarangTitipan::create($barangData);
+
+            // Simpan gambar tambahan jika ada
             if ($request->hasFile('gambar')) {
                 foreach ($request->file('gambar') as $file) {
                     $path = $file->store('gambar_barang_titipan', 'public');
@@ -104,12 +142,33 @@ class BarangTitipanController extends Controller
                 }
             }
 
-            // Catat pegawai gudang yang menambah barang
-            $this->catatPegawaiGudang($barang->id_barang);
+            // SELALU catat pegawai gudang yang menambahkan barang (di kedua mode)
+            try {
+                $this->catatPegawaiGudang($barang->id_barang);
+            } catch (\Exception $e) {
+                \Log::warning('Gagal mencatat pegawai gudang: ' . $e->getMessage());
+            }
+
+            // Pencatatan tambahan berdasarkan mode
+            if ($request->mode === 'hunter') {
+                // Mode Hunter: Catat hunter yang dipilih SELAIN pegawai gudang
+                BarangTitipanHunter::create([
+                    'id_barang' => $barang->id_barang,
+                    'id_pegawai' => $request->hunter_id, // ID Hunter yang dipilih
+                ]);
+                
+                $hunterName = Pegawai::find($request->hunter_id)->nama_pegawai;
+                $successMessage = 'Barang berhasil ditambahkan untuk Hunter: ' . $hunterName . 
+                    ' (Pegawai gudang: ' . $pegawai->nama_pegawai . ' juga tercatat)';
+            } else {
+                // Mode Penitip: Hanya pegawai gudang yang tercatat
+                $successMessage = 'Barang berhasil ditambahkan untuk Penitip (Pegawai gudang: ' . 
+                    $pegawai->nama_pegawai . ' tercatat)';
+            }
 
             DB::commit();
 
-            return redirect()->route('gudang.index')->with('success', 'Barang berhasil ditambahkan dan tercatat oleh pegawai gudang');
+            return redirect()->route('gudang.index')->with('success', $successMessage);
 
         } catch (\Exception $e) {
             DB::rollback();
@@ -122,20 +181,17 @@ class BarangTitipanController extends Controller
      */
     private function catatPegawaiGudang($idBarang)
     {
-        // Ambil ID pegawai dari session atau auth
-        $idPegawai = session('pegawai_id') ?? auth()->id();
+        // Ambil ID pegawai dari auth guard pegawai
+        $pegawai = Auth::guard('pegawai')->user();
         
-        // Jika tidak ada ID pegawai di session, coba ambil dari request atau default
-        if (!$idPegawai) {
-            // Anda bisa menyesuaikan logika ini sesuai dengan sistem autentikasi Anda
-            // Misalnya jika ada cara lain untuk mendapatkan ID pegawai yang sedang login
-            throw new \Exception('ID Pegawai tidak ditemukan. Pastikan pegawai sudah login.');
+        if (!$pegawai) {
+            throw new \Exception('Pegawai tidak ditemukan. Pastikan pegawai sudah login.');
         }
 
         // Simpan pencatatan
         PencatatanPegawaiGudang::create([
             'id_barang' => $idBarang,
-            'id_pegawai' => $idPegawai,
+            'id_pegawai' => $pegawai->id_pegawai,
         ]);
     }
 
@@ -224,6 +280,12 @@ class BarangTitipanController extends Controller
     // Update barang
     public function update(Request $request, $id)
     {
+        // Cek apakah user adalah pegawai gudang
+        $pegawai = Auth::guard('pegawai')->user();
+        if (!$pegawai || !in_array($pegawai->id_role, [4, 1])) {
+            return redirect()->back()->with('error', 'Akses ditolak. Anda bukan pegawai gudang.');
+        }
+
         $barang = BarangTitipan::findOrFail($id);
 
         $request->validate([
@@ -280,18 +342,44 @@ class BarangTitipanController extends Controller
     // Hapus barang
     public function destroy($id)
     {
-        $barang = BarangTitipan::find($id);
-        if (!$barang) {
-            return response()->json(['message' => 'Barang tidak ditemukan'], 404);
+        // Cek apakah user adalah pegawai gudang
+        $pegawai = Auth::guard('pegawai')->user();
+        if (!$pegawai || !in_array($pegawai->id_role, [4, 1])) {
+            return redirect()->back()->with('error', 'Akses ditolak. Anda bukan pegawai gudang.');
         }
 
-        if ($barang->gambar_barang) {
-            Storage::disk('public')->delete($barang->gambar_barang);
+        try {
+            $barang = BarangTitipan::findOrFail($id);
+
+            // Hapus gambar utama jika ada
+            if ($barang->gambar_barang && Storage::disk('public')->exists($barang->gambar_barang)) {
+                Storage::disk('public')->delete($barang->gambar_barang);
+            }
+
+            // Hapus gambar tambahan jika ada
+            $gambarTambahan = GambarBarangTitipan::where('id_barang', $id)->get();
+            foreach ($gambarTambahan as $gambar) {
+                if (Storage::disk('public')->exists('gambar_barang_titipan/' . $gambar->nama_file_gambar)) {
+                    Storage::disk('public')->delete('gambar_barang_titipan/' . $gambar->nama_file_gambar);
+                }
+                $gambar->delete();
+            }
+
+            // Hapus pencatatan pegawai gudang jika ada
+            try {
+                PencatatanPegawaiGudang::where('id_barang', $id)->delete();
+            } catch (\Exception $e) {
+                \Log::warning('Gagal menghapus pencatatan pegawai gudang: ' . $e->getMessage());
+            }
+
+            // Hapus barang
+            $barang->delete();
+
+            return redirect()->route('gudang.index')->with('success', 'Barang berhasil dihapus');
+
+        } catch (\Exception $e) {
+            return redirect()->back()->with('error', 'Terjadi kesalahan saat menghapus barang: ' . $e->getMessage());
         }
-
-        $barang->delete();
-
-        return redirect()->route('gudang.index')->with('success', 'Barang berhasil dihapus');
     }
 
     public function cekGaransi(Request $request)

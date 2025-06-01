@@ -2,6 +2,7 @@
 
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\BarangTitipanController;
+use App\Http\Controllers\HunterController;
 use App\Http\Controllers\AuthController;
 use App\Models\BarangTitipan;
 use App\Http\Controllers\DiskusiProdukController;
@@ -116,6 +117,29 @@ Route::middleware(['multiauth'])->group(function () {
         })->name('cs.logout');
     });
 
+    //PEGAWAI GUDANG - Pindahkan route gudang ke sini
+    Route::get('/gudang', function () {
+        return redirect()->route('gudang.dashboard');
+    });
+    Route::get('/gudang/dashboard', [PegawaiController::class, 'dashboardGudang'])->name('gudang.dashboard');
+    Route::prefix('gudang')->name('gudang.')->middleware('auth:pegawai')->group(function () {
+        Route::get('/', [BarangTitipanController::class, 'index'])->name('index');
+        Route::post('/', [BarangTitipanController::class, 'store'])->name('store');
+        Route::get('/barang/{id}/detail', [BarangTitipanController::class, 'showDetail'])->name('barang.showDetail');
+        //Route::get('/edit/{id}', [BarangTitipanController::class, 'edit'])->name('edit');
+        Route::put('/barang/{id}', [BarangTitipanController::class, 'update'])->name('update');
+        Route::delete('/destroy/{id}', [BarangTitipanController::class, 'destroy'])->name('destroy');
+        Route::post('/penitipan/jadwalkan-pengiriman', [PenitipanController::class, 'jadwalkanPengiriman'])->name('penitipan.jadwalkanPengiriman');
+        
+        // Tambahan logout untuk pegawai gudang
+        Route::post('/logout', function () {
+            Auth::guard('pegawai')->logout();
+            session()->invalidate();
+            session()->regenerateToken();
+            return redirect()->route('login')->with('success', 'Logout berhasil!');
+        })->name('gudang.logout');
+    });
+
     //ROUTE OWNER
     Route::get('/owner', function () {
         return redirect()->route('owner.dashboard');
@@ -123,6 +147,29 @@ Route::middleware(['multiauth'])->group(function () {
     Route::get('/owner/dashboard', [PegawaiController::class, 'dashboardOwner'])->name('owner.dashboard');
     Route::prefix('owner')->name('owner.')->group(function () {
         Route::get('/profile/{id}', [OwnerController::class, 'profile'])->name('profile');
+        Route::post('/logout', function () {
+            Auth::guard('pegawai')->logout();
+            session()->invalidate();
+            session()->regenerateToken();
+            return redirect()->route('login')->with('success', 'Logout berhasil!');
+        })->name('owner.logout');
+    });
+
+    //HUNTER
+    Route::get('/hunter', function () {
+        return redirect()->route('hunter.dashboard');
+    });
+    Route::get('/hunter/dashboard', function () {
+        return view('pegawai.hunter.dashboardHunter');
+    })->name('hunter.dashboard');
+    Route::prefix('hunter')->name('hunter.')->group(function () {
+        Route::get('/profile/{id}', [HunterController::class, 'profile'])->name('profile');
+        Route::post('/logout', function () {
+            Auth::guard('pegawai')->logout();
+            session()->invalidate();
+            session()->regenerateToken();
+            return redirect()->route('login')->with('success', 'Logout berhasil!');
+        })->name('hunter.logout');
     });
 });
 

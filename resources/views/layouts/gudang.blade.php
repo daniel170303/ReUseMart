@@ -7,10 +7,10 @@
     <title>Gudang - Barang Titipan</title>
 
     {{-- Bootstrap CDN --}}
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.0/dist/css/bootstrap.min.css" rel="stylesheet">
 
     {{-- Font Awesome (opsional untuk ikon) --}}
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" rel="stylesheet">
 
     {{-- Custom CSS --}}
     <style>
@@ -89,23 +89,16 @@
     </div>
 
     <div class="content-wrapper">
-        {{-- Navbar --}}
-        <nav class="navbar navbar-light bg-light">
-            <div class="container-fluid">
-                <span class="navbar-brand mb-0 h1">Sistem Gudang</span>
-            </div>
-        </nav>
-
         <main class="p-4">
             @yield('content')
         </main>
     </div>
 
-    <!-- jQuery (tambahkan ini!) -->
+    <!-- jQuery HARUS dimuat SEBELUM Bootstrap JS -->
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 
     {{-- Bootstrap JS --}}
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.0/dist/js/bootstrap.bundle.min.js"></script>
 
     @yield('scripts')
 

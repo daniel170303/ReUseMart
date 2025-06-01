@@ -2,7 +2,23 @@
 
 @section('content')
     <div class="container mt-4">
-        <h2 class="mb-4">Manajemen Barang Titipan</h2>
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2>Manajemen Barang Titipan</h2>
+
+            <!-- Switch Mode di pojok kanan dengan desain yang lebih menarik -->
+            <div class="mode-switch">
+                <div class="btn-group btn-group-toggle" data-toggle="buttons" role="group" aria-label="Mode Switch">
+                    <label class="btn btn-outline-primary active">
+                        <input type="radio" name="mode" id="mode-penitip" value="penitip" checked autocomplete="off">
+                        <i class="fas fa-user mr-2"></i>Mode Penitip
+                    </label>
+                    <label class="btn btn-outline-success">
+                        <input type="radio" name="mode" id="mode-hunter" value="hunter" autocomplete="off">
+                        <i class="fas fa-search mr-2"></i>Mode Hunter
+                    </label>
+                </div>
+            </div>
+        </div>
 
         {{-- Alert untuk menampilkan pesan sukses atau error --}}
         @if (session('success'))
@@ -25,16 +41,99 @@
 
         {{-- Form Tambah Barang --}}
         <div class="card mb-4" id="form-tambah-barang">
-            <div class="card-header">Tambah Barang Titipan</div>
+            <div class="card-header bg-primary text-white">
+                <div class="d-flex align-items-center justify-content-between">
+                    <div>
+                        <span id="form-title">Tambah Barang Titipan - Mode Penitip</span>
+                        <small class="d-block mt-1 text-light">
+                            <i class="fas fa-info-circle mr-1"></i>
+                            <span id="mode-info">Pegawai gudang akan tercatat sebagai penambah barang</span>
+                        </small>
+                    </div>
+                    <div class="badge badge-light badge-pill px-3 py-2">
+                        <i class="fas fa-user mr-1"></i>
+                        <span id="current-mode">Penitip</span>
+                    </div>
+                </div>
+            </div>
             <div class="card-body">
                 <form action="{{ route('gudang.store') }}" method="POST" enctype="multipart/form-data" novalidate>
                     @csrf
+
+                    <!-- Hidden field untuk mode -->
+                    <input type="hidden" name="mode" id="selected-mode" value="penitip">
+
+                    {{-- Field Hunter (hidden by default) --}}
+                    <div class="row mb-4" id="hunter-field" style="display: none;">
+                        <div class="col-md-12">
+                            <div class="alert alert-info border-left-success shadow-sm">
+                                <div class="d-flex align-items-center">
+                                    <div class="mr-3">
+                                        <i class="fas fa-search fa-2x text-success"></i>
+                                    </div>
+                                    <div>
+                                        <h6 class="alert-heading mb-1">
+                                            <i class="fas fa-info-circle mr-1"></i>
+                                            Mode Hunter Aktif
+                                        </h6>
+                                        <p class="mb-0">
+                                            Pilih hunter yang akan dicatat untuk barang ini. 
+                                            Pegawai gudang (<strong>{{ session('user_name', 'Anda') }}</strong>) tetap akan tercatat sebagai yang menambahkan barang.
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="hunter_id" class="font-weight-bold">
+                                    <i class="fas fa-user-tie text-success mr-2"></i>
+                                    Pilih Hunter <span class="text-danger">*</span>
+                                </label>
+                                <select class="form-control form-control-lg @error('hunter_id') is-invalid @enderror" 
+                                        name="hunter_id" id="hunter_id">
+                                    <option value="">
+                                        <i class="fas fa-hand-pointer"></i> -- Pilih Hunter --
+                                    </option>
+                                    @if (isset($hunters) && $hunters->count() > 0)
+                                        @foreach ($hunters as $hunter)
+                                            <option value="{{ $hunter->id_pegawai }}"
+                                                {{ old('hunter_id') == $hunter->id_pegawai ? 'selected' : '' }}>
+                                                <i class="fas fa-user"></i> {{ $hunter->nama_pegawai }} (ID: {{ $hunter->id_pegawai }})
+                                            </option>
+                                        @endforeach
+                                    @else
+                                        <option value="" disabled class="text-muted">
+                                            <i class="fas fa-exclamation-triangle"></i> Tidak ada hunter tersedia
+                                        </option>
+                                    @endif
+                                </select>
+                                @error('hunter_id')
+                                    <div class="invalid-feedback">
+                                        <i class="fas fa-exclamation-circle mr-1"></i>{{ $message }}
+                                    </div>
+                                @enderror
+
+                                {{-- Info hunter count --}}
+                                <small class="form-text text-muted mt-2">
+                                    <i class="fas fa-users mr-1"></i>
+                                    <strong>{{ isset($hunters) ? $hunters->count() : 0 }}</strong> hunter tersedia
+                                    @if(isset($hunters) && $hunters->count() == 0)
+                                        <span class="text-warning">
+                                            <i class="fas fa-exclamation-triangle ml-2"></i>
+                                            Tidak ada hunter yang terdaftar dalam sistem
+                                        </span>
+                                    @endif
+                                </small>
+                            </div>
+                        </div>
+                    </div>
+
                     <div class="row">
                         <div class="col-md-6 mb-3">
                             <label for="nama_barang_titipan">Nama Barang <span class="text-danger">*</span></label>
                             <input type="text" class="form-control @error('nama_barang_titipan') is-invalid @enderror"
-                                name="nama_barang_titipan" id="nama_barang_titipan" value="{{ old('nama_barang_titipan') }}"
-                                placeholder="Masukkan nama barang">
+                                name="nama_barang_titipan" id="nama_barang_titipan"
+                                value="{{ old('nama_barang_titipan') }}" placeholder="Masukkan nama barang">
                             @error('nama_barang_titipan')
                                 <div class="invalid-feedback">
                                     {{ $message }}
@@ -89,7 +188,7 @@
                             <label for="status_barang">Status <span class="text-danger">*</span></label>
                             <select class="form-control @error('status_barang') is-invalid @enderror" name="status_barang"
                                 id="status_barang">
-                                <option value="">-- Pilih Status --</option>
+                                <option value="" disabled selected>-- Pilih Status --</option>
                                 <option value="dijual" {{ old('status_barang') == 'dijual' ? 'selected' : '' }}>Dijual
                                 </option>
                                 <option value="barang untuk donasi"
@@ -145,8 +244,22 @@
                             @enderror
                         </div>
                     </div>
-                    <button type="submit" class="btn btn-primary">Simpan Barang</button>
-                    <button type="reset" class="btn btn-secondary">Reset Form</button>
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <button type="submit" class="btn btn-primary btn-lg">
+                                <i class="fas fa-save mr-2"></i>Simpan Barang
+                            </button>
+                            <button type="reset" class="btn btn-secondary btn-lg ml-2">
+                                <i class="fas fa-undo mr-2"></i>Reset Form
+                            </button>
+                        </div>
+                        <div class="text-muted">
+                            <small>
+                                <i class="fas fa-info-circle mr-1"></i>
+                                Mode aktif: <span id="active-mode-display" class="font-weight-bold text-primary">Penitip</span>
+                            </small>
+                        </div>
+                    </div>
                 </form>
             </div>
         </div>
@@ -654,6 +767,143 @@
                     e.preventDefault();
                     alert('Pengiriman di atas jam 4 sore tidak bisa dijadwalkan di hari yang sama.');
                 }
+            });
+
+            document.addEventListener('DOMContentLoaded', function() {
+                console.log('DOM loaded'); // Debug
+
+                // Handle mode switch
+                const modeRadios = document.querySelectorAll('input[name="mode"]');
+                const hunterField = document.getElementById('hunter-field');
+                const hunterSelect = document.getElementById('hunter_id');
+                const selectedModeInput = document.getElementById('selected-mode');
+                const formTitle = document.getElementById('form-title');
+                const modeInfo = document.getElementById('mode-info');
+                const currentMode = document.getElementById('current-mode');
+                const activeModeDisplay = document.getElementById('active-mode-display');
+
+                console.log('Mode radios found:', modeRadios.length); // Debug
+                console.log('Hunter field:', hunterField); // Debug
+                console.log('Hunter select:', hunterSelect); // Debug
+
+                modeRadios.forEach(radio => {
+                    radio.addEventListener('change', function() {
+                        console.log('Mode changed to:', this.value); // Debug
+
+                        const selectedMode = this.value;
+                        selectedModeInput.value = selectedMode;
+
+                        // Update UI elements
+                        if (selectedMode === 'hunter') {
+                            // Show hunter field dan buat required
+                            hunterField.style.display = 'block';
+                            hunterSelect.setAttribute('required', 'required');
+                            
+                            // Update text elements
+                            formTitle.textContent = 'Tambah Barang Titipan - Mode Hunter';
+                            modeInfo.innerHTML = '<i class="fas fa-info-circle mr-1"></i> Pegawai gudang dan hunter yang dipilih akan tercatat';
+                            currentMode.innerHTML = '<i class="fas fa-search mr-1"></i>Hunter';
+                            activeModeDisplay.textContent = 'Hunter';
+                            activeModeDisplay.className = 'font-weight-bold text-success';
+
+                            // Add animation
+                            hunterField.style.opacity = '0';
+                            hunterField.style.transform = 'translateY(-10px)';
+                            setTimeout(() => {
+                                hunterField.style.transition = 'all 0.3s ease';
+                                hunterField.style.opacity = '1';
+                                hunterField.style.transform = 'translateY(0)';
+                            }, 10);
+
+                            console.log('Hunter field shown'); // Debug
+                        } else {
+                            // Hide hunter field dan hapus required
+                            hunterField.style.transition = 'all 0.3s ease';
+                            hunterField.style.opacity = '0';
+                            hunterField.style.transform = 'translateY(-10px)';
+                            
+                            setTimeout(() => {
+                                hunterField.style.display = 'none';
+                                hunterSelect.removeAttribute('required');
+                                hunterSelect.value = ''; // Reset value
+                            }, 300);
+                            
+                            // Update text elements
+                            formTitle.textContent = 'Tambah Barang Titipan - Mode Penitip';
+                            modeInfo.innerHTML = '<i class="fas fa-info-circle mr-1"></i> Pegawai gudang akan tercatat sebagai penambah barang';
+                            currentMode.innerHTML = '<i class="fas fa-user mr-1"></i>Penitip';
+                            activeModeDisplay.textContent = 'Penitip';
+                            activeModeDisplay.className = 'font-weight-bold text-primary';
+
+                            console.log('Hunter field hidden'); // Debug
+                        }
+                    });
+                });
+
+                // Form validation
+                const form = document.querySelector('form[action="{{ route('gudang.store') }}"]');
+                if (form) {
+                    form.addEventListener('submit', function(e) {
+                        const mode = selectedModeInput.value;
+
+                        console.log('Form submitted with mode:', mode); // Debug
+
+                        if (mode === 'hunter') {
+                            const hunterId = hunterSelect.value;
+                            if (!hunterId) {
+                                e.preventDefault();
+                                
+                                // Show better error message
+                                const alertDiv = document.createElement('div');
+                                alertDiv.className = 'alert alert-warning alert-dismissible fade show';
+                                alertDiv.innerHTML = `
+                                    <div class="d-flex align-items-center">
+                                        <i class="fas fa-exclamation-triangle text-warning mr-3 fa-lg"></i>
+                                        <div>
+                                            <strong>Perhatian!</strong> Silakan pilih Hunter terlebih dahulu sebelum menyimpan barang.
+                                        </div>
+                                    </div>
+                                    <button type="button" class="close" data-dismiss="alert">
+                                        <span>&times;</span>
+                                    </button>
+                                `;
+                                
+                                // Insert alert before form
+                                form.parentNode.insertBefore(alertDiv, form);
+                                
+                                // Focus on hunter select
+                                hunterSelect.focus();
+                                hunterSelect.classList.add('is-invalid');
+                                
+                                // Remove alert after 5 seconds
+                                setTimeout(() => {
+                                    alertDiv.remove();
+                                    hunterSelect.classList.remove('is-invalid');
+                                }, 5000);
+                                
+                                return false;
+                            }
+                        }
+                    });
+                }
+
+                // Add hover effects to mode buttons
+                const modeButtons = document.querySelectorAll('.btn-group-toggle .btn');
+                modeButtons.forEach(button => {
+                    button.addEventListener('mouseenter', function() {
+                        if (!this.classList.contains('active')) {
+                            this.style.transform = 'translateY(-2px)';
+                            this.style.boxShadow = '0 4px 8px rgba(0,0,0,0.1)';
+                        }
+                    });
+                    
+                    button.addEventListener('mouseleave', function() {
+                        if (!this.classList.contains('active')) {
+                            this.style.transform = 'translateY(0)';
+                            this.style.boxShadow = 'none';
+                        }
+                    });
+                });
             });
         </script>
     @endsection
