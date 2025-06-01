@@ -5,10 +5,12 @@ namespace App\Http\Controllers;
 use App\Models\BarangTitipan;
 use App\Models\Transaksi;
 use App\Models\GambarBarangTitipan;
+use App\Models\PencatatanPegawaiGudang;
 use App\Models\Pegawai;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Auth;
 use Carbon\Carbon;
 
 class BarangTitipanController extends Controller
@@ -78,28 +80,63 @@ class BarangTitipanController extends Controller
             'gambar.*' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048', // Gambar tambahan
         ]);
 
-        // Upload gambar utama jika ada (masuk ke kolom gambar_barang di tabel barang_titipan)
-        if ($request->hasFile('gambar_barang')) {
-            $path = $request->file('gambar_barang')->store('gambar_barang', 'public');
-            $validatedData['gambar_barang'] = $path;
-        }
+        try {
+            DB::beginTransaction();
 
-        // Simpan data barang utama
-        $barang = BarangTitipan::create($validatedData);
-
-        // Simpan gambar tambahan jika ada (masuk ke tabel gambar_barang_titipan)
-        if ($request->hasFile('gambar')) {
-            foreach ($request->file('gambar') as $file) {
-                $path = $file->store('gambar_barang_titipan', 'public');
-                
-                GambarBarangTitipan::create([
-                    'id_barang' => $barang->id_barang,
-                    'nama_file_gambar' => basename($path),
-                ]);
+            // Upload gambar utama jika ada (masuk ke kolom gambar_barang di tabel barang_titipan)
+            if ($request->hasFile('gambar_barang')) {
+                $path = $request->file('gambar_barang')->store('gambar_barang', 'public');
+                $validatedData['gambar_barang'] = $path;
             }
+
+            // Simpan data barang utama
+            $barang = BarangTitipan::create($validatedData);
+
+            // Simpan gambar tambahan jika ada (masuk ke tabel gambar_barang_titipan)
+            if ($request->hasFile('gambar')) {
+                foreach ($request->file('gambar') as $file) {
+                    $path = $file->store('gambar_barang_titipan', 'public');
+                    
+                    GambarBarangTitipan::create([
+                        'id_barang' => $barang->id_barang,
+                        'nama_file_gambar' => basename($path),
+                    ]);
+                }
+            }
+
+            // Catat pegawai gudang yang menambah barang
+            $this->catatPegawaiGudang($barang->id_barang);
+
+            DB::commit();
+
+            return redirect()->route('gudang.index')->with('success', 'Barang berhasil ditambahkan dan tercatat oleh pegawai gudang');
+
+        } catch (\Exception $e) {
+            DB::rollback();
+            return redirect()->back()->with('error', 'Terjadi kesalahan saat menyimpan barang: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Mencatat pegawai gudang yang menambah barang titipan
+     */
+    private function catatPegawaiGudang($idBarang)
+    {
+        // Ambil ID pegawai dari session atau auth
+        $idPegawai = session('pegawai_id') ?? auth()->id();
+        
+        // Jika tidak ada ID pegawai di session, coba ambil dari request atau default
+        if (!$idPegawai) {
+            // Anda bisa menyesuaikan logika ini sesuai dengan sistem autentikasi Anda
+            // Misalnya jika ada cara lain untuk mendapatkan ID pegawai yang sedang login
+            throw new \Exception('ID Pegawai tidak ditemukan. Pastikan pegawai sudah login.');
         }
 
-        return redirect()->route('gudang.index')->with('success', 'Barang berhasil ditambahkan');
+        // Simpan pencatatan
+        PencatatanPegawaiGudang::create([
+            'id_barang' => $idBarang,
+            'id_pegawai' => $idPegawai,
+        ]);
     }
 
     // Fitur pencarian
@@ -131,16 +168,47 @@ class BarangTitipanController extends Controller
         return response()->json($barang);
     }
 
-    // Menampilkan detail barang + gambar + diskusi
+    // Menampilkan detail barang + gambar + diskusi + rating
     public function showDetail($id)
     {
-        $barang = BarangTitipan::with(['gambarBarangTitipan', 'transaksiTerakhir'])->findOrFail($id);
+        $barang = BarangTitipan::with([
+            'gambarBarangTitipan',
+            'transaksiTerakhir',
+            'penitipan',  // ← ambil data penitip via hasOneThrough
+            'rating'
+        ])->findOrFail($id);
 
-        // Hitung tanggal habis garansi jika ada transaksi terakhir
+        $penitip = $barang->detailPenitipan->penitipan->penitip ?? null;
+
+        // Hitung rata-rata rating untuk semua barang milik penitip
+        $averageRating = null;
+
+        if ($penitip) {
+            // Ambil semua barang milik penitip
+            $barangMilikPenitip = \App\Models\BarangTitipan::whereHas('detailPenitipan.penitipan', function ($query) use ($penitip) {
+                $query->where('id_penitip', $penitip->id_penitip);
+            })->with('rating')->get();
+
+            // Hitung rata-rata rating dari semua barang yang sudah diberi rating
+            $totalRating = 0;
+            $jumlahRating = 0;
+
+            foreach ($barangMilikPenitip as $b) {
+                if ($b->rating) {
+                    $totalRating += $b->rating->rating;
+                    $jumlahRating++;
+                }
+            }
+
+            if ($jumlahRating > 0) {
+                $averageRating = round($totalRating / $jumlahRating, 2);
+            }
+        }
+
+        // Garansi
         if ($barang->transaksiTerakhir && $barang->garansi_bulan !== null) {
             $tanggalPelunasan = Carbon::parse($barang->transaksiTerakhir->tanggal_pelunasan);
-            $tanggalHabisGaransi = $tanggalPelunasan->addMonths($barang->garansi_bulan);
-            $barang->tanggal_habis_garansi = $tanggalHabisGaransi->translatedFormat('d F Y');
+            $barang->tanggal_habis_garansi = $tanggalPelunasan->addMonths($barang->garansi_bulan)->translatedFormat('d F Y');
         } else {
             $barang->tanggal_habis_garansi = 'Tidak ada garansi atau belum terjual';
         }
@@ -150,7 +218,7 @@ class BarangTitipanController extends Controller
             ->orderBy('created_at', 'desc')
             ->get();
 
-        return view('detailBarang', compact('barang', 'diskusi'));
+        return view('detailBarang', compact('barang', 'diskusi', 'averageRating', 'penitip'));
     }
 
     // Update barang
@@ -241,13 +309,8 @@ class BarangTitipanController extends Controller
             return redirect()->back()->with('error', 'Barang tidak ditemukan atau belum pernah transaksi.');
         }
 
-        // Hitung sisa garansi dari accessor dan bulatkan
-        $sisaGaransi = round($barang->sisa_garansi);
-
-        // Format status garansi
-        if ($sisaGaransi === null) {
-            $statusGaransi = 'Barang tanpa garansi atau belum terjual.';
-        } elseif ($barang->garansi_masih_berlaku) {
+        // Hitung sisa garansi atau belum terjual.';
+        if ($barang->garansi_masih_berlaku) {
             $tanggalHabis = \Carbon\Carbon::parse($barang->transaksiTerakhir->tanggal_pelunasan)->addMonths($barang->garansi_bulan);
             $statusGaransi = "Garansi masih berlaku, habis pada " . $tanggalHabis->translatedFormat('d M Y') . " (sisa $sisaGaransi bulan).";
         } else {
@@ -258,5 +321,5 @@ class BarangTitipanController extends Controller
         // Kirim ke view baru, atau ke halaman sama dengan session flash message
         return view('landingPage.cekGaransi', compact('barang', 'statusGaransi'));
     }
-
 }
+

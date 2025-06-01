@@ -10,10 +10,13 @@ use App\Http\Controllers\LoginController;
 use App\Http\Controllers\OrganisasiController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\PegawaiController;
+use App\Http\Controllers\PembeliController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\PenitipController;
 use App\Http\Controllers\PenitipanController;
 use App\Http\Controllers\ProfilePembeliController;
+use App\Http\Controllers\RatingController;
+use App\Http\Controllers\OwnerController;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Response;
 
@@ -21,9 +24,6 @@ Route::get('/profil-pembeli', [ProfilePembeliController::class, 'index'])->name(
 Route::get('/profil-pembeli/{id}', [ProfilePembeliController::class, 'show'])->name('profil.pembeli.show');
 
 
-
-
-use App\Http\Controllers\PembeliController;
 
 Route::resource('pembelis', PembeliController::class);
 
@@ -40,35 +40,10 @@ Route::delete('/alamat/{id}', [AlamatPembeliController::class, 'destroy'])->name
 Route::post('/alamat/{id}/main', [AlamatPembeliController::class, 'setAsMain'])->name('alamat.set-main');
 Route::get('/alamat/search', [AlamatPembeliController::class, 'search'])->name('alamat.search');
 
-
-
-
-
-
-// // Menggunakan middleware api dan menambahkan prefix 'api'
-// Route::prefix('api')->middleware('api')->group(function () {
-
 Route::get('/', function () {
-    $barangTitipan = BarangTitipan::take(3)->get();
+    $barangTitipan = BarangTitipan::all();
     return view('landingPage.landingPage', compact('barangTitipan'));
 });
-
-Route::get('/login', function () {
-    return view('login.login');
-})->name('login');
-
-Route::post('/login', [AuthController::class, 'login']);
-
-// Tampilkan halaman register
-Route::get('/register', function () {
-    return view('register.register');
-})->name('register');
-
-Route::get('/pegawai', [PegawaiController::class, 'index'])->name('pegawai.index');
-
-// Proses data register
-Route::post('/register', [AuthController::class, 'apiRegister']);
-
 
 Route::get('/admin', function () {
     return view('admin');
@@ -139,6 +114,15 @@ Route::middleware(['multiauth'])->group(function () {
             session()->regenerateToken();
             return redirect()->route('login')->with('success', 'Logout berhasil!');
         })->name('cs.logout');
+    });
+
+    //ROUTE OWNER
+    Route::get('/owner', function () {
+        return redirect()->route('owner.dashboard');
+    });
+    Route::get('/owner/dashboard', [PegawaiController::class, 'dashboardOwner'])->name('owner.dashboard');
+    Route::prefix('owner')->name('owner.')->group(function () {
+        Route::get('/profile/{id}', [OwnerController::class, 'profile'])->name('profile');
     });
 });
 
@@ -225,6 +209,7 @@ Route::prefix('pegawai')->name('pegawai.')->group(function () {
     Route::get('/gudang', [BarangTitipanController::class, 'index'])->name('gudang');
 });
 
+//Route PENITIP
 Route::prefix('penitip')->group(function () {
     Route::get('/profile/{id}', [PenitipController::class, 'profileById'])->name('penitip.profile.id');
     Route::get('/{id}/barang-titipan', [PenitipController::class, 'barangTitipanPenitip'])->name('penitip.barangTitipan');
@@ -232,8 +217,7 @@ Route::prefix('penitip')->group(function () {
     Route::post('/jadwal-pengambilan', [PenitipController::class, 'jadwalPengambilan'])->name('penitip.jadwalPengambilan');
 });
 
-
-Route::get('/search-organisasi', function(\Illuminate\Http\Request $request) {
+Route::get('/search-organisasi', function(Request $request) {
     return redirect()->route('admin.organisasi.index', ['search' => $request->query('q')]);
 })->name('search.organisasi');
 
@@ -245,3 +229,5 @@ Route::prefix('admin')->group(function () {
     Route::resource('alamat-pembeli', AlamatPembeliController::class)->names('alamat');
 });
 
+Route::get('/pembeli/{id}/history', [PembeliController::class, 'history'])->name('pembeli.history');
+Route::post('/rating', [RatingController::class, 'store'])->name('rating.store');

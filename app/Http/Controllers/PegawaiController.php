@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Pegawai;
 use App\Models\RolePegawai;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rule;
@@ -133,4 +134,59 @@ class PegawaiController extends Controller
             'message' => 'Password pegawai berhasil direset ke tanggal lahir',
         ]);
     }
+
+    public function dashboardCs()
+    {
+        // Cek apakah user yang login adalah pegawai
+        if (!Auth::guard('pegawai')->check()) {
+            return redirect()->route('login')->withErrors(['access_denied' => 'Anda tidak diizinkan mengakses halaman ini.']);
+        }
+
+        $user = Auth::guard('pegawai')->user();
+
+        // Pastikan role-nya adalah CS (Customer Service)
+        if (!$user->rolePegawai || $user->rolePegawai->nama_role !== 'Customer Service') {
+            return redirect('/')->withErrors(['access_denied' => 'Anda tidak memiliki hak akses sebagai Customer Service.']);
+        }
+
+        // Jika role sesuai, lanjut tampilkan dashboard CS
+        return view('customerService.dashboardCustomerService');
+    }
+
+    public function dashboardGudang()
+    {
+        // Cek apakah user yang login adalah pegawai
+        if (!Auth::guard('pegawai')->check()) {
+            return redirect()->route('login')->withErrors(['access_denied' => 'Anda tidak diizinkan mengakses halaman ini.']);
+        }
+
+        $user = Auth::guard('pegawai')->user();
+
+        // Pastikan role-nya adalah Gudang
+        if (!$user->rolePegawai || $user->rolePegawai->nama_role !== 'Gudang') {
+            return redirect('/')->withErrors(['access_denied' => 'Anda tidak memiliki hak akses sebagai Gudang.']);
+        }
+
+        // Jika role sesuai, tampilkan dashboard Gudang
+        return view('pegawai.gudang.dashboardGudang');
+    }
+
+    public function dashboardOwner()
+    {
+        // Cek apakah user yang login adalah pegawai
+        if (!Auth::guard('pegawai')->check()) {
+            return redirect()->route('login')->withErrors(['access_denied' => 'Anda tidak diizinkan mengakses halaman ini.']);
+        }
+
+        $owner = Auth::guard('pegawai')->user();
+        
+        // Pastikan role-nya adalah Owner
+        if (!$owner->rolePegawai || $owner->rolePegawai->nama_role !== 'Owner') {
+            return redirect('/')->withErrors(['access_denied' => 'Anda tidak memiliki hak akses sebagai Owner.']);
+        }
+
+        // Jika role sesuai, tampilkan dashboard Owner dengan data owner
+        return view('owner.dashboardOwner', compact('owner'));
+    }
+
 }

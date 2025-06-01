@@ -111,16 +111,30 @@ class PenitipController extends Controller
 
     public function profileById($id)
     {
-        $penitip = Penitip::find($id);
+        $penitip = Penitip::findOrFail($id);
 
-        if (!$penitip) {
-            return abort(404, 'Penitip tidak ditemukan.');
+        $barangTitipan = BarangTitipan::whereHas('penitipan', function ($query) use ($id) {
+            $query->where('id_penitip', $id);
+        })->with('rating')->get();
+
+        $riwayatPenitipan = Penitipan::where('id_penitip', $id)
+                                ->with(['detailPenitipan.barang'])
+                                ->latest()->get();
+
+        // Hitung rata-rata rating dari semua barang milik penitip
+        $totalRating = 0;
+        $jumlahRating = 0;
+
+        foreach ($barangTitipan as $barang) {
+            if ($barang->rating) {
+                $totalRating += $barang->rating->rating;
+                $jumlahRating++;
+            }
         }
 
-        $barangTitipan = $penitip->barangTitipan ?? collect();
-        $riwayatPenitipan = $penitip->riwayatPenitipan ?? collect();
+        $averageRating = $jumlahRating > 0 ? round($totalRating / $jumlahRating, 2) : null;
 
-        return view('penitip.profilePenitip', compact('penitip', 'barangTitipan', 'riwayatPenitipan'));
+        return view('penitip.profilePenitip', compact('penitip', 'barangTitipan', 'riwayatPenitipan', 'averageRating'));
     }
 
     public function barangTitipanPenitip($id_penitip)

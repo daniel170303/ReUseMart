@@ -27,21 +27,6 @@
         <div class="card mb-4" id="form-tambah-barang">
             <div class="card-header">Tambah Barang Titipan</div>
             <div class="card-body">
-                {{-- Tampilkan error validasi di dalam form --}}
-                @if ($errors->any())
-                    <div class="alert alert-danger alert-dismissible fade show" role="alert">
-                        <strong>Terdapat kesalahan pada form:</strong>
-                        <ul class="mb-0 mt-2">
-                            @foreach ($errors->all() as $error)
-                                <li>{{ $error }}</li>
-                            @endforeach
-                        </ul>
-                        <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-                            <span aria-hidden="true">&times;</span>
-                        </button>
-                    </div>
-                @endif
-
                 <form action="{{ route('gudang.store') }}" method="POST" enctype="multipart/form-data" novalidate>
                     @csrf
                     <div class="row">

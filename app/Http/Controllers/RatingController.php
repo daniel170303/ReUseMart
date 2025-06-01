@@ -12,8 +12,8 @@ class RatingController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'id_barang' => 'required|exists:barang_titipans,id_barang',  // Barang yang dirating
-            'id_pembeli' => 'required|exists:pembelis,id_pembeli',  // Pembeli yang memberikan rating
+            'id_barang' => 'required|exists:barang_titipan,id_barang',  // Barang yang dirating
+            'id_pembeli' => 'required|exists:pembeli,id_pembeli',  // Pembeli yang memberikan rating
             'rating' => 'required|integer|between:1,5',  // Rating antara 1 sampai 5
         ]);
 

@@ -176,20 +176,7 @@ class LoginController extends Controller
             // Ambil nama role dari tabel role_pegawai
             $rolePegawai = RolePegawai::find($pegawai->id_role);
             
-            // Mapping nama role dari database ke role yang digunakan di sistem
-            $roleMapping = [
-                'Owner' => 'owner',
-                'Admin' => 'admin', 
-                'Customer Service' => 'cs',
-                'Gudang' => 'gudang',
-                'Hunter' => 'hunter',
-                'Kurir' => 'kurir'
-            ];
-            
-            $roleName = 'pegawai'; // default
-            if ($rolePegawai && isset($roleMapping[$rolePegawai->nama_role])) {
-                $roleName = $roleMapping[$rolePegawai->nama_role];
-            }
+            $roleName = $rolePegawai ? $this->mapRolePegawai($rolePegawai->nama_role) : 'pegawai';
             
             return [
                 'id' => $pegawai->id_pegawai,
@@ -425,7 +412,7 @@ class LoginController extends Controller
     private function handlePegawaiLogin(Request $request)
     {
         try {
-            $pegawai = Pegawai::where('email_pegawai', $request->email)->first();
+            $pegawai = Pegawai::with('rolePegawai')->where('email_pegawai', $request->email)->first();
 
             if (!$pegawai || !Hash::check($request->password, $pegawai->password_pegawai)) {
                 if ($request->wantsJson()) {
@@ -438,20 +425,7 @@ class LoginController extends Controller
             // Ambil role pegawai
             $rolePegawai = RolePegawai::find($pegawai->id_role);
 
-            // Pemetaan nama role ke route atau identifier
-            $roleMapping = [
-                'Owner' => 'owner',
-                'Admin' => 'admin',
-                'Customer Service' => 'cs',
-                'Gudang' => 'gudang',
-                'Hunter' => 'hunter',
-                'Kurir' => 'kurir'
-            ];
-
-            $roleName = 'pegawai'; // default fallback
-            if ($rolePegawai && isset($roleMapping[$rolePegawai->nama_role])) {
-                $roleName = $roleMapping[$rolePegawai->nama_role];
-            }
+            $roleName = $rolePegawai ? $this->mapRolePegawai($rolePegawai->nama_role) : 'pegawai';
 
             // Login menggunakan guard pegawai
             Auth::guard('pegawai')->login($pegawai, true);
@@ -492,6 +466,19 @@ class LoginController extends Controller
         }
     }
 
+    // Tambahkan di bagian paling bawah sebelum akhir class LoginController
+    private function mapRolePegawai($namaRole)
+    {
+        return [
+            'Owner' => 'owner',
+            'Admin' => 'admin',
+            'Customer Service' => 'cs',
+            'Gudang' => 'gudang',
+            'Hunter' => 'hunter',
+            'Kurir' => 'kurir',
+        ][$namaRole] ?? 'pegawai';
+    }
+
     // Register Pembeli (gabungkan API + Web)
     public function registerPembeli(Request $request)
     {
@@ -527,7 +514,7 @@ class LoginController extends Controller
                 'required',
                 'string',
                 'min:8',
-                'regex:/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/', // Inputan harus ada huruf kecil, besar, dan angka
+                'regex:/^(?=.[a-z])(?=.[A-Z])(?=.*\d)/', // Inputan harus ada huruf kecil, besar, dan angka
             ],
         ], [
             // Error messages
@@ -613,7 +600,7 @@ class LoginController extends Controller
                 'required',
                 'string',
                 'min:8',
-                'regex:/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/',
+                'regex:/^(?=.[a-z])(?=.[A-Z])(?=.*\d)/',
             ],
         ], [
             'nama_organisasi.required' => 'Nama organisasi harus diisi!',

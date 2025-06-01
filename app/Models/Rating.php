@@ -8,7 +8,10 @@ class Rating extends Model
 {
     use HasFactory;
 
+    protected $table = 'rating';
+    protected $primaryKey = 'id_rating';
     protected $fillable = ['id_barang', 'id_pembeli', 'rating'];
+    public $timestamps = false;
 
     // Relasi ke Barang
     public function barang()

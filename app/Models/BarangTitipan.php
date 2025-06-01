@@ -121,12 +121,12 @@ class BarangTitipan extends Model
     public function penitipan()
     {
         return $this->hasOneThrough(
-            \App\Models\Penitipan::class,
+            \App\Models\Penitip::class,
             \App\Models\DetailPenitipan::class,
-            'id_barang',   
-            'id_penitipan',
-            'id_barang',  
-            'id_penitipan'
+            'id_barang',   // Foreign key di detail_penitipan
+            'id_penitip',  // Foreign key di penitipan
+            'id_barang',   // Local key di barang_titipan
+            'id_penitipan' // Local key di detail_penitipan
         );
     }
 }

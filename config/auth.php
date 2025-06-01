@@ -31,13 +31,38 @@ return [
     | users are actually retrieved out of your database or other storage
     | system used by the application. Typically, Eloquent is utilized.
     |
-    | Supported: "session"
+    | Supported: "session", "token", "passport", "sanctum"
     |
     */
 
     'guards' => [
         'web' => [
             'driver' => 'session',
+            'provider' => 'users',
+        ],
+
+        'organisasi' => [
+            'driver' => 'session',
+            'provider' => 'organisasi',
+        ],
+
+        'pembeli' => [
+            'driver' => 'session',
+            'provider' => 'pembeli',
+        ],
+
+        'penitip' => [
+            'driver' => 'session',
+            'provider' => 'penitip',
+        ],
+
+        'pegawai' => [
+            'driver' => 'session',
+            'provider' => 'pegawai',
+        ],
+
+        'api' => [
+            'driver' => 'sanctum',
             'provider' => 'users',
         ],
     ],
@@ -65,6 +90,27 @@ return [
             'model' => env('AUTH_MODEL', App\Models\User::class),
         ],
 
+        'organisasi' => [
+            'driver' => 'eloquent',
+            'model' => App\Models\Organisasi::class,
+        ],
+
+        'pembeli' => [
+            'driver' => 'eloquent',
+            'model' => App\Models\Pembeli::class,
+        ],
+
+        'penitip' => [
+            'driver' => 'eloquent',
+            'model' => App\Models\Penitip::class,
+        ],
+
+        'pegawai' => [
+            'driver' => 'eloquent',
+            'model' => App\Models\Pegawai::class,
+        ],
+
+        // Alternative database provider example
         // 'users' => [
         //     'driver' => 'database',
         //     'table' => 'users',
@@ -94,6 +140,35 @@ return [
         'users' => [
             'provider' => 'users',
             'table' => env('AUTH_PASSWORD_RESET_TOKEN_TABLE', 'password_reset_tokens'),
+            'expire' => 60,
+            'throttle' => 60,
+        ],
+
+        'organisasi' => [
+            'provider' => 'organisasi',
+            'table' => 'password_reset_tokens',
+            'expire' => 60,
+            'throttle' => 60,
+        ],
+
+        'pembeli' => [
+            'provider' => 'pembeli',
+            'table' => 'password_reset_tokens',
+            'expire' => 60,
+            'throttle' => 60,
+        ],
+
+        'penitip' => [
+            'provider' => 'penitip',
+            'table' => 'password_reset_tokens',
+            'expire' => 60,
+            'throttle' => 60,
+        ],
+
+        // Tambahkan password reset untuk pegawai
+        'pegawai' => [
+            'provider' => 'pegawai',
+            'table' => 'password_reset_tokens',
             'expire' => 60,
             'throttle' => 60,
         ],

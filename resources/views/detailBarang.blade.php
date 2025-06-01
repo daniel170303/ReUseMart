@@ -48,6 +48,26 @@
                 @endforelse
             </div>
 
+            <!-- Info penitip & rating -->
+            <div class="mb-4 bg-gray-50 border border-gray-200 rounded-lg p-4">
+                @if ($penitip)
+                    <p class="text-gray-800 font-semibold">
+                        Dititipkan oleh: <span class="text-blue-700">{{ $penitip->nama_penitip }}</span>
+                    </p>
+                @else
+                    <p class="text-muted">Penitip tidak ditemukan</p>
+                @endif
+
+                @if ($averageRating)
+                    <p class="text-yellow-600 mt-1">
+                        Rating Penitip: <strong>{{ $averageRating }} / 5</strong> <i
+                            class="fas fa-star text-yellow-500"></i>
+                    </p>
+                @else
+                    <p class="text-gray-500 mt-1">Belum ada rating untuk penitip ini</p>
+                @endif
+            </div>
+
             <!-- Tombol kembali -->
             <div class="mt-8">
                 <a href="{{ url('/') }}"

@@ -28,6 +28,21 @@
                 </div>
             </div>
 
+            <!-- Rating Penitip -->
+            @if (!is_null($averageRating))
+                <div class="card mb-4 shadow-sm border-0">
+                    <div class="card-header bg-warning text-dark text-center">
+                        <h4 class="mb-0"><i class="fas fa-star me-2"></i>Rating Penitip</h4>
+                    </div>
+                    <div class="card-body text-center">
+                        <h1 class="display-5 fw-bold text-warning">
+                            {{ $averageRating }} <i class="fas fa-star text-warning"></i>
+                        </h1>
+                        <p class="text-muted mb-0">Berdasarkan rating dari pembeli untuk semua barang titipan</p>
+                    </div>
+                </div>
+            @endif
+
             <!-- Barang Titipan -->
             <div class="card mb-4 shadow-sm border-0">
                 <div class="card-header bg-success text-white text-center">
