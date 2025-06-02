@@ -163,14 +163,14 @@ class PenitipanController extends Controller
     {
         $penitipan = Penitipan::findOrFail($id_penitipan);
 
-        if ($penitipan->status_perpanjangan === 'ya') {
+        if ($penitipan->status_perpanjangan === 'tidak') {
             $tanggalSelesai = \Carbon\Carbon::parse($penitipan->tanggal_selesai_penitipan)->addDays(30);
             $tanggalBatasPengambilan = $tanggalSelesai->copy()->addDays(7);
 
             $penitipan->update([
                 'tanggal_selesai_penitipan' => $tanggalSelesai,
                 'tanggal_batas_pengambilan' => $tanggalBatasPengambilan,
-                'status_perpanjangan' => 'tidak',
+                'status_perpanjangan' => 'ya',
             ]);
 
             return redirect()->back()->with('success', 'Masa penitipan berhasil diperpanjang 30 hari.');

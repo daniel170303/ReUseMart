@@ -53,7 +53,7 @@
                                 @if (
                                     $barang->detailPenitipan &&
                                         $barang->detailPenitipan->penitipan &&
-                                        $barang->detailPenitipan->penitipan->status_perpanjangan == 'ya')
+                                        $barang->detailPenitipan->penitipan->status_perpanjangan == 'tidak')
                                     <form method="POST"
                                         action="{{ route('penitip.penitipan.perpanjang', $barang->detailPenitipan->penitipan->id_penitipan) }}">
                                         @csrf
