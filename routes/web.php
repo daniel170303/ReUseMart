@@ -171,6 +171,29 @@ Route::middleware(['multiauth'])->group(function () {
             return redirect()->route('login')->with('success', 'Logout berhasil!');
         })->name('hunter.logout');
     });
+
+    //ROUTE ADMIN
+    Route::get('/admin', function () {
+        return redirect()->route('admin.dashboard');
+    });
+    Route::get('/admin/dashboard', [DashboardController::class, 'adminDashboard'])->name('admin.dashboard');
+    Route::prefix('admin')->name('admin.')->group(function () {
+        Route::get('/pegawai', [PegawaiController::class, 'index'])->name('pegawai.index');
+        Route::get('/pegawai/create', [PegawaiController::class, 'create'])->name('pegawai.create');
+        Route::post('/pegawai', [PegawaiController::class, 'store'])->name('pegawai.store');
+        Route::get('/pegawai/{id}', [PegawaiController::class, 'show'])->name('pegawai.show');
+        Route::get('/pegawai/{id}/edit', [PegawaiController::class, 'edit'])->name('pegawai.edit');
+        Route::put('/pegawai/{id}', [PegawaiController::class, 'update'])->name('pegawai.update');
+        Route::delete('/pegawai/{id}', [PegawaiController::class, 'destroy'])->name('pegawai.destroy');
+        Route::get('/pegawai/search/{keyword}', [PegawaiController::class, 'search'])->name('pegawai.search');
+        Route::post('/logout', function () {
+            Auth::guard('pegawai')->logout();
+            session()->invalidate();
+            session()->regenerateToken();
+            return redirect()->route('login')->with('success', 'Logout berhasil!');
+            name('admin.logout');
+        });
+    });
 });
 
 
