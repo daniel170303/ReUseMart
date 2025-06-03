@@ -76,6 +76,10 @@ class LoginController extends Controller
 
         Log::info('User logged in successfully: ' . $email . ' with role: ' . $user['role']);
 
+        if ($request->wantsJson()) {
+            return $this->apiLogin($request);
+        }
+        
         // Redirect sesuai role
         return $this->redirectByRole($user['role']);
     }
