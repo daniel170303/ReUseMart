@@ -15,6 +15,9 @@ use App\Http\Controllers\{
     GambarBarangTitipanController
 };
 
+use Illuminate\Http\Request;
+use App\Http\Controllers\MobileAuthController;
+
 // === AUTH ROUTES (TIDAK PERLU AUTENTIKASI) ===
 
 // Satu endpoint login untuk semua role (deteksi otomatis)
@@ -169,4 +172,39 @@ Route::middleware('auth:sanctum')->group(function () {
     // Route yang bisa diakses beberapa role
     Route::get('/product/{id}', [ProductController::class, 'show'])
         ->middleware('role:admin,penitip,pembeli');
+});
+
+// Mobile Authentication Routes
+Route::prefix('mobile')->group(function () {
+    // Public routes
+    Route::post('/login', [MobileAuthController::class, 'login']);
+    Route::post('/check-email', [MobileAuthController::class, 'checkEmail']);
+    
+    // Protected routes
+    Route::middleware('auth:sanctum')->group(function () {
+        Route::post('/logout', [MobileAuthController::class, 'logout']);
+        Route::get('/user', [MobileAuthController::class, 'getUser']);
+        
+        // Role-specific routes
+        Route::middleware('role:pembeli')->prefix('pembeli')->group(function () {
+            // Pembeli specific routes
+            Route::get('/profile', function (Request $request) {
+                return response()->json(['message' => 'Pembeli profile']);
+            });
+        });
+        
+        Route::middleware('role:penitip')->prefix('penitip')->group(function () {
+            // Penitip specific routes
+            Route::get('/profile', function (Request $request) {
+                return response()->json(['message' => 'Penitip profile']);
+            });
+        });
+        
+        Route::middleware('role:hunter,kurir,admin,cs,gudang,owner')->prefix('pegawai')->group(function () {
+            // Pegawai specific routes
+            Route::get('/profile', function (Request $request) {
+                return response()->json(['message' => 'Pegawai profile']);
+            });
+        });
+    });
 });

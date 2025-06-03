@@ -7,53 +7,49 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
 
-class Pembeli extends Authenticatable
+class Penitip extends Authenticatable
 {
     use HasApiTokens, HasFactory, Notifiable;
 
-    protected $table = 'pembeli';
-    protected $primaryKey = 'id_pembeli';
+    protected $table = 'penitip';
+    protected $primaryKey = 'id_penitip';
     public $incrementing = true;
     protected $keyType = 'int';
 
     protected $fillable = [
-        'nama_pembeli',
-        'email_pembeli',
-        'password_pembeli',
-        'nomor_telepon_pembeli',
-        'alamat_pembeli',
-        'tanggal_lahir_pembeli',
+        'nama_penitip',
+        'nik_penitip',
+        'nomor_telepon_penitip',
+        'email_penitip',
+        'password_penitip',
+        'alamat_penitip',
+        'tanggal_lahir_penitip',
     ];
 
     protected $hidden = [
-        'password_pembeli',
+        'password_penitip',
         'remember_token',
     ];
 
     protected $casts = [
         'email_verified_at' => 'datetime',
-        'tanggal_lahir_pembeli' => 'date',
+        'tanggal_lahir_penitip' => 'date',
     ];
 
     // Override method untuk authentication
     public function getAuthPassword()
     {
-        return $this->password_pembeli;
+        return $this->password_penitip;
     }
 
     public function getEmailForPasswordReset()
     {
-        return $this->email_pembeli;
+        return $this->email_penitip;
     }
 
     // Relasi
-    public function rewardPembeli()
+    public function barangTitipan()
     {
-        return $this->hasOne(RewardPembeli::class, 'id_pembeli', 'id_pembeli');
-    }
-
-    public function transaksi()
-    {
-        return $this->hasMany(Transaksi::class, 'id_pembeli', 'id_pembeli');
+        return $this->hasMany(BarangTitipan::class, 'id_penitip', 'id_penitip');
     }
 }
