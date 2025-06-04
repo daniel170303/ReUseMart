@@ -1,28 +1,72 @@
 <?php
-
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Foundation\Auth\User as Authenticatable;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Laravel\Sanctum\HasApiTokens;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Log;
 
 class Pegawai extends Authenticatable
 {
+    use HasFactory, HasApiTokens;
+    
     protected $table = 'pegawai';
     protected $primaryKey = 'id_pegawai';
     public $timestamps = false;
-
+    
     protected $fillable = [
         'id_role',
         'nama_pegawai',
         'nomor_telepon_pegawai',
         'email_pegawai',
         'password_pegawai',
+        'tanggal_lahir_pegawai',
     ];
 
-    // Fungsi relasi
-    public function komisi()
+    /**
+     * The attributes that should be cast.
+     *
+     * @var array
+     */
+    protected $casts = [
+        'tanggal_lahir_pegawai' => 'date', // Casting ke tipe date Carbon
+    ];
+
+    protected $hidden = [
+        'password_pegawai',
+    ];
+
+    // Override method untuk autentikasi Laravel
+    public function getAuthIdentifierName()
     {
-        return $this->hasMany(KomisiPegawai::class, 'id_pegawai', 'id_pegawai');
+        return 'email_pegawai';
+    }
+
+    public function getAuthIdentifier()
+    {
+        return $this->getAttribute($this->primaryKey);
+    }
+
+    public function getAuthPassword()
+    {
+        return $this->password_pegawai;
+    }
+
+    public function getRememberToken()
+    {
+        return $this->remember_token ?? null;
+    }
+
+    public function setRememberToken($value)
+    {
+        $this->remember_token = $value;
+    }
+
+    public function getRememberTokenName()
+    {
+        return 'remember_token';
     }
 
     // Relationship dengan role_pegawai
@@ -34,37 +78,53 @@ class Pegawai extends Authenticatable
     // Accessor untuk mendapatkan nama role
     public function getRoleNameAttribute()
     {
-        return $this->rolePegawai ? $this->rolePegawai->nama_role : 'Unknown';
+        $role = $this->rolePegawai;
+        return $role ? $role->nama_role : 'Unknown';
+    }
+    
+    // Accessor untuk role_pegawai
+    public function getRolePegawaiAttribute()
+    {
+        return $this->rolePegawai()->first();
     }
 
-    // Method untuk mengecek role spesifik
+    // Method untuk mengecek role specific
     public function isOwner()
     {
-        return $this->rolePegawai && $this->rolePegawai->nama_role === 'Owner';
+        $role = $this->rolePegawai;
+        return $role && $role->nama_role === 'Owner';
     }
 
     public function isAdmin()
     {
-        return $this->rolePegawai && $this->rolePegawai->nama_role === 'Admin';
+        $role = $this->rolePegawai;
+        return $role && $role->nama_role === 'Admin';
     }
 
     public function isCS()
     {
-        return $this->rolePegawai && $this->rolePegawai->nama_role === 'Customer Service';
+        $role = $this->rolePegawai;
+        return $role && $role->nama_role === 'Customer Service';
     }
-    
+
     public function isGudang()
     {
-        return $this->rolePegawai && $this->rolePegawai->nama_role === 'Gudang';
+        $role = $this->rolePegawai;
+        return $role && $role->nama_role === 'Gudang';
     }
 
     public function isHunter()
     {
-        return $this->rolePegawai && $this->rolePegawai->nama_role === 'Hunter';
+        $role = $this->rolePegawai;
+        return $role && $role->nama_role === 'Hunter';
     }
 
     public function isKurir()
     {
-        return $this->rolePegawai && $this->rolePegawai->nama_role === 'Kurir';
+        $role = $this->rolePegawai;
+        return $role && $role->nama_role === 'Kurir';
     }
+    
+    // JANGAN gunakan mutator untuk password karena bisa menyebabkan masalah
+    // Gunakan DB::table() untuk update password langsung
 }
