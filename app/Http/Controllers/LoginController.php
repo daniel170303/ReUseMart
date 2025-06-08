@@ -22,12 +22,53 @@ class LoginController extends Controller
         return view('login.login');
     }
 
+    /**
+     * Check email untuk mobile app - mendeteksi role berdasarkan email
+     */
+    public function checkEmail(Request $request)
+    {
+        $request->validate([
+            'email' => ['required', 'email'],
+        ]);
+
+        $email = $request->email;
+        
+        // Cari user di berbagai tabel menggunakan method yang sudah ada
+        $user = $this->findUserAcrossTables($email);
+        
+        if (!$user) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Email tidak terdaftar dalam sistem.',
+            ], 404);
+        }
+        
+        return response()->json([
+            'success' => true,
+            'message' => 'Email ditemukan',
+            'data' => [
+                'user' => [
+                    'id' => $user['id'],
+                    'name' => $user['name'],
+                    'email' => $user['email'],
+                    'role' => $user['role'],
+                    'phone' => $user['phone'] ?? null,
+                    'model' => $user['model']
+                ]
+            ]
+        ], 200);
+    }
+
     // Unified Login Method - Handle semua role dari 1 form
     public function login(Request $request)
     {
         // Jika ada parameter role, gunakan method yang sesuai
         if ($request->has('role')) {
             return $this->handleRoleBasedLogin($request);
+        }
+
+        if ($request->wantsJson() || $request->expectsJson() || $request->header('Accept') === 'application/json') {
+            return $this->apiLogin($request);
         }
 
         // Default login behavior (tanpa role parameter)
@@ -76,11 +117,12 @@ class LoginController extends Controller
 
         Log::info('User logged in successfully: ' . $email . ' with role: ' . $user['role']);
 
+        // Setelah login berhasil, sebelum redirect
         if ($request->wantsJson()) {
             return $this->apiLogin($request);
         }
-        
-        // Redirect sesuai role
+
+        // Redirect sesuai role (untuk web)
         return $this->redirectByRole($user['role']);
     }
 
@@ -713,5 +755,86 @@ class LoginController extends Controller
     {
         $request->merge(['role' => 'pegawai']);
         return $this->handlePegawaiLogin($request);
+    }
+
+    /**
+     * Handle API login response
+     */
+    public function apiLogin(Request $request)
+    {
+        try {
+            // Validasi
+            $credentials = $request->validate([
+                'email' => ['required', 'email'],
+                'password' => ['required', 'string'],
+            ], [
+                'email.required' => 'Email harus diisi',
+                'email.email' => 'Format email tidak valid',
+                'password.required' => 'Password harus diisi',
+            ]);
+
+            $email = $credentials['email'];
+            $password = $credentials['password'];
+
+            Log::info('API Login attempt for email: ' . $email);
+
+            // Cari user di berbagai tabel
+            $user = $this->findUserAcrossTables($email);
+
+            if (!$user) {
+                Log::info('User not found for email: ' . $email);
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Email tidak terdaftar dalam sistem.',
+                ], 401);
+            }
+
+            // Verifikasi password
+            if (!Hash::check($password, $user['password'])) {
+                Log::info('Password mismatch for email: ' . $email);
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Password yang Anda masukkan salah.',
+                ], 401);
+            }
+
+            // Buat token untuk API (jika menggunakan Sanctum)
+            $token = null;
+            if (method_exists($user['model'], 'createToken')) {
+                $token = $user['model']->createToken('mobile-app')->plainTextToken;
+            }
+
+            Log::info('User logged in successfully: ' . $email . ' with role: ' . $user['role']);
+
+            // Return JSON response untuk mobile
+            return response()->json([
+                'success' => true,
+                'message' => 'Login berhasil',
+                'data' => [
+                    'token' => $token,
+                    'user' => [
+                        'id' => $user['id'],
+                        'name' => $user['name'],
+                        'email' => $user['email'],
+                        'role' => $user['role'],
+                        'phone' => $user['phone'] ?? null,
+                        'model' => $user['model_name'] ?? $user['role'],
+                    ]
+                ]
+            ], 200);
+
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Data tidak valid',
+                'errors' => $e->errors(),
+            ], 422);
+        } catch (\Exception $e) {
+            Log::error('API Login error: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Terjadi kesalahan server: ' . $e->getMessage(),
+            ], 500);
+        }
     }
 }

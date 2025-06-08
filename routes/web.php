@@ -145,8 +145,18 @@ Route::middleware(['multiauth'])->group(function () {
         return redirect()->route('owner.dashboard');
     });
     Route::get('/owner/dashboard', [PegawaiController::class, 'dashboardOwner'])->name('owner.dashboard');
-    Route::prefix('owner')->name('owner.')->group(function () {
+    Route::prefix('owner')->name('owner.')->middleware('auth:pegawai')->group(function () {
         Route::get('/profile/{id}', [OwnerController::class, 'profile'])->name('profile');
+        Route::get('/laporan-penjualan', [OwnerController::class, 'laporanPenjualan'])->name('laporanPenjualan');
+        Route::get('/laporan-penjualan-pdf', [OwnerController::class, 'laporanPenjualanPDF'])->name('laporanPenjualanPDF');
+        Route::get('/laporan-komisi', [OwnerController::class, 'laporanKomisi'])->name('laporanKomisi');
+        Route::get('/laporan-komisi-pdf', [OwnerController::class, 'laporanKomisiPDF'])->name('laporanKomisiPDF');
+        Route::get('/laporan-stok-gudang', [OwnerController::class, 'laporanStokGudang'])->name('laporanStokGudang');
+        Route::get('/laporan-stok-gudang-pdf', [OwnerController::class, 'laporanStokGudangPDF'])->name('laporanStokGudangPDF');
+        Route::get('/laporan-penjualan-per-kategori', [OwnerController::class, 'laporanPenjualanPerKategori'])->name('laporanPenjualanPerKategori');
+        Route::get('/laporan-penjualan-per-kategori-pdf', [OwnerController::class, 'laporanPenjualanPerKategoriPDF'])->name('laporanPenjualanPerKategoriPDF');
+        Route::get('/laporan-masa-penitipan-habis', [OwnerController::class, 'laporanMasaPenitipanHabis'])->name('laporanMasaPenitipanHabis');
+        Route::get('/laporan-masa-penitipan-habis-pdf', [OwnerController::class, 'laporanMasaPenitipanHabisPDF'])->name('laporanMasaPenitipanHabisPDF');
         Route::post('/logout', function () {
             Auth::guard('pegawai')->logout();
             session()->invalidate();
@@ -191,8 +201,7 @@ Route::middleware(['multiauth'])->group(function () {
             session()->invalidate();
             session()->regenerateToken();
             return redirect()->route('login')->with('success', 'Logout berhasil!');
-            name('admin.logout');
-        });
+        })->name('admin.logout');
     });
 });
 

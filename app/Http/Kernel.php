@@ -27,6 +27,7 @@ class Kernel extends HttpKernel
         ],
 
         'api' => [
+            \Laravel\Sanctum\Http\Middleware\EnsureFrontendRequestsAreStateful::class,
             'throttle:api',
             \Illuminate\Routing\Middleware\SubstituteBindings::class,
         ],
@@ -45,5 +46,6 @@ class Kernel extends HttpKernel
     'verified' => \Illuminate\Auth\Middleware\EnsureEmailIsVerified::class,
     // Tambahkan baris ini
     'role' => \App\Http\Middleware\CheckRole::class,
+    'multiauth' => \App\Http\Middleware\MultiAuthMiddleware::class,
 ];
 }

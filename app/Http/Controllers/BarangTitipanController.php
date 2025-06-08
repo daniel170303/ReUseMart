@@ -40,7 +40,6 @@ class BarangTitipanController extends Controller
                 ->orWhere('harga_barang', 'like', "%$keyword%")
                 ->orWhere('deskripsi_barang', 'like', "%$keyword%")
                 ->orWhere('jenis_barang', 'like', "%$keyword%")
-                ->orWhere('garansi_barang', 'like', "%$keyword%")
                 ->orWhere('berat_barang', 'like', "%$keyword%")
                 ->orWhere('status_barang', 'like', "%$keyword%");
             });
@@ -49,16 +48,23 @@ class BarangTitipanController extends Controller
         // Ambil semua barang titipan
         $barangTitipan = $query->get();
 
-        // Proses status garansi
+        // Proses status garansi berdasarkan tanggal akhir garansi
         foreach ($barangTitipan as $barang) {
-            if ($barang->sisa_garansi === null) {
+            if ($barang->garansi_barang === null) {
                 $barang->status_garansi = 'Tanpa Garansi';
-            } elseif ($barang->garansi_masih_berlaku) {
-                $tanggalHabis = now()->addMonths($barang->sisa_garansi);
-                $barang->status_garansi = 'Masih Bergaransi sampai ' . $tanggalHabis->translatedFormat('d M Y');
             } else {
-                $tanggalHabis = now()->subMonths(abs($barang->sisa_garansi));
-                $barang->status_garansi = 'Garansi Habis pada ' . $tanggalHabis->translatedFormat('d M Y');
+                $tanggalGaransi = Carbon::parse($barang->garansi_barang);
+                $hariIni = Carbon::now();
+                
+                if ($tanggalGaransi->gte($hariIni)) {
+                    $sisaHari = $hariIni->diffInDays($tanggalGaransi);
+                    $barang->status_garansi = 'Masih Bergaransi sampai ' . $tanggalGaransi->translatedFormat('d M Y') . " ({$sisaHari} hari lagi)";
+                    $barang->garansi_masih_berlaku = true;
+                } else {
+                    $hariLewat = $tanggalGaransi->diffInDays($hariIni);
+                    $barang->status_garansi = 'Garansi Habis pada ' . $tanggalGaransi->translatedFormat('d M Y') . " ({$hariLewat} hari yang lalu)";
+                    $barang->garansi_masih_berlaku = false;
+                }
             }
         }
 
@@ -98,10 +104,10 @@ class BarangTitipanController extends Controller
             'nama_barang_titipan' => 'required|string|max:255',
             'harga_barang' => 'required|numeric',
             'deskripsi_barang' => 'required|string',
-            'jenis_barang' => 'required|string',
-            'garansi_barang' => 'required|string|max:50',
+            'jenis_barang' => 'required|in:Elektronik & Gadget,Pakaian & Aksesori,Perabotan Rumah Tangga,Buku, Alat Tulis, & Peralatan Sekolah,Hobi, Mainan, & Koleksi,Perlengkapan Bayi & Anak,Otomotif & Aksesori,Perlengkapan Taman & Outdoor,Peralatan Kantor & Industri,Kosmetik & Perawatan Diri',
+            'garansi_barang' => 'required|date', // Validasi tanggal akhir garansi
             'berat_barang' => 'required|integer',
-            'status_barang' => 'required|in:dijual,terjual,sudah diambil penitip, sudah didonasikan, barang untuk donasi',
+            'status_barang' => 'required|in:dijual,terjual,sudah diambil penitip,sudah didonasikan,barang untuk donasi',
             'gambar_barang' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
             'gambar.*' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
             'mode' => 'required|in:penitip,hunter',
@@ -121,6 +127,11 @@ class BarangTitipanController extends Controller
             if ($request->hasFile('gambar_barang')) {
                 $path = $request->file('gambar_barang')->store('gambar_barang', 'public');
                 $validatedData['gambar_barang'] = $path;
+            }
+
+            // Format tanggal garansi
+            if ($request->garansi_barang) {
+                $validatedData['garansi_barang'] = Carbon::parse($request->garansi_barang)->format('Y-m-d');
             }
 
             // Hapus field yang tidak ada di tabel barang_titipan
@@ -291,25 +302,33 @@ class BarangTitipanController extends Controller
         $request->validate([
             'nama_barang_titipan' => 'required|string|max:255',
             'harga_barang' => 'required|numeric',
-            'jenis_barang' => 'required|string',
-            'garansi_barang' => 'nullable|string',
+            'jenis_barang' => 'required|in:Elektronik & Gadget,Pakaian & Aksesori,Perabotan Rumah Tangga,Buku, Alat Tulis, & Peralatan Sekolah,Hobi, Mainan, & Koleksi,Perlengkapan Bayi & Anak,Otomotif & Aksesori,Perlengkapan Taman & Outdoor,Peralatan Kantor & Industri,Kosmetik & Perawatan Diri',
+            'garansi_barang' => 'required|date', // Validasi tanggal akhir garansi
             'berat_barang' => 'required|numeric',
-            'status_barang' => 'required|string|in:dijual,terjual,sudah diambil penitip, sudah didonasikan, barang untuk donasi',
+            'status_barang' => 'required|string|in:dijual,terjual,sudah diambil penitip,sudah didonasikan,barang untuk donasi',
             'deskripsi_barang' => 'required|string',
             'gambar_barang' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
             'gambar.*' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
         ]);
 
-        // Update field utama
-        $barang->update($request->only([
+        $updateData = $request->only([
             'nama_barang_titipan',
             'harga_barang',
             'jenis_barang',
-            'garansi_barang',
             'berat_barang',
             'status_barang',
             'deskripsi_barang',
-        ]));
+        ]);
+
+        // Format tanggal garansi
+        if ($request->garansi_barang) {
+            $updateData['garansi_barang'] = Carbon::parse($request->garansi_barang)->format('Y-m-d');
+        } else {
+            $updateData['garansi_barang'] = null;
+        }
+
+        // Update field utama
+        $barang->update($updateData);
 
         // Ganti gambar utama jika ada
         if ($request->hasFile('gambar_barang')) {
@@ -380,34 +399,6 @@ class BarangTitipanController extends Controller
         } catch (\Exception $e) {
             return redirect()->back()->with('error', 'Terjadi kesalahan saat menghapus barang: ' . $e->getMessage());
         }
-    }
-
-    public function cekGaransi(Request $request)
-    {
-        $keyword = $request->input('keyword');
-
-        // Cari barang berdasarkan id atau nama, yang sudah pernah transaksi
-        $barang = BarangTitipan::where('id_barang', $keyword)
-            ->orWhere('nama_barang_titipan', 'like', "%$keyword%")
-            ->whereHas('transaksi') // pastikan barang sudah pernah transaksi
-            ->with('transaksiTerakhir')
-            ->first();
-
-        if (!$barang) {
-            return redirect()->back()->with('error', 'Barang tidak ditemukan atau belum pernah transaksi.');
-        }
-
-        // Hitung sisa garansi atau belum terjual.';
-        if ($barang->garansi_masih_berlaku) {
-            $tanggalHabis = \Carbon\Carbon::parse($barang->transaksiTerakhir->tanggal_pelunasan)->addMonths($barang->garansi_bulan);
-            $statusGaransi = "Garansi masih berlaku, habis pada " . $tanggalHabis->translatedFormat('d M Y') . " (sisa $sisaGaransi bulan).";
-        } else {
-            $tanggalHabis = \Carbon\Carbon::parse($barang->transaksiTerakhir->tanggal_pelunasan)->addMonths($barang->garansi_bulan);
-            $statusGaransi = "Garansi sudah habis sejak " . $tanggalHabis->translatedFormat('d M Y') . ".";
-        }
-
-        // Kirim ke view baru, atau ke halaman sama dengan session flash message
-        return view('landingPage.cekGaransi', compact('barang', 'statusGaransi'));
     }
 }
 

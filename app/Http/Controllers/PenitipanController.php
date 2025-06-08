@@ -23,15 +23,9 @@ class PenitipanController extends Controller
 
         // Ambil ID barang yang sudah dititipkan
         $barangSudahDititipkan = DetailPenitipan::pluck('id_barang')->toArray();
-        
-        // Ambil ID barang yang terhubung dengan hunter
-        $barangHunter = BarangTitipanHunter::pluck('id_barang')->toArray();
-        
-        // Gabungkan kedua array untuk mengecualikan barang yang sudah dititipkan DAN barang hunter
-        $barangTidakTersedia = array_merge($barangSudahDititipkan, $barangHunter);
 
         // Ambil barang yang TIDAK ada di list barang yang sudah dititipkan DAN TIDAK terhubung dengan hunter
-        $barangList = BarangTitipan::whereNotIn('id_barang', $barangTidakTersedia)
+        $barangList = BarangTitipan::whereNotIn('id_barang', $barangSudahDititipkan)
             ->where('status_barang', '!=', 'sudah diambil penitip') // Tambahan filter status
             ->where('status_barang', '!=', 'sudah didonasikan')     // Tambahan filter status
             ->get();

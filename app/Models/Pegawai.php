@@ -22,7 +22,7 @@ class Pegawai extends Authenticatable
         'nomor_telepon_pegawai',
         'email_pegawai',
         'password_pegawai',
-        'tanggal_lahir_pegawai',
+        // 'tanggal_lahir_pegawai',
     ];
 
     /**
@@ -30,44 +30,44 @@ class Pegawai extends Authenticatable
      *
      * @var array
      */
-    protected $casts = [
-        'tanggal_lahir_pegawai' => 'date', // Casting ke tipe date Carbon
-    ];
+    // protected $casts = [
+    //     'tanggal_lahir_pegawai' => 'date', // Casting ke tipe date Carbon
+    // ];
 
     protected $hidden = [
         'password_pegawai',
     ];
 
-    // Override method untuk autentikasi Laravel
-    public function getAuthIdentifierName()
-    {
-        return 'email_pegawai';
-    }
+    // // Override method untuk autentikasi Laravel
+    // public function getAuthIdentifierName()
+    // {
+    //     return 'email_pegawai';
+    // }
 
-    public function getAuthIdentifier()
-    {
-        return $this->getAttribute($this->primaryKey);
-    }
+    // public function getAuthIdentifier()
+    // {
+    //     return $this->getAttribute($this->primaryKey);
+    // }
 
-    public function getAuthPassword()
-    {
-        return $this->password_pegawai;
-    }
+    // public function getAuthPassword()
+    // {
+    //     return $this->password_pegawai;
+    // }
 
-    public function getRememberToken()
-    {
-        return $this->remember_token ?? null;
-    }
+    // public function getRememberToken()
+    // {
+    //     return $this->remember_token ?? null;
+    // }
 
-    public function setRememberToken($value)
-    {
-        $this->remember_token = $value;
-    }
+    // public function setRememberToken($value)
+    // {
+    //     $this->remember_token = $value;
+    // }
 
-    public function getRememberTokenName()
-    {
-        return 'remember_token';
-    }
+    // public function getRememberTokenName()
+    // {
+    //     return 'remember_token';
+    // }
 
     // Relationship dengan role_pegawai
     public function rolePegawai()
@@ -124,7 +124,4 @@ class Pegawai extends Authenticatable
         $role = $this->rolePegawai;
         return $role && $role->nama_role === 'Kurir';
     }
-    
-    // JANGAN gunakan mutator untuk password karena bisa menyebabkan masalah
-    // Gunakan DB::table() untuk update password langsung
 }

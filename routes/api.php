@@ -12,7 +12,8 @@ use App\Http\Controllers\{
     RewardPembeliController,
     RolePegawaiController,
     TransaksiController,
-    GambarBarangTitipanController
+    GambarBarangTitipanController,
+    LoginController,
 };
 
 use Illuminate\Http\Request;
@@ -20,11 +21,16 @@ use App\Http\Controllers\MobileAuthController;
 
 // === AUTH ROUTES (TIDAK PERLU AUTENTIKASI) ===
 
-// Satu endpoint login untuk semua role (deteksi otomatis)
-Route::post('/login', [AuthController::class, 'apiLogin']);
+// // Satu endpoint login untuk semua role (deteksi otomatis)
+// Route::post('/login', [LoginController::class, 'apiLogin']);
 
-// Register endpoint yang mendukung berbagai role
-Route::post('/register', [AuthController::class, 'apiRegister']);
+// // Register endpoint yang mendukung berbagai role
+// Route::post('/register', [LoginController::class, 'apiRegister']);
+
+Route::post('/check-email', [LoginController::class, 'checkEmail']);
+Route::post('/login', [LoginController::class, 'login']);
+Route::post('/register/pembeli', [LoginController::class, 'registerPembeli']);
+Route::post('/register/organisasi', [LoginController::class, 'registerOrganisasi']);
 
 // Protected Routes - hanya bisa diakses jika sudah login
 Route::middleware('auth:sanctum')->group(function () {
@@ -174,37 +180,3 @@ Route::middleware('auth:sanctum')->group(function () {
         ->middleware('role:admin,penitip,pembeli');
 });
 
-// Mobile Authentication Routes
-Route::prefix('mobile')->group(function () {
-    // Public routes
-    Route::post('/login', [MobileAuthController::class, 'login']);
-    Route::post('/check-email', [MobileAuthController::class, 'checkEmail']);
-    
-    // Protected routes
-    Route::middleware('auth:sanctum')->group(function () {
-        Route::post('/logout', [MobileAuthController::class, 'logout']);
-        Route::get('/user', [MobileAuthController::class, 'getUser']);
-        
-        // Role-specific routes
-        Route::middleware('role:pembeli')->prefix('pembeli')->group(function () {
-            // Pembeli specific routes
-            Route::get('/profile', function (Request $request) {
-                return response()->json(['message' => 'Pembeli profile']);
-            });
-        });
-        
-        Route::middleware('role:penitip')->prefix('penitip')->group(function () {
-            // Penitip specific routes
-            Route::get('/profile', function (Request $request) {
-                return response()->json(['message' => 'Penitip profile']);
-            });
-        });
-        
-        Route::middleware('role:hunter,kurir,admin,cs,gudang,owner')->prefix('pegawai')->group(function () {
-            // Pegawai specific routes
-            Route::get('/profile', function (Request $request) {
-                return response()->json(['message' => 'Pegawai profile']);
-            });
-        });
-    });
-});

@@ -62,56 +62,56 @@ class BarangTitipan extends Model
                     ->orderByDesc('tanggal_pelunasan');
     }
 
-    /**
-     * Ambil nilai garansi dalam bentuk bulan (int)
-     */
-    public function getGaransiBulanAttribute()
-    {
-        $value = strtolower($this->garansi_barang);
+    // /**
+    //  * Ambil nilai garansi dalam bentuk bulan (int)
+    //  */
+    // public function getGaransiBulanAttribute()
+    // {
+    //     $value = strtolower($this->garansi_barang);
 
-        if (str_contains($value, 'tahun')) {
-            preg_match('/\d+/', $value, $match);
-            return isset($match[0]) ? ((int)$match[0] * 12) : 0;
-        }
+    //     if (str_contains($value, 'tahun')) {
+    //         preg_match('/\d+/', $value, $match);
+    //         return isset($match[0]) ? ((int)$match[0] * 12) : 0;
+    //     }
 
-        if (str_contains($value, 'bulan')) {
-            preg_match('/\d+/', $value, $match);
-            return isset($match[0]) ? (int)$match[0] : 0;
-        }
+    //     if (str_contains($value, 'bulan')) {
+    //         preg_match('/\d+/', $value, $match);
+    //         return isset($match[0]) ? (int)$match[0] : 0;
+    //     }
 
-        return 0;
-    }
+    //     return 0;
+    // }
 
-    /**
-     * Ambil sisa garansi dalam bulan (int atau null)
-     */
-    public function getSisaGaransiAttribute()
-    {
-        if (!$this->transaksiTerakhir || !$this->transaksiTerakhir->tanggal_pelunasan) {
-            return null; // belum pernah terjual
-        }
+    // /**
+    //  * Ambil sisa garansi dalam bulan (int atau null)
+    //  */
+    // public function getSisaGaransiAttribute()
+    // {
+    //     if (!$this->transaksiTerakhir || !$this->transaksiTerakhir->tanggal_pelunasan) {
+    //         return null; // belum pernah terjual
+    //     }
 
-        $garansiBulan = $this->garansi_bulan;
-        $tanggalPelunasan = Carbon::parse($this->transaksiTerakhir->tanggal_pelunasan);
-        $garansiHabis = $tanggalPelunasan->copy()->addMonths($garansiBulan);
-        $sisa = now()->diffInMonths($garansiHabis, false);
+    //     $garansiBulan = $this->garansi_bulan;
+    //     $tanggalPelunasan = Carbon::parse($this->transaksiTerakhir->tanggal_pelunasan);
+    //     $garansiHabis = $tanggalPelunasan->copy()->addMonths($garansiBulan);
+    //     $sisa = now()->diffInMonths($garansiHabis, false);
 
-        return $sisa;
-    }
+    //     return $sisa;
+    // }
 
-    /**
-     * Cek apakah garansi masih berlaku
-     */
-    public function getGaransiMasihBerlakuAttribute()
-    {
-        $sisa = $this->sisa_garansi;
+    // /**
+    //  * Cek apakah garansi masih berlaku
+    //  */
+    // public function getGaransiMasihBerlakuAttribute()
+    // {
+    //     $sisa = $this->sisa_garansi;
 
-        if ($sisa === null) {
-            return null;
-        }
+    //     if ($sisa === null) {
+    //         return null;
+    //     }
 
-        return $sisa > 0;
-    }
+    //     return $sisa > 0;
+    // }
 
     public function detailPenitipan()
     {

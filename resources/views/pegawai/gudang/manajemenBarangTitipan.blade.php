@@ -77,20 +77,21 @@
                                             Mode Hunter Aktif
                                         </h6>
                                         <p class="mb-0">
-                                            Pilih hunter yang akan dicatat untuk barang ini. 
-                                            Pegawai gudang (<strong>{{ session('user_name', 'Anda') }}</strong>) tetap akan tercatat sebagai yang menambahkan barang.
+                                            Pilih hunter yang akan dicatat untuk barang ini.
+                                            Pegawai gudang (<strong>{{ session('user_name', 'Anda') }}</strong>) tetap akan
+                                            tercatat sebagai yang menambahkan barang.
                                         </p>
                                     </div>
                                 </div>
                             </div>
-                            
+
                             <div class="form-group">
                                 <label for="hunter_id" class="font-weight-bold">
                                     <i class="fas fa-user-tie text-success mr-2"></i>
                                     Pilih Hunter <span class="text-danger">*</span>
                                 </label>
-                                <select class="form-control form-control-lg @error('hunter_id') is-invalid @enderror" 
-                                        name="hunter_id" id="hunter_id">
+                                <select class="form-control form-control-lg @error('hunter_id') is-invalid @enderror"
+                                    name="hunter_id" id="hunter_id">
                                     <option value="">
                                         <i class="fas fa-hand-pointer"></i> -- Pilih Hunter --
                                     </option>
@@ -98,7 +99,8 @@
                                         @foreach ($hunters as $hunter)
                                             <option value="{{ $hunter->id_pegawai }}"
                                                 {{ old('hunter_id') == $hunter->id_pegawai ? 'selected' : '' }}>
-                                                <i class="fas fa-user"></i> {{ $hunter->nama_pegawai }} (ID: {{ $hunter->id_pegawai }})
+                                                <i class="fas fa-user"></i> {{ $hunter->nama_pegawai }} (ID:
+                                                {{ $hunter->id_pegawai }})
                                             </option>
                                         @endforeach
                                     @else
@@ -117,7 +119,7 @@
                                 <small class="form-text text-muted mt-2">
                                     <i class="fas fa-users mr-1"></i>
                                     <strong>{{ isset($hunters) ? $hunters->count() : 0 }}</strong> hunter tersedia
-                                    @if(isset($hunters) && $hunters->count() == 0)
+                                    @if (isset($hunters) && $hunters->count() == 0)
                                         <span class="text-warning">
                                             <i class="fas fa-exclamation-triangle ml-2"></i>
                                             Tidak ada hunter yang terdaftar dalam sistem
@@ -152,10 +154,41 @@
                             @enderror
                         </div>
                         <div class="col-md-6 mb-3">
-                            <label for="jenis_barang">Jenis <span class="text-danger">*</span></label>
-                            <input type="text" class="form-control @error('jenis_barang') is-invalid @enderror"
-                                name="jenis_barang" id="jenis_barang" value="{{ old('jenis_barang') }}"
-                                placeholder="Masukkan jenis barang">
+                            <label for="jenis_barang">Jenis Barang <span class="text-danger">*</span></label>
+                            <select class="form-control @error('jenis_barang') is-invalid @enderror" name="jenis_barang"
+                                id="jenis_barang">
+                                <option value="">-- Pilih Jenis Barang --</option>
+                                <option value="Elektronik & Gadget"
+                                    {{ old('jenis_barang') == 'Elektronik & Gadget' ? 'selected' : '' }}>Elektronik &
+                                    Gadget</option>
+                                <option value="Pakaian & Aksesori"
+                                    {{ old('jenis_barang') == 'Pakaian & Aksesori' ? 'selected' : '' }}>Pakaian & Aksesori
+                                </option>
+                                <option value="Perabotan Rumah Tangga"
+                                    {{ old('jenis_barang') == 'Perabotan Rumah Tangga' ? 'selected' : '' }}>Perabotan Rumah
+                                    Tangga</option>
+                                <option value="Buku, Alat Tulis, & Peralatan Sekolah"
+                                    {{ old('jenis_barang') == 'Buku, Alat Tulis, & Peralatan Sekolah' ? 'selected' : '' }}>
+                                    Buku, Alat Tulis, & Peralatan Sekolah</option>
+                                <option value="Hobi, Mainan, & Koleksi"
+                                    {{ old('jenis_barang') == 'Hobi, Mainan, & Koleksi' ? 'selected' : '' }}>Hobi, Mainan,
+                                    & Koleksi</option>
+                                <option value="Perlengkapan Bayi & Anak"
+                                    {{ old('jenis_barang') == 'Perlengkapan Bayi & Anak' ? 'selected' : '' }}>Perlengkapan
+                                    Bayi & Anak</option>
+                                <option value="Otomotif & Aksesori"
+                                    {{ old('jenis_barang') == 'Otomotif & Aksesori' ? 'selected' : '' }}>Otomotif &
+                                    Aksesori</option>
+                                <option value="Perlengkapan Taman & Outdoor"
+                                    {{ old('jenis_barang') == 'Perlengkapan Taman & Outdoor' ? 'selected' : '' }}>
+                                    Perlengkapan Taman & Outdoor</option>
+                                <option value="Peralatan Kantor & Industri"
+                                    {{ old('jenis_barang') == 'Peralatan Kantor & Industri' ? 'selected' : '' }}>Peralatan
+                                    Kantor & Industri</option>
+                                <option value="Kosmetik & Perawatan Diri"
+                                    {{ old('jenis_barang') == 'Kosmetik & Perawatan Diri' ? 'selected' : '' }}>Kosmetik &
+                                    Perawatan Diri</option>
+                            </select>
                             @error('jenis_barang')
                                 <div class="invalid-feedback">
                                     {{ $message }}
@@ -164,9 +197,8 @@
                         </div>
                         <div class="col-md-6 mb-3">
                             <label for="garansi_barang">Garansi <span class="text-danger">*</span></label>
-                            <input type="text" class="form-control @error('garansi_barang') is-invalid @enderror"
-                                name="garansi_barang" id="garansi_barang" value="{{ old('garansi_barang') }}"
-                                placeholder="Contoh: 12 bulan, 1 tahun, Tidak ada garansi">
+                            <input type="date" class="form-control @error('garansi_barang') is-invalid @enderror"
+                                name="garansi_barang" id="garansi_barang" value="{{ old('garansi_barang') }}">
                             @error('garansi_barang')
                                 <div class="invalid-feedback">
                                     {{ $message }}
@@ -256,7 +288,8 @@
                         <div class="text-muted">
                             <small>
                                 <i class="fas fa-info-circle mr-1"></i>
-                                Mode aktif: <span id="active-mode-display" class="font-weight-bold text-primary">Penitip</span>
+                                Mode aktif: <span id="active-mode-display"
+                                    class="font-weight-bold text-primary">Penitip</span>
                             </small>
                         </div>
                     </div>
@@ -318,7 +351,7 @@
                                 <td>{{ $barang->jenis_barang }}</td>
                                 <td>{{ $barang->berat_barang }} g</td>
                                 <td>{{ ucfirst($barang->status_barang) }}</td>
-                                <td>{{ $barang->garansi_barang ?? '-' }}</td>
+                                <td>{{ $barang->garansi_barang ?? '' }}</td>
                                 <td>
                                     <!-- Tombol Edit -->
                                     <button type="button" class="btn btn-primary btn-edit-barang"
@@ -477,7 +510,7 @@
         {{-- Modal Edit --}}
         <div class="modal fade" id="editModal" tabindex="-1" role="dialog" aria-labelledby="editModalLabel"
             aria-hidden="true">
-            <div class="modal-dialog" role="document">
+            <div class="modal-dialog modal-lg" role="document">
                 <div class="modal-content">
                     <form id="editForm" method="POST" enctype="multipart/form-data">
                         @csrf
@@ -488,62 +521,102 @@
                                 <span aria-hidden="true">&times;</span>
                             </button>
                         </div>
-                        <div class="modal-body row">
-                            <input type="hidden" name="id_barang" id="edit_id_barang">
-                            <div class="col-md-6 mb-3">
-                                <label for="edit_nama_barang_titipan">Nama Barang</label>
-                                <input type="text" class="form-control" name="nama_barang_titipan"
-                                    id="edit_nama_barang_titipan" required>
-                            </div>
-                            <div class="col-md-6 mb-3">
-                                <label for="edit_harga_barang">Harga</label>
-                                <input type="number" class="form-control" name="harga_barang" id="edit_harga_barang"
-                                    required>
-                            </div>
-                            <div class="col-md-6 mb-3">
-                                <label for="edit_jenis_barang">Jenis</label>
-                                <input type="text" class="form-control" name="jenis_barang" id="edit_jenis_barang"
-                                    required>
-                            </div>
-                            <div class="col-md-6 mb-3">
-                                <label for="edit_garansi_barang">Garansi (bulan)</label>
-                                <input type="text" class="form-control" name="garansi_barang"
-                                    id="edit_garansi_barang">
-                            </div>
-                            <div class="col-md-6 mb-3">
-                                <label for="edit_berat_barang">Berat (gram)</label>
-                                <input type="number" class="form-control" name="berat_barang" id="edit_berat_barang"
-                                    required>
-                            </div>
-                            <div class="col-md-6 mb-3">
-                                <label for="edit_status_barang">Status</label>
-                                <select class="form-control" name="status_barang" id="edit_status_barang" required>
-                                    <option value="dijual">dijual</option>
-                                    <option value="barang untuk donasi">barang untuk donasi</option>
-                                </select>
-                            </div>
-                            <div class="col-md-12 mb-3">
-                                <label for="edit_deskripsi_barang">Deskripsi</label>
-                                <textarea class="form-control" name="deskripsi_barang" id="edit_deskripsi_barang" required></textarea>
-                            </div>
-                            <div class="col-md-6 mb-3">
-                                <label for="edit_gambar_barang">Gambar Utama (opsional)</label>
-                                <input type="file" class="form-control" name="gambar_barang" id="edit_gambar_barang"
-                                    accept="image/*">
-                            </div>
-                            <div class="col-md-6 mb-3">
-                                <label for="edit_gambar_tambahan">Gambar Tambahan (boleh lebih dari satu)</label>
-                                <input type="file" class="form-control" name="gambar[]" id="edit_gambar_tambahan"
-                                    accept="image/*" multiple>
-                            </div>
-                            <div class="col-12">
-                                <label>Gambar Tambahan Saat Ini:</label>
-                                <div id="gambarTambahanContainer" class="d-flex flex-wrap"></div>
+                        <div class="modal-body">
+                            <div class="row">
+                                <input type="hidden" name="id_barang" id="edit_id_barang">
+                                
+                                <div class="col-md-6 mb-3">
+                                    <label for="edit_nama_barang_titipan">Nama Barang <span class="text-danger">*</span></label>
+                                    <input type="text" class="form-control" name="nama_barang_titipan"
+                                        id="edit_nama_barang_titipan" required>
+                                </div>
+                                
+                                <div class="col-md-6 mb-3">
+                                    <label for="edit_harga_barang">Harga <span class="text-danger">*</span></label>
+                                    <input type="number" class="form-control" name="harga_barang" id="edit_harga_barang"
+                                        min="0" step="0.01" required>
+                                </div>
+                                
+                                <div class="col-md-6 mb-3">
+                                    <label for="edit_jenis_barang">Jenis Barang <span class="text-danger">*</span></label>
+                                    <select class="form-control" name="jenis_barang" id="edit_jenis_barang" required>
+                                        <option value="">-- Pilih Jenis Barang --</option>
+                                        <option value="Elektronik & Gadget">Elektronik & Gadget</option>
+                                        <option value="Pakaian & Aksesori">Pakaian & Aksesori</option>
+                                        <option value="Perabotan Rumah Tangga">Perabotan Rumah Tangga</option>
+                                        <option value="Buku, Alat Tulis, & Peralatan Sekolah">Buku, Alat Tulis, & Peralatan Sekolah</option>
+                                        <option value="Hobi, Mainan, & Koleksi">Hobi, Mainan, & Koleksi</option>
+                                        <option value="Perlengkapan Bayi & Anak">Perlengkapan Bayi & Anak</option>
+                                        <option value="Otomotif & Aksesori">Otomotif & Aksesori</option>
+                                        <option value="Perlengkapan Taman & Outdoor">Perlengkapan Taman & Outdoor</option>
+                                        <option value="Peralatan Kantor & Industri">Peralatan Kantor & Industri</option>
+                                        <option value="Kosmetik & Perawatan Diri">Kosmetik & Perawatan Diri</option>
+                                    </select>
+                                </div>
+                                
+                                <div class="col-md-6 mb-3">
+                                    <label for="edit_garansi_barang">Garansi <span class="text-danger">*</span></label>
+                                    <input type="date" class="form-control" name="garansi_barang" id="edit_garansi_barang" required>
+                                </div>
+                                
+                                <div class="col-md-6 mb-3">
+                                    <label for="edit_berat_barang">Berat (gram) <span class="text-danger">*</span></label>
+                                    <input type="number" class="form-control" name="berat_barang" id="edit_berat_barang"
+                                        min="1" required>
+                                </div>
+                                
+                                <div class="col-md-6 mb-3">
+                                    <label for="edit_status_barang">Status <span class="text-danger">*</span></label>
+                                    <select class="form-control" name="status_barang" id="edit_status_barang" required>
+                                        <option value="">-- Pilih Status --</option>
+                                        <option value="dijual">Dijual</option>
+                                        <option value="barang untuk donasi">Barang untuk Donasi</option>
+                                    </select>
+                                </div>
+                                
+                                <div class="col-md-12 mb-3">
+                                    <label for="edit_deskripsi_barang">Deskripsi <span class="text-danger">*</span></label>
+                                    <textarea class="form-control" name="deskripsi_barang" id="edit_deskripsi_barang" 
+                                        rows="3" required placeholder="Masukkan deskripsi barang..."></textarea>
+                                </div>
+                                
+                                <div class="col-md-6 mb-3">
+                                    <label for="edit_gambar_barang">Gambar Utama (opsional)</label>
+                                    <input type="file" class="form-control" name="gambar_barang" id="edit_gambar_barang"
+                                        accept="image/jpeg,image/png,image/jpg,image/gif">
+                                    <small class="form-text text-muted">Format yang diizinkan: JPEG, PNG, JPG, GIF. Maksimal 2MB.</small>
+                                    
+                                    {{-- Preview gambar utama saat ini --}}
+                                    <div id="current_main_image" class="mt-2" style="display: none;">
+                                        <label class="form-label">Gambar Utama Saat Ini:</label>
+                                        <div>
+                                            <img id="preview_main_image" src="" alt="Gambar Utama" class="img-thumbnail" width="100">
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="col-md-6 mb-3">
+                                    <label for="edit_gambar_tambahan">Gambar Tambahan (opsional)</label>
+                                    <input type="file" class="form-control" name="gambar[]" id="edit_gambar_tambahan"
+                                        accept="image/jpeg,image/png,image/jpg,image/gif" multiple>
+                                    <small class="form-text text-muted">Anda dapat memilih beberapa gambar sekaligus. Format yang diizinkan: JPEG, PNG, JPG, GIF. Maksimal 2MB per file.</small>
+                                </div>
+                                
+                                <div class="col-12">
+                                    <label class="form-label">Gambar Tambahan Saat Ini:</label>
+                                    <div id="gambarTambahanContainer" class="d-flex flex-wrap">
+                                        <!-- Gambar tambahan akan ditampilkan di sini -->
+                                    </div>
+                                </div>
                             </div>
                         </div>
                         <div class="modal-footer">
-                            <button type="button" class="btn btn-secondary" data-dismiss="modal">Batal</button>
-                            <button type="submit" class="btn btn-primary">Simpan Perubahan</button>
+                            <button type="button" class="btn btn-secondary" data-dismiss="modal">
+                                <i class="fas fa-times mr-1"></i>Batal
+                            </button>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save mr-1"></i>Simpan Perubahan
+                            </button>
                         </div>
                     </form>
                 </div>
@@ -665,30 +738,132 @@
 
                         form.action = `/gudang/barang/${barang.id_barang}`;
 
+                        // Set basic fields
                         document.getElementById('edit_id_barang').value = barang.id_barang;
-                        document.getElementById('edit_nama_barang_titipan').value = barang
-                            .nama_barang_titipan;
+                        document.getElementById('edit_nama_barang_titipan').value = barang.nama_barang_titipan;
                         document.getElementById('edit_harga_barang').value = barang.harga_barang;
-                        document.getElementById('edit_jenis_barang').value = barang.jenis_barang;
-                        document.getElementById('edit_garansi_barang').value = barang.garansi_barang;
                         document.getElementById('edit_berat_barang').value = barang.berat_barang;
-                        document.getElementById('edit_status_barang').value = barang.status_barang;
-                        document.getElementById('edit_deskripsi_barang').value = barang
-                            .deskripsi_barang;
+                        document.getElementById('edit_deskripsi_barang').value = barang.deskripsi_barang;
 
+                        // Set dropdown jenis barang
+                        const jenisSelect = document.getElementById('edit_jenis_barang');
+                        jenisSelect.value = barang.jenis_barang;
+
+                        // Set dropdown status barang
+                        const statusSelect = document.getElementById('edit_status_barang');
+                        statusSelect.value = barang.status_barang;
+
+                        // Set date garansi
+                        const garansiInput = document.getElementById('edit_garansi_barang');
+                        if (barang.garansi_barang) {
+                            // Pastikan format tanggal sesuai dengan input date (YYYY-MM-DD)
+                            const garansiDate = new Date(barang.garansi_barang);
+                            const formattedDate = garansiDate.toISOString().split('T')[0];
+                            garansiInput.value = formattedDate;
+                        }
+
+                        // Show current main image if exists
+                        const currentMainImageDiv = document.getElementById('current_main_image');
+                        const previewMainImage = document.getElementById('preview_main_image');
+                        
+                        if (barang.gambar_barang) {
+                            previewMainImage.src = `/storage/${barang.gambar_barang}`;
+                            currentMainImageDiv.style.display = 'block';
+                        } else {
+                            currentMainImageDiv.style.display = 'none';
+                        }
+
+                        // Handle additional images
                         const gambarContainer = document.getElementById('gambarTambahanContainer');
                         gambarContainer.innerHTML = '';
-                        if (barang.gambar_tambahan) {
-                            barang.gambar_tambahan.forEach(gambar => {
+                        
+                        if (barang.gambar_barang_titipan && barang.gambar_barang_titipan.length > 0) {
+                            barang.gambar_barang_titipan.forEach((gambar, index) => {
                                 const div = document.createElement('div');
                                 div.classList.add('position-relative', 'm-1');
                                 div.innerHTML = `
-                            <img src="/storage/gambar_barang_titipan/${gambar.nama_file_gambar}" width="80" class="me-2">
-                        `;
+                                    <img src="/storage/gambar_barang_titipan/${gambar.nama_file_gambar}" 
+                                         width="80" height="80" 
+                                         class="img-thumbnail object-cover" 
+                                         alt="Gambar ${index + 1}">
+                                    <small class="d-block text-center text-muted mt-1">Gambar ${index + 1}</small>
+                                `;
                                 gambarContainer.appendChild(div);
                             });
+                        } else {
+                            gambarContainer.innerHTML = '<p class="text-muted">Tidak ada gambar tambahan.</p>';
                         }
+
+                        // Show modal
                         $('#editModal').modal('show');
+                    });
+                });
+
+                // Handle form submission validation
+                const editForm = document.getElementById('editForm');
+                if (editForm) {
+                    editForm.addEventListener('submit', function(e) {
+                        // Validate required fields
+                        const requiredFields = [
+                            'edit_nama_barang_titipan',
+                            'edit_harga_barang', 
+                            'edit_jenis_barang',
+                            'edit_garansi_barang',
+                            'edit_berat_barang',
+                            'edit_status_barang',
+                            'edit_deskripsi_barang'
+                        ];
+
+                        let isValid = true;
+                        let firstInvalidField = null;
+
+                        requiredFields.forEach(fieldId => {
+                            const field = document.getElementById(fieldId);
+                            if (!field.value.trim()) {
+                                field.classList.add('is-invalid');
+                                isValid = false;
+                                if (!firstInvalidField) {
+                                    firstInvalidField = field;
+                                }
+                            } else {
+                                field.classList.remove('is-invalid');
+                            }
+                        });
+
+                        if (!isValid) {
+                            e.preventDefault();
+                            if (firstInvalidField) {
+                                firstInvalidField.focus();
+                            }
+                            alert('Mohon lengkapi semua field yang wajib diisi!');
+                            return false;
+                        }
+
+                        // Validate file size if files are selected
+                        const mainImageFile = document.getElementById('edit_gambar_barang').files[0];
+                        const additionalImageFiles = document.getElementById('edit_gambar_tambahan').files;
+
+                        if (mainImageFile && mainImageFile.size > 2 * 1024 * 1024) {
+                            e.preventDefault();
+                            alert('Ukuran gambar utama tidak boleh lebih dari 2MB!');
+                            return false;
+                        }
+
+                        for (let i = 0; i < additionalImageFiles.length; i++) {
+                            if (additionalImageFiles[i].size > 2 * 1024 * 1024) {
+                                e.preventDefault();
+                                alert(`Ukuran gambar tambahan ${i + 1} tidak boleh lebih dari 2MB!`);
+                                return false;
+                            }
+                        }
+                    });
+                }
+
+                // Clear validation on input change
+                const formInputs = document.querySelectorAll('#editModal input, #editModal select, #editModal textarea');
+                formInputs.forEach(input => {
+                    input.addEventListener('input', function() {
+                        this.classList.remove('is-invalid');
                     });
                 });
             });
@@ -798,10 +973,11 @@
                             // Show hunter field dan buat required
                             hunterField.style.display = 'block';
                             hunterSelect.setAttribute('required', 'required');
-                            
+
                             // Update text elements
                             formTitle.textContent = 'Tambah Barang Titipan - Mode Hunter';
-                            modeInfo.innerHTML = '<i class="fas fa-info-circle mr-1"></i> Pegawai gudang dan hunter yang dipilih akan tercatat';
+                            modeInfo.innerHTML =
+                                '<i class="fas fa-info-circle mr-1"></i> Pegawai gudang dan hunter yang dipilih akan tercatat';
                             currentMode.innerHTML = '<i class="fas fa-search mr-1"></i>Hunter';
                             activeModeDisplay.textContent = 'Hunter';
                             activeModeDisplay.className = 'font-weight-bold text-success';
@@ -821,16 +997,17 @@
                             hunterField.style.transition = 'all 0.3s ease';
                             hunterField.style.opacity = '0';
                             hunterField.style.transform = 'translateY(-10px)';
-                            
+
                             setTimeout(() => {
                                 hunterField.style.display = 'none';
                                 hunterSelect.removeAttribute('required');
                                 hunterSelect.value = ''; // Reset value
                             }, 300);
-                            
+
                             // Update text elements
                             formTitle.textContent = 'Tambah Barang Titipan - Mode Penitip';
-                            modeInfo.innerHTML = '<i class="fas fa-info-circle mr-1"></i> Pegawai gudang akan tercatat sebagai penambah barang';
+                            modeInfo.innerHTML =
+                                '<i class="fas fa-info-circle mr-1"></i> Pegawai gudang akan tercatat sebagai penambah barang';
                             currentMode.innerHTML = '<i class="fas fa-user mr-1"></i>Penitip';
                             activeModeDisplay.textContent = 'Penitip';
                             activeModeDisplay.className = 'font-weight-bold text-primary';
@@ -852,7 +1029,7 @@
                             const hunterId = hunterSelect.value;
                             if (!hunterId) {
                                 e.preventDefault();
-                                
+
                                 // Show better error message
                                 const alertDiv = document.createElement('div');
                                 alertDiv.className = 'alert alert-warning alert-dismissible fade show';
@@ -867,20 +1044,20 @@
                                         <span>&times;</span>
                                     </button>
                                 `;
-                                
+
                                 // Insert alert before form
                                 form.parentNode.insertBefore(alertDiv, form);
-                                
+
                                 // Focus on hunter select
                                 hunterSelect.focus();
                                 hunterSelect.classList.add('is-invalid');
-                                
+
                                 // Remove alert after 5 seconds
                                 setTimeout(() => {
                                     alertDiv.remove();
                                     hunterSelect.classList.remove('is-invalid');
                                 }, 5000);
-                                
+
                                 return false;
                             }
                         }
@@ -896,7 +1073,7 @@
                             this.style.boxShadow = '0 4px 8px rgba(0,0,0,0.1)';
                         }
                     });
-                    
+
                     button.addEventListener('mouseleave', function() {
                         if (!this.classList.contains('active')) {
                             this.style.transform = 'translateY(0)';
