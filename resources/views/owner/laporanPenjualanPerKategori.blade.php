@@ -41,20 +41,7 @@
                             </div>
                         </div>
 
-                        {{-- Info Alert --}}
-                        <div class="alert alert-info">
-                            <i class="fas fa-info-circle mr-2"></i>
-                            <strong>Informasi:</strong> Laporan ini menampilkan data barang titipan yang tersambung ke
-                            penitipan berdasarkan tahun penitipan {{ $tahun }}.
-                            <ul class="mb-0 mt-2">
-                                <li><strong>Terjual:</strong> Barang dengan status "dijual" DAN memiliki transaksi dengan
-                                    status "Selesai" (sudah dilunasi)</li>
-                                <li><strong>Gagal Terjual:</strong> Barang dengan status "sudah diambil penitip" (tidak
-                                    berhasil terjual)</li>
-                                <li><strong>Belum Terjual:</strong> Barang dengan status "dijual" tapi belum ada transaksi
-                                    yang selesai (masih tersedia untuk dibeli)</li>
-                            </ul>
-                        </div>
+                        
 
                         {{-- Summary Cards --}}
                         <div class="row mb-4">
@@ -366,85 +353,6 @@
                                                         </div>
                                                     </div>
                                                 </div>
-                                            </div>
-
-                                            {{-- Rekomendasi --}}
-                                            <div class="alert alert-info mt-3">
-                                                <h6><i class="fas fa-lightbulb mr-2"></i>Rekomendasi:</h6>
-                                                <ul class="mb-0">
-                                                    @if ($tingkatKeberhasilan < 50)
-                                                        <li>Tingkat keberhasilan penjualan masih rendah
-                                                            ({{ number_format($tingkatKeberhasilan, 1) }}%). Pertimbangkan
-                                                            untuk mengevaluasi strategi pemasaran.</li>
-                                                    @elseif($tingkatKeberhasilan < 75)
-                                                        <li>Tingkat keberhasilan penjualan cukup baik
-                                                            ({{ number_format($tingkatKeberhasilan, 1) }}%). Masih ada
-                                                            ruang untuk peningkatan.</li>
-                                                    @else
-                                                        <li>Tingkat keberhasilan penjualan sangat baik
-                                                            ({{ number_format($tingkatKeberhasilan, 1) }}%). Pertahankan
-                                                            strategi yang sudah ada.</li>
-                                                    @endif
-
-                                                    @if ($terbaik && $terbaik['terjual'] > 0)
-                                                        <li>Fokuskan promosi pada kategori
-                                                            <strong>{{ $terbaik['kategori'] }}</strong> karena memiliki
-                                                            tingkat penjualan tertinggi.
-                                                        </li>
-                                                    @endif
-
-                                                    @if ($terburuk && $terburuk['terjual'] < 5)
-                                                        <li>Kategori <strong>{{ $terburuk['kategori'] }}</strong>
-                                                            memerlukan perhatian khusus karena penjualan rendah.</li>
-                                                    @endif
-
-                                                    @if ($totalBelumTerjual > $totalTerjual)
-                                                        <li>Terdapat {{ number_format($totalBelumTerjual) }} item yang
-                                                            belum terjual. Pertimbangkan strategi promosi yang lebih
-                                                            agresif.</li>
-                                                    @endif
-
-                                                    @php
-                                                        $kategoriGagalTinggi = collect($laporanKategori)->filter(
-                                                            function ($item) {
-                                                                $total =
-                                                                    $item['terjual'] +
-                                                                    $item['gagal_terjual'] +
-                                                                    $item['belum_terjual'];
-                                                                return $total > 0 &&
-                                                                    $item['gagal_terjual'] / $total > 0.3;
-                                                            },
-                                                        );
-
-                                                        $kategoriBelumTerjualTinggi = collect($laporanKategori)->filter(
-                                                            function ($item) {
-                                                                $total =
-                                                                    $item['terjual'] +
-                                                                    $item['gagal_terjual'] +
-                                                                    $item['belum_terjual'];
-                                                                return $total > 0 &&
-                                                                    $item['belum_terjual'] / $total > 0.5;
-                                                            },
-                                                        );
-                                                    @endphp
-
-                                                    @if ($kategoriGagalTinggi->count() > 0)
-                                                        <li>Beberapa kategori memiliki tingkat kegagalan tinggi (>30%):
-                                                            @foreach ($kategoriGagalTinggi->take(3) as $kategori)
-                                                                <strong>{{ $kategori['kategori'] }}</strong>{{ !$loop->last ? ', ' : '' }}
-                                                            @endforeach
-                                                        </li>
-                                                    @endif
-
-                                                    @if ($kategoriBelumTerjualTinggi->count() > 0)
-                                                        <li>Kategori dengan banyak item belum terjual (>50%):
-                                                            @foreach ($kategoriBelumTerjualTinggi->take(3) as $kategori)
-                                                                <strong>{{ $kategori['kategori'] }}</strong>{{ !$loop->last ? ', ' : '' }}
-                                                            @endforeach
-                                                            - perlu strategi pemasaran khusus.
-                                                        </li>
-                                                    @endif
-                                                </ul>
                                             </div>
                                         </div>
                                     </div>

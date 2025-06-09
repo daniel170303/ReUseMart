@@ -760,17 +760,12 @@ class LoginController extends Controller
     /**
      * Handle API login response
      */
-    public function apiLogin(Request $request)
+    protected function apiLogin(Request $request)
     {
         try {
-            // Validasi
             $credentials = $request->validate([
                 'email' => ['required', 'email'],
                 'password' => ['required', 'string'],
-            ], [
-                'email.required' => 'Email harus diisi',
-                'email.email' => 'Format email tidak valid',
-                'password.required' => 'Password harus diisi',
             ]);
 
             $email = $credentials['email'];
@@ -785,7 +780,7 @@ class LoginController extends Controller
                 Log::info('User not found for email: ' . $email);
                 return response()->json([
                     'success' => false,
-                    'message' => 'Email tidak terdaftar dalam sistem.',
+                    'message' => 'Email tidak terdaftar dalam sistem.'
                 ], 401);
             }
 
@@ -794,47 +789,156 @@ class LoginController extends Controller
                 Log::info('Password mismatch for email: ' . $email);
                 return response()->json([
                     'success' => false,
-                    'message' => 'Password yang Anda masukkan salah.',
+                    'message' => 'Password yang Anda masukkan salah.'
                 ], 401);
             }
 
-            // Buat token untuk API (jika menggunakan Sanctum)
+            // Buat token berdasarkan role
             $token = null;
-            if (method_exists($user['model'], 'createToken')) {
-                $token = $user['model']->createToken('mobile-app')->plainTextToken;
+            $authenticatedUser = null;
+
+            switch ($user['role']) {
+                case 'pembeli':
+                    $pembeliModel = \App\Models\Pembeli::where('email_pembeli', $email)->first();
+                    if ($pembeliModel) {
+                        // Hapus token lama
+                        $pembeliModel->tokens()->delete();
+                        // Buat token baru
+                        $token = $pembeliModel->createToken('auth_token')->plainTextToken;
+                        $authenticatedUser = $pembeliModel;
+                    }
+                    break;
+                
+                case 'organisasi':
+                    $organisasiModel = \App\Models\Organisasi::where('email_organisasi', $email)->first();
+                    if ($organisasiModel) {
+                        $organisasiModel->tokens()->delete();
+                        $token = $organisasiModel->createToken('auth_token')->plainTextToken;
+                        $authenticatedUser = $organisasiModel;
+                    }
+                    break;
+                
+                case 'penitip':
+                    $penitipModel = \App\Models\Penitip::where('email_penitip', $email)->first();
+                    if ($penitipModel) {
+                        $penitipModel->tokens()->delete();
+                        $token = $penitipModel->createToken('auth_token')->plainTextToken;
+                        $authenticatedUser = $penitipModel;
+                    }
+                    break;
+                
+                // Handle semua role pegawai
+                case 'owner':
+                case 'admin':
+                case 'cs':
+                case 'gudang':
+                case 'hunter':
+                case 'kurir':
+                    $pegawaiModel = \App\Models\Pegawai::where('email_pegawai', $email)->first();
+                    if ($pegawaiModel) {
+                        $pegawaiModel->tokens()->delete();
+                        $token = $pegawaiModel->createToken('auth_token')->plainTextToken;
+                        $authenticatedUser = $pegawaiModel;
+                    }
+                    break;
             }
 
-            Log::info('User logged in successfully: ' . $email . ' with role: ' . $user['role']);
+            if (!$token || !$authenticatedUser) {
+                Log::error('Failed to create token for user: ' . $email . ' with role: ' . $user['role']);
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Gagal membuat token autentikasi untuk role: ' . $user['role']
+                ], 500);
+            }
 
-            // Return JSON response untuk mobile
+            Log::info('API Login successful for: ' . $email . ' with role: ' . $user['role'] . ' and token: ' . substr($token, 0, 10) . '...');
+
+            // Format response sesuai dengan yang diharapkan Flutter
+            $userData = $this->formatUserDataForApi($user, $authenticatedUser);
+
             return response()->json([
                 'success' => true,
                 'message' => 'Login berhasil',
                 'data' => [
                     'token' => $token,
-                    'user' => [
-                        'id' => $user['id'],
-                        'name' => $user['name'],
-                        'email' => $user['email'],
-                        'role' => $user['role'],
-                        'phone' => $user['phone'] ?? null,
-                        'model' => $user['model_name'] ?? $user['role'],
-                    ]
+                    'user' => $userData
                 ]
-            ], 200);
+            ]);
 
-        } catch (\Illuminate\Validation\ValidationException $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Data tidak valid',
-                'errors' => $e->errors(),
-            ], 422);
         } catch (\Exception $e) {
             Log::error('API Login error: ' . $e->getMessage());
+            Log::error('Stack trace: ' . $e->getTraceAsString());
+            
             return response()->json([
                 'success' => false,
-                'message' => 'Terjadi kesalahan server: ' . $e->getMessage(),
+                'message' => 'Terjadi kesalahan saat login: ' . $e->getMessage()
             ], 500);
         }
     }
+
+    /**
+     * Format user data untuk API response
+     */
+    private function formatUserDataForApi($user, $authenticatedUser)
+    {
+        switch ($user['role']) {
+            case 'pembeli':
+                return [
+                    'id' => $authenticatedUser->id_pembeli,
+                    'name' => $authenticatedUser->nama_pembeli,
+                    'email' => $authenticatedUser->email_pembeli,
+                    'role' => $user['role'],
+                    'phone' => $authenticatedUser->nomor_telepon_pembeli,
+                    'model' => $user['role'],
+                ];
+            
+            case 'organisasi':
+                return [
+                    'id' => $authenticatedUser->id_organisasi,
+                    'name' => $authenticatedUser->nama_organisasi,
+                    'email' => $authenticatedUser->email_organisasi,
+                    'role' => $user['role'],
+                    'phone' => $authenticatedUser->nomor_telepon_organisasi,
+                    'model' => $user['role'],
+                ];
+            
+            case 'penitip':
+                return [
+                    'id' => $authenticatedUser->id_penitip,
+                    'name' => $authenticatedUser->nama_penitip,
+                    'email' => $authenticatedUser->email_penitip,
+                    'role' => $user['role'],
+                    'phone' => $authenticatedUser->nomor_telepon_penitip,
+                    'model' => $user['role'],
+                ];
+            
+            case 'owner':
+            case 'admin':
+            case 'cs':
+            case 'gudang':
+            case 'hunter':
+            case 'kurir':
+                return [
+                    'id' => $authenticatedUser->id_pegawai,
+                    'name' => $authenticatedUser->nama_pegawai,
+                    'email' => $authenticatedUser->email_pegawai,
+                    'role' => $user['role'],
+                    'phone' => $authenticatedUser->nomor_telepon_pegawai,
+                    'model' => 'pegawai',
+                    'role_id' => $user['role_id'] ?? null,
+                    'role_name' => $user['role_name'] ?? null,
+                ];
+            
+            default:
+                return [
+                    'id' => $user['id'],
+                    'name' => $user['name'],
+                    'email' => $user['email'],
+                    'role' => $user['role'],
+                    'phone' => $user['phone'],
+                    'model' => $user['model'],
+                ];
+        }
+    }
+
 }

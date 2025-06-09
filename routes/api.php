@@ -14,23 +14,34 @@ use App\Http\Controllers\{
     TransaksiController,
     GambarBarangTitipanController,
     LoginController,
+    MobileController,
+    KomisiPegawaiController
 };
 
 use Illuminate\Http\Request;
-use App\Http\Controllers\MobileAuthController;
-
-// === AUTH ROUTES (TIDAK PERLU AUTENTIKASI) ===
-
-// // Satu endpoint login untuk semua role (deteksi otomatis)
-// Route::post('/login', [LoginController::class, 'apiLogin']);
-
-// // Register endpoint yang mendukung berbagai role
-// Route::post('/register', [LoginController::class, 'apiRegister']);
+// use App\Http\Controllers\MobileAuthController;
 
 Route::post('/check-email', [LoginController::class, 'checkEmail']);
 Route::post('/login', [LoginController::class, 'login']);
 Route::post('/register/pembeli', [LoginController::class, 'registerPembeli']);
 Route::post('/register/organisasi', [LoginController::class, 'registerOrganisasi']);
+
+// ===== PUBLIC ROUTES (TANPA AUTH) =====
+Route::prefix('public')->group(function () {
+    Route::get('/barang-titipan', [MobileController::class, 'getBarangTitipan']);
+    Route::get('/barang-titipan/{id}', [MobileController::class, 'getDetailBarangTitipan']);
+});
+
+Route::get('/penitip/barang-titipan/{id_penitip}', [PenitipController::class, 'barangTitipanPenitip']);
+Route::get('/top-seller', [MobileController::class, 'getTopSeller']);
+Route::get('/top-seller/summary', [MobileController::class, 'getTopSellerSummary']);
+
+Route::get('/komisi-pegawai/pegawai/{id_pegawai}', [KomisiPegawaiController::class, 'getByPegawai']);
+Route::get('/komisi-pegawai/pegawai/{id_pegawai}/total', [KomisiPegawaiController::class, 'getTotalKomisiByPegawai']);
+
+Route::get('/pembeli/history-transaksi', [PembeliController::class, 'historyTransaksi']);
+
+// Route::get('/pembeli/history-transaksi', [PembeliController::class, 'historyTransaksi']);
 
 // Protected Routes - hanya bisa diakses jika sudah login
 Route::middleware('auth:sanctum')->group(function () {
@@ -92,6 +103,11 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::put('/{id}', [PembeliController::class, 'update']);
         Route::delete('/{id}', [PembeliController::class, 'destroy']);
         Route::get('/search/{keyword}', [PembeliController::class, 'search']);
+        
+        // Pindahkan ke dalam group dan hapus duplikasi 'pembeli'
+        Route::get('/profile', [PembeliController::class, 'profile']);
+        // Route::get('/history-transaksi', [PembeliController::class, 'historyTransaksi']);
+        Route::post('/update-alamat', [PembeliController::class, 'updateAlamat']);
         
         // Endpoint untuk data pembeli yang login
         Route::get('/profile/me', [PembeliController::class, 'profile'])->middleware('role:pembeli');

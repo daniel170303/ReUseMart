@@ -326,12 +326,7 @@ class OwnerController extends Controller
                 </div>
             </div>
         </div>
-        
-        <!-- Catatan -->
-        <div style="margin-top: 15px; font-size: 10px; color: #6c757d; text-align: center; font-style: italic;">
-            * Grafik menunjukkan persentase penjualan relatif terhadap bulan dengan penjualan tertinggi<br>
-            * Kolom "Persentase" menunjukkan kontribusi setiap bulan terhadap total penjualan tahunan
-        </div>
+
     </div>';
         
         return $chartHtml;
@@ -924,7 +919,6 @@ class OwnerController extends Controller
         $totalBelumTerjual = 0;
 
         foreach ($kategoriBarang as $kategori) {
-            // Hitung barang terjual: status 'dijual' DAN ada transaksi 'Selesai' yang sudah dilunasi
             $barangTerjual = \DB::table('barang_titipan as bt')
                 ->join('detail_penitipan as dp', 'bt.id_barang', '=', 'dp.id_barang')
                 ->join('penitipan as p', 'dp.id_penitipan', '=', 'p.id_penitipan')
@@ -937,7 +931,6 @@ class OwnerController extends Controller
                 ->distinct('bt.id_barang')
                 ->count('bt.id_barang');
 
-            // Hitung barang gagal terjual: status 'sudah diambil penitip' (tidak terjual)
             $barangGagalTerjual = \DB::table('barang_titipan as bt')
                 ->join('detail_penitipan as dp', 'bt.id_barang', '=', 'dp.id_barang')
                 ->join('penitipan as p', 'dp.id_penitipan', '=', 'p.id_penitipan')
@@ -946,7 +939,6 @@ class OwnerController extends Controller
                 ->whereYear('p.tanggal_penitipan', $tahun)
                 ->count();
 
-            // Hitung barang belum terjual: status 'dijual' tapi BELUM ada transaksi 'Selesai'
             $barangBelumTerjual = \DB::table('barang_titipan as bt')
                 ->join('detail_penitipan as dp', 'bt.id_barang', '=', 'dp.id_barang')
                 ->join('penitipan as p', 'dp.id_penitipan', '=', 'p.id_penitipan')
@@ -958,7 +950,7 @@ class OwnerController extends Controller
                 ->where('bt.jenis_barang', $kategori)
                 ->where('bt.status_barang', 'dijual')
                 ->whereYear('p.tanggal_penitipan', $tahun)
-                ->whereNull('t.id_barang') // Tidak ada transaksi selesai
+                ->whereNull('t.id_barang')
                 ->count();
 
             $laporanKategori[] = [
@@ -973,7 +965,6 @@ class OwnerController extends Controller
             $totalBelumTerjual += $barangBelumTerjual;
         }
 
-        // Urutkan berdasarkan total barang (descending)
         usort($laporanKategori, function($a, $b) {
             $totalA = $a['terjual'] + $a['gagal_terjual'] + $a['belum_terjual'];
             $totalB = $b['terjual'] + $b['gagal_terjual'] + $b['belum_terjual'];
@@ -999,8 +990,6 @@ class OwnerController extends Controller
 
     public function laporanMasaPenitipanHabis()
     {
-        // Ambil data penitipan yang masa penitipannya sudah habis
-        // (tanggal_selesai_penitipan sudah terlewat dan status_barang bukan 'sudah diambil penitip')
         $penitipanHabis = \DB::table('penitipan as p')
             ->join('detail_penitipan as dp', 'p.id_penitipan', '=', 'dp.id_penitipan')
             ->join('barang_titipan as bt', 'dp.id_barang', '=', 'bt.id_barang')
@@ -1034,7 +1023,6 @@ class OwnerController extends Controller
 
     public function laporanMasaPenitipanHabisPDF()
     {
-        // Ambil data penitipan yang masa penitipannya sudah habis
         $penitipanHabis = \DB::table('penitipan as p')
             ->join('detail_penitipan as dp', 'p.id_penitipan', '=', 'dp.id_penitipan')
             ->join('barang_titipan as bt', 'dp.id_barang', '=', 'bt.id_barang')
@@ -1068,9 +1056,144 @@ class OwnerController extends Controller
             'tanggalCetak'
         ));
 
-        $pdf->setPaper('A4', 'landscape'); // Landscape karena banyak kolom
+        $pdf->setPaper('A4', 'landscape');
         
         return $pdf->download('laporan-masa-penitipan-habis-' . now()->format('Y-m-d') . '.pdf');
+    }
+
+    public function laporanKomisiPerHunter(Request $request)
+    {
+        try {
+            // Cek apakah user yang login adalah owner
+            if (!Auth::guard('pegawai')->check()) {
+                return redirect()->route('login')->withErrors(['access_denied' => 'Anda tidak diizinkan mengakses halaman ini.']);
+            }
+
+            $owner = Auth::guard('pegawai')->user();
+            
+            if (!$owner->rolePegawai || $owner->rolePegawai->nama_role !== 'Owner') {
+                return redirect('/')->withErrors(['access_denied' => 'Anda tidak memiliki hak akses sebagai Owner.']);
+            }
+
+            // Get filter parameters
+            $bulan = (int) $request->get('bulan', date('m'));
+            $tahun = (int) $request->get('tahun', date('Y'));
+
+            // Data laporan komisi per hunter
+            $laporanKomisiHunter = $this->getLaporanKomisiPerHunter($bulan, $tahun);
+            
+            // Summary data
+            $totalKomisiSemua = $laporanKomisiHunter->sum('total_komisi');
+            $totalProdukSemua = $laporanKomisiHunter->sum('total_produk');
+            $totalPenjualanSemua = $laporanKomisiHunter->sum('total_penjualan');
+            $jumlahHunter = $laporanKomisiHunter->count();
+
+            // Nama bulan untuk tampilan
+            $namaBulan = [
+                1 => 'Januari', 2 => 'Februari', 3 => 'Maret', 4 => 'April',
+                5 => 'Mei', 6 => 'Juni', 7 => 'Juli', 8 => 'Agustus',
+                9 => 'September', 10 => 'Oktober', 11 => 'November', 12 => 'Desember'
+            ];
+
+            $namaBulanTerpilih = isset($namaBulan[$bulan]) ? $namaBulan[$bulan] : 'Tidak Diketahui';
+
+            return view('owner.laporanKomisiPerHunter', compact(
+                'laporanKomisiHunter',
+                'totalKomisiSemua',
+                'totalProdukSemua',
+                'totalPenjualanSemua',
+                'jumlahHunter',
+                'bulan',
+                'tahun',
+                'namaBulan',
+                'namaBulanTerpilih'
+            ));
+
+        } catch (\Exception $e) {
+            return redirect()->back()->withErrors(['error' => $e->getMessage()]);
+        }
+    }
+
+    public function laporanKomisiPerHunterPDF(Request $request)
+    {
+        try {
+            $bulan = (int) ($request->bulan ?? date('m'));
+            $tahun = (int) ($request->tahun ?? date('Y'));
+
+            // Panggil data yang sama seperti laporanKomisiPerHunter()
+            $laporanKomisiHunter = $this->getLaporanKomisiPerHunter($bulan, $tahun);
+            
+            // Hitung summary data
+            $totalKomisiSemua = $laporanKomisiHunter->sum('total_komisi');
+            $totalProdukSemua = $laporanKomisiHunter->sum('total_produk');
+            $totalPenjualanSemua = $laporanKomisiHunter->sum('total_penjualan');
+            $jumlahHunter = $laporanKomisiHunter->count();
+
+            $namaBulan = [
+                1 => 'Januari', 2 => 'Februari', 3 => 'Maret', 4 => 'April',
+                5 => 'Mei', 6 => 'Juni', 7 => 'Juli', 8 => 'Agustus',
+                9 => 'September', 10 => 'Oktober', 11 => 'November', 12 => 'Desember'
+            ];
+
+            $namaBulanTerpilih = $namaBulan[$bulan];
+
+            // Load view dengan data
+            $pdf = Pdf::loadView('owner.laporanKomisiPerHunterPDF', compact(
+                'laporanKomisiHunter',
+                'totalKomisiSemua',
+                'totalProdukSemua',
+                'totalPenjualanSemua',
+                'jumlahHunter',
+                'bulan',
+                'tahun',
+                'namaBulanTerpilih'
+            ));
+
+            // Set paper size dan orientation
+            $pdf->setPaper('A4', 'portrait');
+            
+            // Set options untuk DomPDF
+            $pdf->setOptions([
+                'isHtml5ParserEnabled' => true,
+                'isPhpEnabled' => true,
+                'defaultFont' => 'DejaVu Sans'
+            ]);
+
+            return $pdf->download('laporan-komisi-per-hunter-' . strtolower($namaBulanTerpilih) . '-' . $tahun . '.pdf');
+
+        } catch (\Exception $e) {
+            \Log::error('Error generating PDF: ' . $e->getMessage());
+            return redirect()->back()->with('error', 'Gagal membuat PDF: ' . $e->getMessage());
+        }
+    }
+
+    private function getLaporanKomisiPerHunter($bulan, $tahun)
+    {
+        return DB::table('pegawai as p')
+            ->join('barang_titipan_hunter as bth', 'p.id_pegawai', '=', 'bth.id_pegawai')
+            ->join('barang_titipan as bt', 'bth.id_barang', '=', 'bt.id_barang')
+            ->join('transaksi as t', 'bt.id_barang', '=', 't.id_barang')
+            ->leftJoin('detail_penitipan as dp', 'bt.id_barang', '=', 'dp.id_barang')
+            ->leftJoin('penitipan as pen', 'dp.id_penitipan', '=', 'pen.id_penitipan')
+            ->select(
+                'p.id_pegawai',
+                'p.nama_pegawai as nama_hunter',
+                DB::raw('COUNT(t.id_transaksi) as total_produk'),
+                DB::raw('SUM(bt.harga_barang) as total_penjualan'),
+                DB::raw('SUM(CASE 
+                    WHEN LOWER(TRIM(COALESCE(pen.status_perpanjangan, "tidak"))) = "ya" THEN bt.harga_barang * 0.10 
+                    ELSE bt.harga_barang * 0.05 
+                END) as total_komisi'),
+                DB::raw('ROUND(AVG(bt.harga_barang), 0) as rata_rata_harga')
+            )
+            ->where('p.id_role', 5) // Role hunter
+            ->whereMonth('t.tanggal_pelunasan', $bulan)
+            ->whereYear('t.tanggal_pelunasan', $tahun)
+            ->where('t.status_transaksi', 'Selesai')
+            ->whereNotNull('t.tanggal_pelunasan')
+            ->groupBy('p.id_pegawai', 'p.nama_pegawai')
+            ->orderBy('total_komisi', 'desc')
+            ->get();
     }
 
 }

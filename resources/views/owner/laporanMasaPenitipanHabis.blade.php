@@ -22,20 +22,6 @@
                             </div>
                         </div>
 
-                        {{-- Info Alert --}}
-                        <div class="alert alert-warning">
-                            <i class="fas fa-exclamation-triangle mr-2"></i>
-                            <strong>Informasi:</strong> Laporan ini menampilkan barang-barang yang masa penitipannya sudah
-                            selesai (melewati tanggal selesai penitipan) dan belum diambil oleh penitip.
-                            <ul class="mb-0 mt-2">
-                                <li><strong>Status:</strong> Barang dengan status selain "sudah diambil penitip" dan "sudah
-                                    didonasikan"</li>
-                                <li><strong>Masa Habis:</strong> Tanggal selesai penitipan sudah terlewat dari hari ini</li>
-                                <li><strong>Tindakan:</strong> Barang-barang ini perlu ditindaklanjuti (kontak penitip atau
-                                    proses donasi)</li>
-                            </ul>
-                        </div>
-
                         {{-- Summary Cards --}}
                         <div class="row mb-4">
                             <div class="col-md-6">
@@ -124,43 +110,6 @@
                                 </tbody>
                             </table>
                         </div>
-
-                        {{-- Rekomendasi Tindakan --}}
-                        @if ($totalBarang > 0)
-                            <div class="row mt-4">
-                                <div class="col-md-12">
-                                    <div class="card border-warning">
-                                        <div class="card-header bg-warning">
-                                            <h5 class="card-title mb-0">
-                                                <i class="fas fa-lightbulb mr-2"></i>
-                                                Rekomendasi Tindakan
-                                            </h5>
-                                        </div>
-                                        <div class="card-body">
-                                            <div class="row">
-                                                <div class="col-md-6">
-                                                    <h6><i class="fas fa-phone text-primary mr-2"></i>Kontak Penitip</h6>
-                                                    <ul class="list-unstyled">
-                                                        <li>• Hubungi penitip untuk konfirmasi pengambilan</li>
-                                                        <li>• Berikan perpanjangan waktu jika diperlukan</li>
-                                                        <li>• Informasikan konsekuensi jika tidak diambil</li>
-                                                    </ul>
-                                                </div>
-                                                <div class="col-md-6">
-                                                    <h6><i class="fas fa-heart text-danger mr-2"></i>Proses Donasi</h6>
-                                                    <ul class="list-unstyled">
-                                                        <li>• Barang yang tidak diambil > 7 hari setelah masa habis dapat
-                                                            didonasikan</li>
-                                                        <li>• Update status barang menjadi "sudah didonasikan"</li>
-                                                        <li>• Dokumentasikan proses donasi</li>
-                                                    </ul>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        @endif
                     </div>
                 </div>
             </div>

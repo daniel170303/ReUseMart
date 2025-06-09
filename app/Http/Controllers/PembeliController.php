@@ -160,23 +160,37 @@ class PembeliController extends Controller
     }
 
     // API: history transaksi pembeli
-    public function historyTransaksi()
+    public function historyTransaksi(Request $request)
     {
-        $pembeli = Auth::guard('pembeli')->user();
+        try {
+            $idPembeli = $request->query('id_pembeli');
+            
+            if (!$idPembeli) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'ID Pembeli diperlukan'
+                ], 400);
+            }
 
-        if (!$pembeli) {
-            return response()->json(['message' => 'Pembeli belum login'], 401);
+            // Query untuk mengambil history transaksi
+            $transaksi = \App\Models\Transaksi::where('id_pembeli', $idPembeli)
+                ->with(['barang']) // Jika ada relasi dengan barang
+                ->get();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'History transaksi berhasil diambil',
+                'data' => [
+                    'data' => $transaksi
+                ]
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal mengambil history transaksi: ' . $e->getMessage()
+            ], 500);
         }
-
-        $transaksi = Transaksi::with('barang')
-            ->where('id_pembeli', $pembeli->id_pembeli)
-            ->orderBy('tanggal_pemesanan', 'desc')
-            ->get();
-
-        return response()->json([
-            'message' => 'Riwayat transaksi ditemukan',
-            'data' => $transaksi
-        ]);
     }
 
     public function profilePage()

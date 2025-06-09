@@ -239,19 +239,6 @@
             </div>
         @endif
 
-        <!-- Alert jika tidak ada stok -->
-        @if ($stokGudang->isEmpty())
-            <div class="alert alert-info mt-4" role="alert">
-                <h4 class="alert-heading"><i class="fas fa-info-circle me-2"></i>Informasi Stok Gudang</h4>
-                <p>Saat ini tidak ada stok barang di gudang. Hal ini bisa terjadi karena:</p>
-                <hr>
-                <ul class="mb-0">
-                    <li>Semua barang sudah terjual habis</li>
-                    <li>Belum ada barang yang dititipkan hari ini</li>
-                    <li>Semua barang sudah diambil kembali oleh penitip</li>
-                </ul>
-            </div>
-        @endif
     </div>
 @endsection
 

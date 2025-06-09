@@ -177,32 +177,6 @@
     </table>
 
     @if($laporanKomisi->isNotEmpty())
-        <!-- Summary Table -->
-        <table class="summary-table">
-            <tr>
-                <td colspan="2" class="summary-title">RINGKASAN KOMISI</td>
-            </tr>
-            <tr>
-                <td class="summary-label">Total Produk Terjual</td>
-                <td class="summary-value">{{ $totalProduk }} item</td>
-            </tr>
-            <tr>
-                <td class="summary-label">Total Penjualan</td>
-                <td class="summary-value">Rp{{ number_format($totalPenjualan, 0, ',', '.') }}</td>
-            </tr>
-            <tr>
-                <td class="summary-label">Total Komisi Hunter</td>
-                <td class="summary-value">Rp{{ number_format($totalKomisiHunter, 0, ',', '.') }}</td>
-            </tr>
-            <tr>
-                <td class="summary-label">Total Komisi ReUse Mart</td>
-                <td class="summary-value">Rp{{ number_format($totalKomisiReUse, 0, ',', '.') }}</td>
-            </tr>
-            <tr>
-                <td class="summary-label">Total Bonus Penitip</td>
-                <td class="summary-value">Rp{{ number_format($totalBonusPenitip, 0, ',', '.') }}</td>
-            </tr>
-        </table>
 
         <!-- Detail Table -->
         <table>
@@ -242,28 +216,6 @@
                     <th class="text-right">{{ number_format($totalBonusPenitip, 0, ',', '.') }}</th>
                 </tr>
             </tfoot>
-        </table>
-
-        <!-- Keterangan -->
-        <table style="margin-top: 20px; font-size: 9px; border: none;">
-            <tr>
-                <td style="border: none; padding: 5px 0;"><strong>Keterangan:</strong></td>
-            </tr>
-            <tr>
-                <td style="border: none; padding: 2px 0;">• Komisi Hunter: Fee untuk hunter yang menemukan barang (jika ada)</td>
-            </tr>
-            <tr>
-                <td style="border: none; padding: 2px 0;">• Komisi ReUse Mart: Komisi untuk toko (20% atau 30% dari harga jual)</td>
-            </tr>
-            <tr>
-                <td style="border: none; padding: 2px 0;">• Bonus Penitip: Bonus tambahan untuk penitip (jika ada program khusus)</td>
-            </tr>
-            <tr>
-                <td style="border: none; padding: 2px 0;">• Tanggal Masuk: Tanggal barang dititipkan ke toko</td>
-            </tr>
-            <tr>
-                <td style="border: none; padding: 2px 0;">• Tanggal Laku: Tanggal barang berhasil terjual</td>
-            </tr>
         </table>
 
     @else

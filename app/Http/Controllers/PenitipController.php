@@ -137,26 +137,52 @@ class PenitipController extends Controller
         return view('penitip.profilePenitip', compact('penitip', 'barangTitipan', 'riwayatPenitipan', 'averageRating'));
     }
 
-    public function barangTitipanPenitip($id_penitip)
+    public function barangTitipanPenitip($id_penitip, Request $request)
     {
-        // Ambil semua barang titipan milik penitip tertentu
-        $barangTitipan = BarangTitipan::whereHas('detailPenitipan.penitipan', function ($query) use ($id_penitip) {
-            $query->where('id_penitip', $id_penitip);
-        })->with(['transaksiTerakhir', 'gambarBarang'])->get();
+        try {
+            // Ambil semua barang titipan milik penitip tertentu
+            $barangTitipan = BarangTitipan::whereHas('detailPenitipan.penitipan', function ($query) use ($id_penitip) {
+                $query->where('id_penitip', $id_penitip);
+            })->with(['transaksiTerakhir', 'gambarBarang'])->get();
 
-        foreach ($barangTitipan as $barang) {
-            if ($barang->sisa_garansi === null) {
-                $barang->status_garansi = 'Tanpa Garansi';
-            } elseif ($barang->garansi_masih_berlaku) {
-                $tanggalHabis = now()->addMonths($barang->sisa_garansi);
-                $barang->status_garansi = 'Masih Bergaransi sampai ' . $tanggalHabis->translatedFormat('d M Y');
-            } else {
-                $tanggalHabis = now()->subMonths(abs($barang->sisa_garansi));
-                $barang->status_garansi = 'Garansi Habis pada ' . $tanggalHabis->translatedFormat('d M Y');
+            foreach ($barangTitipan as $barang) {
+                if ($barang->sisa_garansi === null) {
+                    $barang->status_garansi = 'Tanpa Garansi';
+                } elseif ($barang->garansi_masih_berlaku) {
+                    $tanggalHabis = now()->addMonths($barang->sisa_garansi);
+                    $barang->status_garansi = 'Masih Bergaransi sampai ' . $tanggalHabis->translatedFormat('d M Y');
+                } else {
+                    $tanggalHabis = now()->subMonths(abs($barang->sisa_garansi));
+                    $barang->status_garansi = 'Garansi Habis pada ' . $tanggalHabis->translatedFormat('d M Y');
+                }
             }
-        }
 
-        return view('penitip.barangTitipanPenitip', compact('barangTitipan'));
+            // Cek apakah request dari API (mobile) atau Web
+            if ($request->expectsJson() || $request->is('api/*') || $request->header('Accept') === 'application/json') {
+                // Return JSON untuk API/Mobile
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Data barang titipan berhasil diambil',
+                    'data' => $barangTitipan
+                ], 200);
+            }
+
+            // Return view untuk Web
+            return view('penitip.barangTitipanPenitip', compact('barangTitipan'));
+
+        } catch (\Exception $e) {
+            // Handle error untuk kedua jenis request
+            if ($request->expectsJson() || $request->is('api/*') || $request->header('Accept') === 'application/json') {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Gagal mengambil data barang titipan: ' . $e->getMessage(),
+                    'data' => []
+                ], 500);
+            }
+
+            // Redirect atau return error view untuk web
+            return back()->with('error', 'Gagal mengambil data barang titipan: ' . $e->getMessage());
+        }
     }
 
     public function perpanjang($id_penitipan)

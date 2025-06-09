@@ -105,6 +105,11 @@
                     <i class="fas fa-clock me-2"></i> Laporan Masa Penitipan Habis
                 </a>
 
+                <a href="{{ route('owner.laporanKomisiPerHunter') }}"
+                    class="nav-link text-dark px-4 py-3 {{ request()->routeIs('owner.laporanKomisiPerHunter') ? 'active' : '' }}">
+                    <i class="fas fa-users me-2"></i> Laporan Komisi Hunter
+                </a>
+
                 {{-- Logout sebagai menu nav-link --}}
                 @auth('pegawai')
                     <a href="#" onclick="event.preventDefault(); document.getElementById('logout-form').submit();"

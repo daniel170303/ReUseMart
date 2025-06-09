@@ -400,5 +400,6 @@ class BarangTitipanController extends Controller
             return redirect()->back()->with('error', 'Terjadi kesalahan saat menghapus barang: ' . $e->getMessage());
         }
     }
+    
 }
 

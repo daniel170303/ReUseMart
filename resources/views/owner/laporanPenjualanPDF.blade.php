@@ -86,36 +86,6 @@
         <p><strong>Tanggal cetak:</strong> {{ \Carbon\Carbon::now()->translatedFormat('d F Y H:i:s') }}</p>
     </div>
 
-    <!-- Ringkasan -->
-    <h4>RINGKASAN PENJUALAN</h4>
-    <table class="summary-table">
-        <tr>
-            <th>Keterangan</th>
-            <th>Jumlah</th>
-        </tr>
-        <tr>
-            <td class="text-left">Total Penjualan</td>
-            <td class="text-right">Rp{{ number_format($totalPenjualan, 0, ',', '.') }}</td>
-        </tr>
-        <tr>
-            <td class="text-left">Total Barang Terjual</td>
-            <td class="text-right">{{ $totalBarang }} item</td>
-        </tr>
-        <tr>
-            <td class="text-left">Total Komisi</td>
-            <td class="text-right">Rp{{ number_format($totalKomisi, 0, ',', '.') }}</td>
-        </tr>
-        <tr>
-            <td class="text-left">Rata-rata Penjualan per Bulan</td>
-            <td class="text-right">Rp{{ number_format($totalPenjualan / 12, 0, ',', '.') }}</td>
-        </tr>
-    </table>
-
-    <!-- HTML Chart -->
-    <div class="chart-container">
-        {!! $htmlChart !!}
-    </div>
-
     <!-- Tabel Laporan Per Bulan -->
     <h4>DETAIL PENJUALAN PER BULAN</h4>
     <table>
@@ -165,74 +135,9 @@
         </tfoot>
     </table>
 
-    <!-- Data Grafik dalam bentuk tabel (sebagai backup) -->
-    <div class="page-break">
-        <h4>DATA GRAFIK PENJUALAN BULANAN</h4>
-        <table>
-            <thead>
-                <tr>
-                    <th>No</th>
-                    <th>Bulan</th>
-                    <th>Jumlah Penjualan</th>
-                    <th>Persentase dari Total</th>
-                </tr>
-            </thead>
-            <tbody>
-                @php $no = 1; @endphp
-                @foreach ($dataGrafik as $data)
-                    <tr>
-                        <td>{{ $no++ }}</td>
-                        <td class="text-left">{{ $data['bulan'] }}</td>
-                        <td class="text-right">Rp{{ number_format($data['penjualan'], 0, ',', '.') }}</td>
-                        <td class="text-right">
-                            @if($totalPenjualan > 0)
-                                {{ number_format(($data['penjualan'] / $totalPenjualan) * 100, 2) }}%
-                            @else
-                                0%
-                            @endif
-                        </td>
-                    </tr>
-                @endforeach
-            </tbody>
-            <tfoot>
-                <tr class="total-row">
-                    <th colspan="2">TOTAL</th>
-                    <th class="text-right">Rp{{ number_format($dataGrafik->sum('penjualan'), 0, ',', '.') }}</th>
-                    <th class="text-right">100%</th>
-                </tr>
-            </tfoot>
-        </table>
-    </div>
-
-    <!-- Analisis Singkat -->
-    <div style="margin-top: 30px;">
-        <h4>ANALISIS SINGKAT</h4>
-        <table style="border: none;">
-            <tr style="border: none;">
-                <td style="border: none; text-align: left; padding: 5px 0;">
-                    @php
-                        $bulanTertinggi = $laporanTahunan->sortByDesc('total_penjualan')->first();
-                        $bulanTerendah = $laporanTahunan->where('total_penjualan', '>', 0)->sortBy('total_penjualan')->first();
-                    @endphp
-                    
-                    <strong>Bulan dengan Penjualan Tertinggi:</strong><br>
-                    {{ $bulanTertinggi ? $bulanTertinggi->nama_bulan . ' (Rp' . number_format($bulanTertinggi->total_penjualan, 0, ',', '.') . ')' : 'Tidak ada data' }}
-                    <br><br>
-                    
-                    <strong>Bulan dengan Penjualan Terendah:</strong><br>
-                    {{ $bulanTerendah ? $bulanTerendah->nama_bulan . ' (Rp' . number_format($bulanTerendah->total_penjualan, 0, ',', '.') . ')' : 'Tidak ada data' }}
-                    <br><br>
-                    
-                    <strong>Rata-rata Penjualan per Bulan:</strong><br>
-                    Rp{{ number_format($totalPenjualan / 12, 0, ',', '.') }}
-                    <br><br>
-                    
-                    <strong>Total Komisi yang Diperoleh:</strong><br>
-                    Rp{{ number_format($totalKomisi, 0, ',', '.') }} 
-                    ({{ $totalPenjualan > 0 ? number_format(($totalKomisi / $totalPenjualan) * 100, 2) : 0 }}% dari total penjualan)
-                </td>
-            </tr>
-        </table>
+    <!-- HTML Chart -->
+    <div class="chart-container">
+        {!! $htmlChart !!}
     </div>
 
     <!-- Footer -->

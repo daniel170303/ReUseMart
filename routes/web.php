@@ -157,6 +157,9 @@ Route::middleware(['multiauth'])->group(function () {
         Route::get('/laporan-penjualan-per-kategori-pdf', [OwnerController::class, 'laporanPenjualanPerKategoriPDF'])->name('laporanPenjualanPerKategoriPDF');
         Route::get('/laporan-masa-penitipan-habis', [OwnerController::class, 'laporanMasaPenitipanHabis'])->name('laporanMasaPenitipanHabis');
         Route::get('/laporan-masa-penitipan-habis-pdf', [OwnerController::class, 'laporanMasaPenitipanHabisPDF'])->name('laporanMasaPenitipanHabisPDF');
+        Route::get('/laporan-komisi-per-hunter', [OwnerController::class, 'laporanKomisiPerHunter'])->name('laporanKomisiPerHunter');
+        Route::get('/laporan-komisi-per-hunter-pdf', [OwnerController::class, 'laporanKomisiPerHunterPDF'])->name('laporanKomisiPerHunterPDF');
+
         Route::post('/logout', function () {
             Auth::guard('pegawai')->logout();
             session()->invalidate();

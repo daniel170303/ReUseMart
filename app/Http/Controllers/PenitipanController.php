@@ -12,11 +12,15 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Session;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Support\Facades\Storage;
+use Carbon\Carbon;
+use Illuminate\Support\Facades\Log;
 
 class PenitipanController extends Controller
 {
     public function index()
     {
+        $this->updateStatusBarangMelewatiBatas();
+
         $penitipanList = Penitipan::all();
         $detailPenitipan = DetailPenitipan::with('barang')->get();
         $penitipList = Penitip::all();
@@ -43,6 +47,8 @@ class PenitipanController extends Controller
 
     public function store(Request $request)
     {
+        $this->updateStatusBarangMelewatiBatas();
+
         $request->validate([
             'id_penitip' => 'required|exists:penitip,id_penitip',
             'id_barang' => 'required|array',
@@ -121,6 +127,8 @@ class PenitipanController extends Controller
 
     public function update(Request $request, $id)
     {
+        $this->updateStatusBarangMelewatiBatas();
+        
         $penitipan = Penitipan::findOrFail($id);
 
         $request->validate([
@@ -218,6 +226,56 @@ class PenitipanController extends Controller
         $penitipan->save();
 
         return redirect()->back()->with('success', 'Pengiriman berhasil dijadwalkan.');
+    }
+
+    /**
+     * Update status barang yang melewati tanggal batas pengambilan
+     */
+    private function updateStatusBarangMelewatiBatas()
+    {
+        try {
+            $hariIni = Carbon::now()->format('Y-m-d');
+            
+            // Cari penitipan yang melewati batas pengambilan
+            $penitipanMelewatiBatas = Penitipan::where('tanggal_batas_pengambilan', '<', $hariIni)
+                ->whereNull('tanggal_pengambilan') // Belum diambil
+                ->whereNotIn('status_barang', ['barang untuk donasi', 'sudah didonasikan', 'sudah diambil penitip'])
+                ->get();
+
+            if ($penitipanMelewatiBatas->count() > 0) {
+                $jumlahDiupdate = 0;
+                
+                foreach ($penitipanMelewatiBatas as $penitipan) {
+                    // Update status penitipan
+                    $penitipan->update([
+                        'status_barang' => 'barang untuk donasi'
+                    ]);
+
+                    // Update status semua barang terkait
+                    $detailBarang = DetailPenitipan::where('id_penitipan', $penitipan->id_penitipan)->get();
+                    
+                    foreach ($detailBarang as $detail) {
+                        $barang = BarangTitipan::find($detail->id_barang);
+                        if ($barang && !in_array($barang->status_barang, ['barang untuk donasi', 'sudah didonasikan', 'terjual', 'sudah diambil penitip'])) {
+                            $barang->update([
+                                'status_barang' => 'barang untuk donasi'
+                            ]);
+                            $jumlahDiupdate++;
+                        }
+                    }
+                }
+
+                if ($jumlahDiupdate > 0) {
+                    Log::info("Status barang diupdate otomatis di PenitipanController: {$jumlahDiupdate} barang diubah menjadi 'barang untuk donasi' karena melewati batas pengambilan.");
+                    
+                    // Set flash message
+                    session()->flash('info', "Terdapat {$jumlahDiupdate} barang yang telah diubah statusnya menjadi 'barang untuk donasi' karena melewati batas pengambilan.");
+                }
+            }
+
+        } catch (\Exception $e) {
+            Log::error('Error saat mengupdate status barang melewati batas di PenitipanController: ' . $e->getMessage());
+        }
     }
 
 }

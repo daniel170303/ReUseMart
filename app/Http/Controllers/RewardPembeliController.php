@@ -28,7 +28,19 @@ class RewardPembeliController extends Controller
      */
     public function store(Request $request)
     {
-        //
+        $request->validate([
+            'id_pembeli' => 'required|integer',
+            'jumlah_poin_pembeli' => 'required|integer',
+            'id_merch' => 'nullable|integer', // Add validation for id_merch
+        ]);
+
+        RewardPembeli::create([
+            'id_pembeli' => $request->id_pembeli,
+            'jumlah_poin_pembeli' => $request->jumlah_poin_pembeli,
+            'id_merch' => $request->id_merch, // Include id_merch in the creation
+        ]);
+
+        return redirect()->back()->with('success', 'Reward pembeli berhasil ditambahkan.');
     }
 
     /**
@@ -52,7 +64,17 @@ class RewardPembeliController extends Controller
      */
     public function update(Request $request, RewardPembeli $rewardPembeli)
     {
-        //
+        $request->validate([
+            'jumlah_poin_pembeli' => 'required|integer',
+            'id_merch' => 'required|integer',
+        ]);
+
+        $rewardPembeli->update([
+            'jumlah_poin_pembeli' => $request->jumlah_poin_pembeli,
+            'id_merch' => $request->id_merch,
+        ]);
+
+        return redirect()->back()->with('success', 'Reward pembeli berhasil diperbarui.');
     }
 
     /**
@@ -60,6 +82,7 @@ class RewardPembeliController extends Controller
      */
     public function destroy(RewardPembeli $rewardPembeli)
     {
-        //
+        $rewardPembeli->delete();
+        return redirect()->back()->with('success', 'Reward pembeli berhasil dihapus.');
     }
 }
