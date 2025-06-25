@@ -75,8 +75,8 @@
                     </a>
                 @endauth
 
-                <a href=""
-                    class="nav-link text-dark px-4 py-3 {{ request()->routeIs('owner.barang.donasi') ? 'active' : '' }}">
+                <a href="{{ route('owner.barang.donasi') }}"
+                    class="nav-link text-dark px-4 py-3 {{ request()->routeIs('owner.barang.donasi') || request()->routeIs('owner.laporan.donasi') ? 'active' : '' }}">
                     <i class="fas fa-hand-holding-heart me-2"></i> Barang Donasi
                 </a>
 
@@ -138,7 +138,7 @@
     </main>
 
     {{-- Scripts Section --}}
-    @yield('scripts')
+    @stack('scripts')
 
 </body>
 

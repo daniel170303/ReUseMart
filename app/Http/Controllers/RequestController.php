@@ -117,38 +117,55 @@ class RequestController extends Controller
         DB::beginTransaction();
 
         try {
+            // Debug: Log untuk melihat ID request yang diterima
+            \Log::info("Menerima request dengan ID: {$id_request}");
+
             $requestDonasi = Request::findOrFail($id_request);
+            \Log::info("Request ditemukan: " . json_encode($requestDonasi->toArray()));
 
             $barangTitipan = BarangTitipan::where('nama_barang_titipan', $requestDonasi->nama_request_barang)
                 ->where('status_barang', 'barang untuk donasi')
                 ->first();
 
             if (!$barangTitipan) {
+                \Log::warning("Barang titipan tidak ditemukan untuk: {$requestDonasi->nama_request_barang}");
                 return redirect()->back()->with('error', 'Barang titipan tidak tersedia atau sudah didonasikan.');
             }
 
-            Donasi::create([
+            \Log::info("Barang titipan ditemukan: " . json_encode($barangTitipan->toArray()));
+
+            // Buat donasi
+            $donasi = Donasi::create([
                 'id_barang' => $barangTitipan->id_barang,
                 'id_request' => $requestDonasi->id_request,
-                'tanggal_donasi' => now()->toDateString(), // default tanggal hari ini
-                'penerima_donasi' => 'Organisasi #' . $requestDonasi->id_organisasi, // default penerima
+                'tanggal_donasi' => now()->toDateString(),
+                'penerima_donasi' => 'Organisasi #' . $requestDonasi->id_organisasi,
             ]);
 
+            \Log::info("Donasi berhasil dibuat: " . json_encode($donasi->toArray()));
+
+            // Update status request
             $requestDonasi->status_request = 'diterima';
             $requestDonasi->save();
 
+            // Update status barang
             $barangTitipan->status_barang = 'sudah didonasikan';
             $barangTitipan->save();
 
+            // Kirim notifikasi ke penitip
             $penitip = Penitip::find($barangTitipan->id_penitip);
             if ($penitip) {
                 Notification::send($penitip, new DonasiDiterimaNotification($barangTitipan, $requestDonasi));
             }
 
             DB::commit();
+            \Log::info("Transaksi berhasil di-commit");
+            
             return redirect()->back()->with('success', 'Request donasi berhasil diterima dan tercatat.');
         } catch (\Exception $e) {
             DB::rollBack();
+            \Log::error("Error dalam terimaRequest: " . $e->getMessage());
+            \Log::error("Stack trace: " . $e->getTraceAsString());
             return redirect()->back()->with('error', 'Terjadi kesalahan: ' . $e->getMessage());
         }
     }
@@ -159,4 +176,24 @@ class RequestController extends Controller
         return view('organisasi.request_barang', compact('requests'));
     }
 
+    public function tolakRequest($id_request)
+    {
+        try {
+            \Log::info("Menolak request dengan ID: {$id_request}");
+
+            $requestDonasi = Request::findOrFail($id_request);
+            
+            // Update status request menjadi ditolak
+            $requestDonasi->status_request = 'ditolak';
+            $requestDonasi->save();
+
+            \Log::info("Request berhasil ditolak: " . json_encode($requestDonasi->toArray()));
+            
+            return redirect()->back()->with('success', 'Request donasi berhasil ditolak.');
+            
+        } catch (\Exception $e) {
+            \Log::error("Error dalam tolakRequest: " . $e->getMessage());
+            return redirect()->back()->with('error', 'Terjadi kesalahan: ' . $e->getMessage());
+        }
+    }
 }

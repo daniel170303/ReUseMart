@@ -6,32 +6,25 @@ use Illuminate\Database\Eloquent\Model;
 
 class Donasi extends Model
 {
-    // Nama tabel jika tidak pakai konvensi jamak (plural)
-    protected $table = 'donasi';
+    // Sesuaikan nama tabel dengan yang ada di database
+    protected $table = 'donasi'; // atau 'donasis'
+    protected $primaryKey = 'id_donasi'; // sesuaikan dengan primary key
+    public $timestamps = false; // set true jika ada created_at, updated_at
 
-    // Primary key kustom
-    protected $primaryKey = 'id_donasi';
-
-    // Tidak menggunakan auto timestamps (created_at & updated_at)
-    public $timestamps = false; // ubah ke false jika tidak pakai timestamps
-
-    // Kolom-kolom yang bisa diisi secara massal
     protected $fillable = [
         'id_barang',
         'id_request',
         'tanggal_donasi',
-        'penerima_donasi',
+        'penerima_donasi'
     ];
 
-    // Relasi ke model Barang (jika ada)
-    public function barang()
+    public function barangTitipan()
     {
-        return $this->belongsTo(Barang::class, 'id_barang');
+        return $this->belongsTo(BarangTitipan::class, 'id_barang', 'id_barang');
     }
 
-    // Relasi ke model Request (jika ada)
-    public function request()
+    public function requestDonasi()
     {
-        return $this->belongsTo(RequestDonasi::class, 'id_request');
+        return $this->belongsTo(Request::class, 'id_request', 'id_request');
     }
 }

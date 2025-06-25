@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\Organisasi;
 use App\Models\Request as RequestDonasi;
+use Illuminate\Support\Facades\Auth;
 
 class OrganisasiController extends Controller
 {
@@ -91,5 +92,16 @@ class OrganisasiController extends Controller
         RequestDonasi::create($validated);
 
         return redirect()->route('organisasi.request-form')->with('success', 'Request barang titipan berhasil dikirim.');
+    }
+
+    public function dashboard()
+    {
+        $organisasi = Auth::guard('organisasi')->user();
+        
+        // Data untuk dashboard (sesuaikan dengan kebutuhan)
+        $totalRequests = 0; // Hitung dari database
+        $pendingRequests = 0; // Hitung dari database
+        
+        return view('organisasi.dashboardOrganisasi', compact('organisasi', 'totalRequests', 'pendingRequests'));
     }
 }

@@ -2,48 +2,62 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Carbon\Carbon;
 
 class Transaksi extends Model
 {
-    // Nama tabel di database
+    use HasFactory;
+
     protected $table = 'transaksi';
-
-    // Primary key tabel
     protected $primaryKey = 'id_transaksi';
-
-    // Tidak menggunakan timestamps default (created_at, updated_at)
-    public $timestamps = false;
-
-    // Kolom yang bisa diisi
+    
     protected $fillable = [
-        'id_barang',
+        'nomor_nota',
         'id_pembeli',
-        'nama_barang',
         'tanggal_pemesanan',
         'tanggal_pelunasan',
         'jenis_pengiriman',
-        'tanggal_pengiriman',
-        'tanggal_pengambilan',
+        'subtotal_barang',
         'ongkir',
+        'poin_ditebus',
+        'diskon_poin',
+        'total_pembayaran',
+        'metode_pengiriman',
+        'alamat_pengiriman',
         'status_transaksi',
+        'bukti_pembayaran',
+        'tanggal_pembayaran',
+
     ];
 
-    // Relasi ke barang titipan
-    public function barangTitipan()
-    {
-        return $this->belongsTo(BarangTitipan::class, 'id_barang', 'id_barang');
-    }
+    protected $casts = [
+        'tanggal_pemesanan' => 'datetime',
+        'tanggal_pembayaran' => 'datetime',
+        'alamat_pengiriman' => 'array',
+    ];
 
-    // (Opsional) Tambahkan relasi ke user/pembeli jika ada model User
+    // Relasi ke Pembeli
     public function pembeli()
     {
-        return $this->belongsTo(User::class, 'id_pembeli');
+        return $this->belongsTo(Pembeli::class, 'id_pembeli', 'id_pembeli');
     }
 
-    // Relasi ke barang titipan
-    public function barang()
+    // Relasi ke Detail Transaksi
+    public function detailTransaksis()
     {
-        return $this->belongsTo(BarangTitipan::class, 'id_barang', 'id_barang');
+        return $this->hasMany(DetailTransaksi::class, 'id_transaksi', 'id_transaksi');
+    }
+
+    // Accessor untuk format tanggal
+    public function getTanggalPemesananFormatAttribute()
+    {
+        return $this->tanggal_pemesanan ? $this->tanggal_pemesanan->format('d/m/Y H:i') : '-';
+    }
+
+    public function getTanggalPembayaranFormatAttribute()
+    {
+        return $this->tanggal_pembayaran ? $this->tanggal_pembayaran->format('d/m/Y H:i') : '-';
     }
 }

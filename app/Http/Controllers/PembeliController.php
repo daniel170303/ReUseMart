@@ -6,6 +6,7 @@ use App\Models\Pembeli;
 use App\Models\User;
 use App\Models\RewardPembeli;
 use App\Models\Transaksi;
+use App\Models\BarangTitipan;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Auth;
@@ -210,7 +211,9 @@ class PembeliController extends Controller
     public function dashboardPembeli()
     {
         $pembeli = Auth::guard('pembeli')->user();
-        return view('pembeli.dashboardPembeli', compact('pembeli'));
+        $barangTitipan = \App\Models\BarangTitipan::all();
+    
+        return view('pembeli.profilePembeli', compact('pembeli', 'barangTitipan'));
     }
 
 

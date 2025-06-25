@@ -22,7 +22,7 @@ class Pegawai extends Authenticatable
         'nomor_telepon_pegawai',
         'email_pegawai',
         'password_pegawai',
-        // 'tanggal_lahir_pegawai',
+        'tanggal_lahir_pegawai',
     ];
 
     /**

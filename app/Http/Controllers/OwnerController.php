@@ -6,7 +6,8 @@ use App\Models\Pegawai;
 use App\Models\Penitipan;
 use App\Models\BarangTitipan;
 use App\Models\Penitip;
-use Illuminate\Http\Request;
+use App\Models\Request;
+use App\Models\Donasi;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
@@ -90,6 +91,223 @@ class OwnerController extends Controller
             'totalKomisi30',
             'totalKomisi'
         ));
+    }
+
+    public function barangDonasi()
+    {
+        // Cek apakah user yang login adalah owner
+        if (!Auth::guard('pegawai')->check()) {
+            return redirect()->route('login')->withErrors(['access_denied' => 'Anda tidak diizinkan mengakses halaman ini.']);
+        }
+
+        $owner = Auth::guard('pegawai')->user();
+        
+        if (!$owner->rolePegawai || $owner->rolePegawai->nama_role !== 'Owner') {
+            return redirect('/')->withErrors(['access_denied' => 'Anda tidak memiliki hak akses sebagai Owner.']);
+        }
+
+        // Ambil request donasi dengan status pending
+        $requests = Request::with('organisasi')
+            ->where('status_request', 'pending')
+            ->orderBy('tanggal_request', 'desc')
+            ->get();
+
+        // Ambil daftar donasi yang sudah dilakukan
+        $donasis = Donasi::with(['barangTitipan', 'requestDonasi.organisasi'])
+            ->orderBy('tanggal_donasi', 'desc')
+            ->get();
+
+        return view('owner.barangDonasi', compact('requests', 'donasis'));
+    }
+
+    /**
+     * Terima request donasi
+     */
+    public function terimaRequest($id_request)
+    {
+        try {
+            // Cek apakah user yang login adalah owner
+            if (!Auth::guard('pegawai')->check()) {
+                return redirect()->route('login')->withErrors(['access_denied' => 'Anda tidak diizinkan mengakses halaman ini.']);
+            }
+
+            $owner = Auth::guard('pegawai')->user();
+            
+            if (!$owner->rolePegawai || $owner->rolePegawai->nama_role !== 'Owner') {
+                return redirect('/')->withErrors(['access_denied' => 'Anda tidak memiliki hak akses sebagai Owner.']);
+            }
+
+            // Cari request donasi
+            $request = RequestDonasi::findOrFail($id_request);
+            
+            // Update status menjadi diterima
+            $request->update([
+                'status_request' => 'diterima',
+                'tanggal_disetujui' => now()
+            ]);
+
+            // Cari barang yang cocok untuk donasi (status barang untuk donasi)
+            $barangUntukDonasi = BarangTitipan::where('status_barang', 'barang untuk donasi')
+                ->where('jenis_barang', 'like', '%' . $request->nama_request_barang . '%')
+                ->orWhere('nama_barang_titipan', 'like', '%' . $request->nama_request_barang . '%')
+                ->first();
+
+            // Jika ada barang yang cocok, buat donasi otomatis
+            if ($barangUntukDonasi) {
+                $this->buatDonasi($barangUntukDonasi->id_barang, $id_request);
+            }
+
+            return redirect()->route('owner.barang.donasi')
+                ->with('success', 'Request donasi berhasil diterima!');
+
+        } catch (\Exception $e) {
+            Log::error('Error menerima request donasi: ' . $e->getMessage());
+            return redirect()->route('owner.barang.donasi')
+                ->with('error', 'Terjadi kesalahan saat menerima request donasi.');
+        }
+    }
+
+    /**
+     * Tolak request donasi
+     */
+    public function tolakRequest($id_request)
+    {
+        try {
+            // Cek apakah user yang login adalah owner
+            if (!Auth::guard('pegawai')->check()) {
+                return redirect()->route('login')->withErrors(['access_denied' => 'Anda tidak diizinkan mengakses halaman ini.']);
+            }
+
+            $owner = Auth::guard('pegawai')->user();
+            
+            if (!$owner->rolePegawai || $owner->rolePegawai->nama_role !== 'Owner') {
+                return redirect('/')->withErrors(['access_denied' => 'Anda tidak memiliki hak akses sebagai Owner.']);
+            }
+
+            // Cari request donasi
+            $request = RequestDonasi::findOrFail($id_request);
+            
+            // Update status menjadi ditolak
+            $request->update([
+                'status_request' => 'ditolak',
+                'tanggal_disetujui' => now()
+            ]);
+
+            return redirect()->route('owner.barang.donasi')
+                ->with('success', 'Request donasi berhasil ditolak.');
+
+        } catch (\Exception $e) {
+            Log::error('Error menolak request donasi: ' . $e->getMessage());
+            return redirect()->route('owner.barang.donasi')
+                ->with('error', 'Terjadi kesalahan saat menolak request donasi.');
+        }
+    }
+
+    /**
+     * Buat donasi baru
+     */
+    private function buatDonasi($id_barang, $id_request)
+    {
+        try {
+            // Ambil data request dan organisasi
+            $request = RequestDonasi::with('organisasi')->findOrFail($id_request);
+            
+            // Buat donasi baru
+            $donasi = Donasi::create([
+                'id_barang' => $id_barang,
+                'id_request' => $id_request,
+                'tanggal_donasi' => now(),
+                'penerima_donasi' => $request->organisasi->nama_organisasi
+            ]);
+
+            // Update status barang menjadi sudah didonasikan
+            BarangTitipan::where('id_barang', $id_barang)
+                ->update(['status_barang' => 'sudah didonasikan']);
+
+            return $donasi;
+
+        } catch (\Exception $e) {
+            Log::error('Error membuat donasi: ' . $e->getMessage());
+            throw $e;
+        }
+    }
+
+    /**
+     * Edit donasi
+     */
+    public function editDonasi(Request $request, $id_donasi)
+    {
+        try {
+            // Cek apakah user yang login adalah owner
+            if (!Auth::guard('pegawai')->check()) {
+                return redirect()->route('login')->withErrors(['access_denied' => 'Anda tidak diizinkan mengakses halaman ini.']);
+            }
+
+            $owner = Auth::guard('pegawai')->user();
+            
+            if (!$owner->rolePegawai || $owner->rolePegawai->nama_role !== 'Owner') {
+                return redirect('/')->withErrors(['access_denied' => 'Anda tidak memiliki hak akses sebagai Owner.']);
+            }
+
+            // Validasi input
+            $validated = $request->validate([
+                'id_barang' => 'required|exists:barang_titipan,id_barang',
+                'id_request' => 'required|exists:request_donasi,id_request',
+                'tanggal_donasi' => 'required|date',
+                'penerima_donasi' => 'required|string|max:255'
+            ]);
+
+            // Cari donasi
+            $donasi = Donasi::findOrFail($id_donasi);
+            
+            // Update donasi
+            $donasi->update($validated);
+
+            return redirect()->route('owner.barang.donasi')
+                ->with('success', 'Donasi berhasil diupdate!');
+
+        } catch (\Exception $e) {
+            Log::error('Error edit donasi: ' . $e->getMessage());
+            return redirect()->route('owner.barang.donasi')
+                ->with('error', 'Terjadi kesalahan saat mengupdate donasi.');
+        }
+    }
+
+    /**
+     * Hapus donasi
+     */
+    public function hapusDonasi($id_donasi)
+    {
+        try {
+            // Cek apakah user yang login adalah owner
+            if (!Auth::guard('pegawai')->check()) {
+                return redirect()->route('login')->withErrors(['access_denied' => 'Anda tidak diizinkan mengakses halaman ini.']);
+            }
+
+            $owner = Auth::guard('pegawai')->user();
+            
+            if (!$owner->rolePegawai || $owner->rolePegawai->nama_role !== 'Owner') {
+                return redirect('/')->withErrors(['access_denied' => 'Anda tidak memiliki hak akses sebagai Owner.']);
+            }
+
+            // Cari donasi
+            $donasi = Donasi::findOrFail($id_donasi);
+            
+            // Kembalikan status barang menjadi barang untuk donasi
+            BarangTitipan::where('id_barang', $donasi->id_barang)
+                ->update(['status_barang' => 'barang untuk donasi']);
+            
+            // Hapus donasi
+            $donasi->delete();
+
+            return redirect()->route('owner.barang.donasi')
+                ->with('success', 'Donasi berhasil dihapus!');
+
+        } catch (\Exception $e) {
+            Log::error('Error hapus donasi: ' . $e->getMessage());
+            return redirect()->route('owner.barang.donasi')
+                ->with('error', 'Terjadi kesalahan saat menghapus donasi.');
+        }
     }
 
     public function laporanPenjualan(Request $request)

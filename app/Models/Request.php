@@ -3,9 +3,11 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 class Request extends Model
 {
+    use HasFactory;
     protected $table = 'request'; // Nama tabel di database
 
     protected $primaryKey = 'id_request'; // Primary key
@@ -22,5 +24,10 @@ class Request extends Model
     public function organisasi()
     {
         return $this->belongsTo(Organisasi::class, 'id_organisasi');
+    }
+
+    public function donasi()
+    {
+        return $this->hasMany(Donasi::class, 'id_request', 'id_request');
     }
 }

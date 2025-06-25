@@ -18,6 +18,9 @@ use App\Http\Controllers\PenitipanController;
 use App\Http\Controllers\ProfilePembeliController;
 use App\Http\Controllers\RatingController;
 use App\Http\Controllers\OwnerController;
+use App\Http\Controllers\CartController;
+use App\Http\Controllers\CheckoutController;
+use App\Http\Controllers\TransaksiController;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Response;
 
@@ -52,8 +55,6 @@ Route::get('/admin', function () {
 
 Route::get('/barang/{id}', [BarangTitipanController::class, 'showDetail'])->name('barang.show');
 
-Route::post('/diskusi/{id_barang}', [DiskusiProdukController::class, 'store'])->name('diskusi.store');
-
 // Route untuk menampilkan form
 Route::get('/login', [LoginController::class, 'showLoginForm'])->name('login');
 Route::get('/register', function () {
@@ -78,6 +79,37 @@ Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
 
 // Route dengan middleware multiauth
 Route::middleware(['multiauth'])->group(function () {
+
+    // ROUTE PEMBELI
+    Route::get('/pembeli', [PembeliController::class, 'dashboardPembeli'])->name('pembeli.dashboard');
+    Route::prefix('pembeli')->group(function () {
+        Route::get('/pembeli/profile', [PembeliController::class, 'dashboardPembeli'])->name('pembeli.profilePembeli');
+        
+        // Profile dan history
+        Route::get('/pembeli/{id}/history', [PembeliController::class, 'history'])->name('pembeli.history');
+        Route::post('/rating', [RatingController::class, 'store'])->name('rating.store');
+        Route::post('/pembeli/update-alamat', [PembeliController::class, 'updateAlamat'])->name('pembeli.updateAlamat');
+        
+        // Cart routes (PERBAIKAN UTAMA - gunakan middleware auth:pembeli)
+        Route::get('/keranjang', [CartController::class, 'index'])->name('keranjang');
+        Route::get('/cart', [CartController::class, 'index'])->name('cart.index'); // alias
+        Route::post('/cart/add/{id}', [CartController::class, 'add'])->name('cart.add');
+        Route::delete('/cart/remove/{id}', [CartController::class, 'remove'])->name('cart.remove');
+        Route::post('/cart/clear', [CartController::class, 'clear'])->name('cart.clear');
+        
+        // Checkout routes
+        Route::post('/checkout/process', [CheckoutController::class, 'process'])->name('checkout.process');
+        
+        // Transaksi routes
+        Route::get('/history', [TransaksiController::class, 'history'])->name('pembeli.history');
+        Route::get('/transaksi/{id}', [TransaksiController::class, 'showDetail'])->name('transaksi.detail');
+        Route::get('/transaksi', [TransaksiController::class, 'index'])->name('transaksi.index');
+        Route::post('/transaksi/{id}/upload-bukti', [TransaksiController::class, 'uploadBuktiPembayaran'])->name('transaksi.upload-bukti');
+        
+        // Diskusi produk
+        Route::post('/diskusi/{id_barang}', [DiskusiProdukController::class, 'store'])->name('diskusi.store');
+    });
+    
     //PENITIP
     Route::get('/penitip', function () {
         return redirect()->route('penitip.dashboard');
@@ -159,6 +191,12 @@ Route::middleware(['multiauth'])->group(function () {
         Route::get('/laporan-masa-penitipan-habis-pdf', [OwnerController::class, 'laporanMasaPenitipanHabisPDF'])->name('laporanMasaPenitipanHabisPDF');
         Route::get('/laporan-komisi-per-hunter', [OwnerController::class, 'laporanKomisiPerHunter'])->name('laporanKomisiPerHunter');
         Route::get('/laporan-komisi-per-hunter-pdf', [OwnerController::class, 'laporanKomisiPerHunterPDF'])->name('laporanKomisiPerHunterPDF');
+        // Routes untuk Donasi
+        Route::get('/barang-donasi', [OwnerController::class, 'barangDonasi'])->name('barang.donasi');
+        Route::post('/request/{id}/terima', [OwnerController::class, 'terimaRequest'])->name('request.terima');
+        Route::post('/request/{id}/tolak', [RequestController::class, 'tolakRequest'])->name('request.tolak');
+        Route::put('/donasi/{id}/edit', [OwnerController::class, 'editDonasi'])->name('donasi.edit');
+        Route::delete('/donasi/{id}/hapus', [OwnerController::class, 'hapusDonasi'])->name('donasi.hapus');
 
         Route::post('/logout', function () {
             Auth::guard('pegawai')->logout();
@@ -206,6 +244,12 @@ Route::middleware(['multiauth'])->group(function () {
             return redirect()->route('login')->with('success', 'Logout berhasil!');
         })->name('admin.logout');
     });
+
+    //ROUTE ORGANISASI
+    Route::get('/organisasi', function () {
+        return redirect()->route('organisasi.dashboard');
+    });
+    Route::get('/organisasi/dashboard', [OrganisasiController::class, 'dashboard'])->name('organisasi.dashboard');
 });
 
 
@@ -310,6 +354,3 @@ Route::get('/api/organisasi/search', [OrganisasiController::class, 'search'])->n
 Route::prefix('admin')->group(function () {
     Route::resource('alamat-pembeli', AlamatPembeliController::class)->names('alamat');
 });
-
-Route::get('/pembeli/{id}/history', [PembeliController::class, 'history'])->name('pembeli.history');
-Route::post('/rating', [RatingController::class, 'store'])->name('rating.store');
