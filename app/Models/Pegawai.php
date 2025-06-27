@@ -75,6 +75,11 @@ class Pegawai extends Authenticatable
         return $this->belongsTo(RolePegawai::class, 'id_role', 'id_role');
     }
 
+    public function role()
+    {
+        return $this->belongsTo(RolePegawai::class, 'id_role', 'id_role');
+    }
+
     // Accessor untuk mendapatkan nama role
     public function getRoleNameAttribute()
     {

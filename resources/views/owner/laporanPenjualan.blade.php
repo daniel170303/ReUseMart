@@ -1,10 +1,23 @@
-@extends('layouts.owner') <!-- Sesuaikan dengan layout yang digunakan -->
+@extends('layouts.owner')
 
 @section('title', 'Laporan Penjualan')
 
 @section('content')
     <div class="container">
         <h2 class="my-4">Laporan Penjualan Tahunan {{ $tahun }}</h2>
+
+        <!-- Debug Info -->
+        @if(config('app.debug'))
+            <div class="alert alert-info">
+                <strong>Debug Info:</strong><br>
+                Data Grafik Count: {{ $dataGrafik->count() }}<br>
+                Data Grafik Sum: {{ $dataGrafik->sum('penjualan') }}<br>
+                <details>
+                    <summary>Data Grafik Detail</summary>
+                    <pre>{{ json_encode($dataGrafik->toArray(), JSON_PRETTY_PRINT) }}</pre>
+                </details>
+            </div>
+        @endif
 
         <!-- Filter Tahun -->
         <form method="GET" action="{{ route('owner.laporanPenjualan') }}" class="mb-4 d-flex gap-2">
@@ -47,7 +60,23 @@
 
         <!-- Grafik -->
         <div class="mb-5">
-            <canvas id="grafikPenjualan" height="100"></canvas>
+            <div class="card">
+                <div class="card-header">
+                    <h5>Grafik Penjualan Tahunan {{ $tahun }}</h5>
+                </div>
+                <div class="card-body">
+                    @if($dataGrafik->sum('penjualan') > 0)
+                        <div style="height: 400px;">
+                            <canvas id="grafikPenjualan"></canvas>
+                        </div>
+                    @else
+                        <div class="alert alert-warning">
+                            <i class="fas fa-exclamation-triangle"></i>
+                            Tidak ada data penjualan untuk tahun {{ $tahun }}
+                        </div>
+                    @endif
+                </div>
+            </div>
         </div>
 
         <!-- Tabel Penjualan Per Bulan -->
@@ -79,7 +108,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="7" class="text-center">Tidak ada data</td>
+                            <td colspan="5" class="text-center">Tidak ada data</td>
                         </tr>
                     @endforelse
                 </tbody>
@@ -91,29 +120,84 @@
 @section('scripts')
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script>
-        const ctx = document.getElementById('grafikPenjualan').getContext('2d');
-        const grafik = new Chart(ctx, {
-            type: 'bar',
-            data: {
-                labels: {!! json_encode($dataGrafik->pluck('bulan')) !!},
-                datasets: [{
-                    label: 'Total Penjualan',
-                    data: {!! json_encode($dataGrafik->pluck('penjualan')) !!},
-                    backgroundColor: 'rgba(54, 162, 235, 0.7)',
-                    borderColor: 'rgba(54, 162, 235, 1)',
-                    borderWidth: 1
-                }]
-            },
-            options: {
-                scales: {
-                    y: {
-                        beginAtZero: true,
-                        ticks: {
-                            callback: function(value) {
-                                return 'Rp' + new Intl.NumberFormat('id-ID').format(value);
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('DOM loaded, initializing sales chart...');
+            
+            // Data dari controller
+            const dataGrafik = @json($dataGrafik);
+            
+            console.log('Raw sales data from controller:', dataGrafik);
+            console.log('Data type:', typeof dataGrafik);
+            console.log('Is array:', Array.isArray(dataGrafik));
+            
+            if (dataGrafik && (Array.isArray(dataGrafik) || dataGrafik.length > 0)) {
+                const ctx = document.getElementById('grafikPenjualan');
+                
+                console.log('Canvas element:', ctx);
+                
+                if (ctx) {
+                    const labels = dataGrafik.map(item => item.bulan || item.bulan_nama);
+                    const data = dataGrafik.map(item => parseFloat(item.penjualan) || 0);
+                    
+                    console.log('Chart labels:', labels);
+                    console.log('Chart data:', data);
+                    console.log('Data sum:', data.reduce((a, b) => a + b, 0));
+                    
+                    // Cek apakah ada data yang tidak nol
+                    const hasData = data.some(value => value > 0);
+                    console.log('Has non-zero data:', hasData);
+                    
+                    try {
+                        const chart = new Chart(ctx, {
+                            type: 'bar',
+                            data: {
+                                labels: labels,
+                                datasets: [{
+                                    label: 'Total Penjualan (Rp)',
+                                    data: data,
+                                    backgroundColor: 'rgba(54, 162, 235, 0.7)',
+                                    borderColor: 'rgba(54, 162, 235, 1)',
+                                    borderWidth: 1
+                                }]
+                            },
+                            options: {
+                                responsive: true,
+                                maintainAspectRatio: false,
+                                plugins: {
+                                    title: {
+                                        display: true,
+                                        text: 'Grafik Penjualan Tahunan {{ $tahun }}'
+                                    },
+                                    legend: {
+                                        display: true,
+                                        position: 'top'
+                                    }
+                                },
+                                scales: {
+                                    y: {
+                                        beginAtZero: true,
+                                        ticks: {
+                                            callback: function(value, index, values) {
+                                                return 'Rp' + new Intl.NumberFormat('id-ID').format(value);
+                                            }
+                                        }
+                                    }
+                                }
                             }
-                        }
+                        });
+                        
+                        console.log('Sales chart created successfully:', chart);
+                    } catch (chartError) {
+                        console.error('Error creating sales chart:', chartError);
                     }
+                } else {
+                    console.error('Canvas element with id "grafikPenjualan" not found');
+                }
+            } else {
+                console.log('No sales chart data available');
+                const chartContainer = document.getElementById('grafikPenjualan');
+                if (chartContainer && chartContainer.parentElement) {
+                    chartContainer.parentElement.innerHTML = '<div class="alert alert-warning">Data grafik tidak tersedia</div>';
                 }
             }
         });

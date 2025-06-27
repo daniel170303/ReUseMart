@@ -12,6 +12,8 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
 use Barryvdh\DomPDF\Facade\Pdf;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Http\Request as HttpRequest;
 
 class OwnerController extends Controller
 {
@@ -95,222 +97,188 @@ class OwnerController extends Controller
 
     public function barangDonasi()
     {
-        // Cek apakah user yang login adalah owner
-        if (!Auth::guard('pegawai')->check()) {
-            return redirect()->route('login')->withErrors(['access_denied' => 'Anda tidak diizinkan mengakses halaman ini.']);
+        try {
+            // Debug: Log semua data request_donasi
+            $allRequests = DB::table('request')->get();
+            Log::info('All requests in database: ' . $allRequests->count());
+            Log::info('All requests data: ' . json_encode($allRequests->toArray()));
+
+            // Debug: Log requests dengan status pending
+            $pendingRequests = DB::table('request')
+                ->where('status_request', 'pending')
+                ->get();
+            Log::info('Pending requests: ' . $pendingRequests->count());
+            Log::info('Pending requests data: ' . json_encode($pendingRequests->toArray()));
+
+            // Ambil request donasi dengan status pending
+            $requests = DB::table('request as rd')
+                ->leftJoin('organisasi as o', 'rd.id_organisasi', '=', 'o.id_organisasi')
+                ->select(
+                    'rd.*',
+                    'o.nama_organisasi',
+                    'o.email_organisasi'
+                )
+                ->where('rd.status_request', 'pending')
+                ->get();
+
+            Log::info('Final requests with join: ' . $requests->count());
+            Log::info('Final requests data: ' . json_encode($requests->toArray()));
+
+            // Ambil data donasi dengan join ke tabel terkait
+            $donasis = DB::table('donasi as d')
+                ->leftJoin('barang_titipan as bt', 'd.id_barang', '=', 'bt.id_barang')
+                ->leftJoin('request as rd', 'd.id_request', '=', 'rd.id_request')
+                ->leftJoin('organisasi as o', 'rd.id_organisasi', '=', 'o.id_organisasi')
+                ->select(
+                    'd.*',
+                    'bt.nama_barang_titipan',
+                    'bt.jenis_barang',
+                    'rd.nama_request_barang',
+                    'o.nama_organisasi'
+                )
+                ->get();
+
+            Log::info('Barang Donasi - Requests: ' . $requests->count() . ', Donasis: ' . $donasis->count());
+
+            return view('owner.barangDonasi', compact('requests', 'donasis'));
+        } catch (\Exception $e) {
+            Log::error('Error in barangDonasi: ' . $e->getMessage());
+            Log::error('Stack trace: ' . $e->getTraceAsString());
+            return view('owner.barangDonasi', [
+                'requests' => collect(),
+                'donasis' => collect()
+            ])->with('error', 'Terjadi kesalahan saat memuat data: ' . $e->getMessage());
         }
-
-        $owner = Auth::guard('pegawai')->user();
-        
-        if (!$owner->rolePegawai || $owner->rolePegawai->nama_role !== 'Owner') {
-            return redirect('/')->withErrors(['access_denied' => 'Anda tidak memiliki hak akses sebagai Owner.']);
-        }
-
-        // Ambil request donasi dengan status pending
-        $requests = Request::with('organisasi')
-            ->where('status_request', 'pending')
-            ->orderBy('tanggal_request', 'desc')
-            ->get();
-
-        // Ambil daftar donasi yang sudah dilakukan
-        $donasis = Donasi::with(['barangTitipan', 'requestDonasi.organisasi'])
-            ->orderBy('tanggal_donasi', 'desc')
-            ->get();
-
-        return view('owner.barangDonasi', compact('requests', 'donasis'));
     }
 
-    /**
-     * Terima request donasi
-     */
-    public function terimaRequest($id_request)
+    public function terimaRequest($id)
     {
         try {
-            // Cek apakah user yang login adalah owner
-            if (!Auth::guard('pegawai')->check()) {
-                return redirect()->route('login')->withErrors(['access_denied' => 'Anda tidak diizinkan mengakses halaman ini.']);
+            // Ambil data request
+            $request = DB::table('request')->where('id_request', $id)->first();
+            
+            if (!$request) {
+                return redirect()->back()->with('error', 'Request tidak ditemukan.');
             }
 
-            $owner = Auth::guard('pegawai')->user();
-            
-            if (!$owner->rolePegawai || $owner->rolePegawai->nama_role !== 'Owner') {
-                return redirect('/')->withErrors(['access_denied' => 'Anda tidak memiliki hak akses sebagai Owner.']);
-            }
+            // Ambil barang yang tersedia untuk donasi
+            $barangTersedia = BarangTitipan::where('status_barang', 'barang untuk donasi')
+                ->get();
 
-            // Cari request donasi
-            $request = RequestDonasi::findOrFail($id_request);
-            
-            // Update status menjadi diterima
-            $request->update([
-                'status_request' => 'diterima',
-                'tanggal_disetujui' => now()
+            return response()->json([
+                'success' => true,
+                'request' => $request,
+                'barang_tersedia' => $barangTersedia
             ]);
 
-            // Cari barang yang cocok untuk donasi (status barang untuk donasi)
-            $barangUntukDonasi = BarangTitipan::where('status_barang', 'barang untuk donasi')
-                ->where('jenis_barang', 'like', '%' . $request->nama_request_barang . '%')
-                ->orWhere('nama_barang_titipan', 'like', '%' . $request->nama_request_barang . '%')
-                ->first();
-
-            // Jika ada barang yang cocok, buat donasi otomatis
-            if ($barangUntukDonasi) {
-                $this->buatDonasi($barangUntukDonasi->id_barang, $id_request);
-            }
-
-            return redirect()->route('owner.barang.donasi')
-                ->with('success', 'Request donasi berhasil diterima!');
-
         } catch (\Exception $e) {
-            Log::error('Error menerima request donasi: ' . $e->getMessage());
-            return redirect()->route('owner.barang.donasi')
-                ->with('error', 'Terjadi kesalahan saat menerima request donasi.');
+            Log::error('Error in terimaRequest: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Terjadi kesalahan: ' . $e->getMessage()
+            ], 500);
         }
     }
 
-    /**
-     * Tolak request donasi
-     */
-    public function tolakRequest($id_request)
+    public function tolakRequest($id)
     {
         try {
-            // Cek apakah user yang login adalah owner
-            if (!Auth::guard('pegawai')->check()) {
-                return redirect()->route('login')->withErrors(['access_denied' => 'Anda tidak diizinkan mengakses halaman ini.']);
+            DB::beginTransaction();
+
+            // Update status request menjadi 'ditolak' atau hapus
+            $deleted = DB::table('request')
+                ->where('id_request', $id)
+                ->delete(); // atau ->update(['status_request' => 'ditolak'])
+
+            if ($deleted) {
+                DB::commit();
+                return redirect()->back()->with('success', 'Request donasi berhasil ditolak dan dihapus.');
+            } else {
+                DB::rollback();
+                return redirect()->back()->with('error', 'Request tidak ditemukan.');
             }
-
-            $owner = Auth::guard('pegawai')->user();
-            
-            if (!$owner->rolePegawai || $owner->rolePegawai->nama_role !== 'Owner') {
-                return redirect('/')->withErrors(['access_denied' => 'Anda tidak memiliki hak akses sebagai Owner.']);
-            }
-
-            // Cari request donasi
-            $request = RequestDonasi::findOrFail($id_request);
-            
-            // Update status menjadi ditolak
-            $request->update([
-                'status_request' => 'ditolak',
-                'tanggal_disetujui' => now()
-            ]);
-
-            return redirect()->route('owner.barang.donasi')
-                ->with('success', 'Request donasi berhasil ditolak.');
 
         } catch (\Exception $e) {
-            Log::error('Error menolak request donasi: ' . $e->getMessage());
-            return redirect()->route('owner.barang.donasi')
-                ->with('error', 'Terjadi kesalahan saat menolak request donasi.');
+            DB::rollback();
+            Log::error('Error in tolakRequest: ' . $e->getMessage());
+            return redirect()->back()->with('error', 'Terjadi kesalahan saat menolak request.');
         }
     }
 
-    /**
-     * Buat donasi baru
-     */
-    private function buatDonasi($id_barang, $id_request)
+    public function konfirmasiDonasi(HttpRequest $request)
     {
+        $validated = $request->validate([
+            'id_request' => 'required|integer',
+            'id_barang' => 'required|integer',
+            'penerima_donasi' => 'required|string|max:255',
+            'tanggal_donasi' => 'required|date'
+        ]);
+
         try {
-            // Ambil data request dan organisasi
-            $request = RequestDonasi::with('organisasi')->findOrFail($id_request);
-            
-            // Buat donasi baru
+            DB::beginTransaction();
+
+            // Buat data donasi
             $donasi = Donasi::create([
-                'id_barang' => $id_barang,
-                'id_request' => $id_request,
-                'tanggal_donasi' => now(),
-                'penerima_donasi' => $request->organisasi->nama_organisasi
+                'id_barang' => $validated['id_barang'],
+                'id_request' => $validated['id_request'],
+                'tanggal_donasi' => $validated['tanggal_donasi'],
+                'penerima_donasi' => $validated['penerima_donasi']
             ]);
 
-            // Update status barang menjadi sudah didonasikan
-            BarangTitipan::where('id_barang', $id_barang)
-                ->update(['status_barang' => 'sudah didonasikan']);
+            // Update status request menjadi 'diterima'
+            DB::table('request')
+                ->where('id_request', $validated['id_request'])
+                ->update(['status_request' => 'diterima']);
 
-            return $donasi;
+            // Update status barang (opsional)
+            BarangTitipan::where('id_barang', $validated['id_barang'])
+                ->update(['status_barang' => 'barang sudah didonasikan']);
+
+            DB::commit();
+
+            return redirect()->back()->with('success', 'Donasi berhasil dikonfirmasi!');
 
         } catch (\Exception $e) {
-            Log::error('Error membuat donasi: ' . $e->getMessage());
-            throw $e;
+            DB::rollback();
+            Log::error('Error in konfirmasiDonasi: ' . $e->getMessage());
+            return redirect()->back()->with('error', 'Terjadi kesalahan saat konfirmasi donasi: ' . $e->getMessage());
         }
     }
 
-    /**
-     * Edit donasi
-     */
-    public function editDonasi(Request $request, $id_donasi)
+    public function editDonasi(HttpRequest $request, $id)
     {
+        $validated = $request->validate([
+            'id_barang' => 'required|integer',
+            'id_request' => 'required|integer',
+            'tanggal_donasi' => 'required|date',
+            'penerima_donasi' => 'required|string|max:255',
+        ]);
+
         try {
-            // Cek apakah user yang login adalah owner
-            if (!Auth::guard('pegawai')->check()) {
-                return redirect()->route('login')->withErrors(['access_denied' => 'Anda tidak diizinkan mengakses halaman ini.']);
-            }
-
-            $owner = Auth::guard('pegawai')->user();
-            
-            if (!$owner->rolePegawai || $owner->rolePegawai->nama_role !== 'Owner') {
-                return redirect('/')->withErrors(['access_denied' => 'Anda tidak memiliki hak akses sebagai Owner.']);
-            }
-
-            // Validasi input
-            $validated = $request->validate([
-                'id_barang' => 'required|exists:barang_titipan,id_barang',
-                'id_request' => 'required|exists:request_donasi,id_request',
-                'tanggal_donasi' => 'required|date',
-                'penerima_donasi' => 'required|string|max:255'
-            ]);
-
-            // Cari donasi
-            $donasi = Donasi::findOrFail($id_donasi);
-            
-            // Update donasi
+            $donasi = Donasi::findOrFail($id);
             $donasi->update($validated);
 
-            return redirect()->route('owner.barang.donasi')
-                ->with('success', 'Donasi berhasil diupdate!');
-
+            return redirect()->back()->with('success', 'Donasi berhasil diperbarui.');
         } catch (\Exception $e) {
-            Log::error('Error edit donasi: ' . $e->getMessage());
-            return redirect()->route('owner.barang.donasi')
-                ->with('error', 'Terjadi kesalahan saat mengupdate donasi.');
+            Log::error('Error in editDonasi: ' . $e->getMessage());
+            return redirect()->back()->with('error', 'Terjadi kesalahan saat memperbarui donasi.');
         }
     }
 
-    /**
-     * Hapus donasi
-     */
-    public function hapusDonasi($id_donasi)
+    public function hapusDonasi($id)
     {
         try {
-            // Cek apakah user yang login adalah owner
-            if (!Auth::guard('pegawai')->check()) {
-                return redirect()->route('login')->withErrors(['access_denied' => 'Anda tidak diizinkan mengakses halaman ini.']);
-            }
-
-            $owner = Auth::guard('pegawai')->user();
-            
-            if (!$owner->rolePegawai || $owner->rolePegawai->nama_role !== 'Owner') {
-                return redirect('/')->withErrors(['access_denied' => 'Anda tidak memiliki hak akses sebagai Owner.']);
-            }
-
-            // Cari donasi
-            $donasi = Donasi::findOrFail($id_donasi);
-            
-            // Kembalikan status barang menjadi barang untuk donasi
-            BarangTitipan::where('id_barang', $donasi->id_barang)
-                ->update(['status_barang' => 'barang untuk donasi']);
-            
-            // Hapus donasi
+            $donasi = Donasi::findOrFail($id);
             $donasi->delete();
 
-            return redirect()->route('owner.barang.donasi')
-                ->with('success', 'Donasi berhasil dihapus!');
-
+            return redirect()->back()->with('success', 'Donasi berhasil dihapus.');
         } catch (\Exception $e) {
-            Log::error('Error hapus donasi: ' . $e->getMessage());
-            return redirect()->route('owner.barang.donasi')
-                ->with('error', 'Terjadi kesalahan saat menghapus donasi.');
+            Log::error('Error in hapusDonasi: ' . $e->getMessage());
+            return redirect()->back()->with('error', 'Terjadi kesalahan saat menghapus donasi.');
         }
     }
 
-    public function laporanPenjualan(Request $request)
+    public function laporanPenjualan(HttpRequest $request)
     {
         // Cek apakah user yang login adalah owner
         if (!Auth::guard('pegawai')->check()) {
@@ -355,7 +323,7 @@ class OwnerController extends Controller
         ));
     }
 
-    public function laporanPenjualanPDF(Request $request)
+    public function laporanPenjualanPDF(HttpRequest $request)
     {
         $tahun = $request->tahun ?? date('Y');
 
@@ -617,7 +585,7 @@ class OwnerController extends Controller
         return collect($dataGrafik);
     }
 
-    public function laporanKomisi(Request $request)
+    public function laporanKomisi(HttpRequest $request)
     {
         try {
             // Cek apakah user yang login adalah owner
@@ -674,7 +642,7 @@ class OwnerController extends Controller
         }
     }
 
-    public function laporanKomisiPDF(Request $request)
+    public function laporanKomisiPDF(HttpRequest $request)
     {
         try {
             $bulan = (int) ($request->bulan ?? date('m'));
@@ -901,7 +869,7 @@ class OwnerController extends Controller
         return $chartHtml;
     }
 
-    public function laporanStokGudang(Request $request)
+    public function laporanStokGudang(HttpRequest $request)
     {
         try {
             // Cek apakah user yang login adalah owner
@@ -1007,14 +975,13 @@ class OwnerController extends Controller
             )
             ->where('bt.status_barang', '!=', 'barang untuk donasi')
             ->whereNull('t.id_transaksi')
-            ->whereDate('p.tanggal_penitipan', $tanggalHariIni)
             ->whereNotNull('p.tanggal_penitipan')
             ->orderBy('p.tanggal_penitipan', 'desc')
             ->orderBy('bt.created_at', 'desc')
             ->get();
     }
 
-    public function laporanPenjualanPerKategori(Request $request)
+    public function laporanPenjualanPerKategori(HttpRequest $request)
     {
         $tahun = $request->get('tahun', date('Y'));
         
@@ -1108,7 +1075,7 @@ class OwnerController extends Controller
         ));
     }
 
-    public function laporanPenjualanPerKategoriPDF(Request $request)
+    public function laporanPenjualanPerKategoriPDF(HttpRequest $request)
     {
         $tahun = $request->get('tahun', date('Y'));
         
@@ -1279,7 +1246,7 @@ class OwnerController extends Controller
         return $pdf->download('laporan-masa-penitipan-habis-' . now()->format('Y-m-d') . '.pdf');
     }
 
-    public function laporanKomisiPerHunter(Request $request)
+    public function laporanKomisiPerHunter(HttpRequest $request)
     {
         try {
             // Cek apakah user yang login adalah owner
@@ -1332,7 +1299,7 @@ class OwnerController extends Controller
         }
     }
 
-    public function laporanKomisiPerHunterPDF(Request $request)
+    public function laporanKomisiPerHunterPDF(HttpRequest $request)
     {
         try {
             $bulan = (int) ($request->bulan ?? date('m'));

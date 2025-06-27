@@ -44,7 +44,7 @@ class PegawaiController extends Controller
 
         Pegawai::create($validated);
 
-        return redirect()->route('pegawai.index')->with('success', 'Pegawai berhasil ditambahkan');
+        return redirect()->route('admin.pegawai.index')->with('success', 'Pegawai berhasil ditambahkan');
     }
 
     // Update data pegawai
@@ -74,7 +74,7 @@ class PegawaiController extends Controller
 
         $pegawai->update($validated);
 
-        return redirect()->route('pegawai.index')->with('success', 'Pegawai berhasil diperbarui');
+        return redirect()->route('admin.pegawai.index')->with('success', 'Pegawai berhasil diperbarui');
     }
 
     // Hapus pegawai
@@ -83,7 +83,7 @@ class PegawaiController extends Controller
         $pegawai = Pegawai::findOrFail($id);
         $pegawai->delete();
 
-        return redirect()->route('pegawai.index')->with('success', 'Pegawai berhasil dihapus');
+        return redirect()->route('admin.pegawai.index')->with('success', 'Pegawai berhasil dihapus');
     }
 
     // Pencarian pegawai berdasarkan keyword

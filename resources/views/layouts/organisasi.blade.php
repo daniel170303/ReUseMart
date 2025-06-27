@@ -203,7 +203,7 @@
                 <!-- Profile -->
                 <li class="nav-item">
                     <a class="nav-link" 
-                       href="">
+                       href="{{ route('organisasi.profile') }}">
                         <i class="fas fa-building"></i>
                         <span>Profil Organisasi</span>
                     </a>

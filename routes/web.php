@@ -194,7 +194,8 @@ Route::middleware(['multiauth'])->group(function () {
         // Routes untuk Donasi
         Route::get('/barang-donasi', [OwnerController::class, 'barangDonasi'])->name('barang.donasi');
         Route::post('/request/{id}/terima', [OwnerController::class, 'terimaRequest'])->name('request.terima');
-        Route::post('/request/{id}/tolak', [RequestController::class, 'tolakRequest'])->name('request.tolak');
+        Route::post('/request/{id}/tolak', [OwnerController::class, 'tolakRequest'])->name('request.tolak');
+        Route::post('/donasi/konfirmasi', [OwnerController::class, 'konfirmasiDonasi'])->name('donasi.konfirmasi');
         Route::put('/donasi/{id}/edit', [OwnerController::class, 'editDonasi'])->name('donasi.edit');
         Route::delete('/donasi/{id}/hapus', [OwnerController::class, 'hapusDonasi'])->name('donasi.hapus');
 
@@ -250,6 +251,17 @@ Route::middleware(['multiauth'])->group(function () {
         return redirect()->route('organisasi.dashboard');
     });
     Route::get('/organisasi/dashboard', [OrganisasiController::class, 'dashboard'])->name('organisasi.dashboard');
+    Route::prefix('organisasi')->name('organisasi.')->group(function () {
+        // Profile organisasi
+        Route::get('/profile', [OrganisasiController::class, 'profile'])->name('profile');
+        Route::put('/profile', [OrganisasiController::class, 'updateProfile'])->name('profile.update');
+        Route::post('/logout', function () {
+            Auth::guard('pegawai')->logout();
+            session()->invalidate();
+            session()->regenerateToken();
+            return redirect()->route('login')->with('success', 'Logout berhasil!');
+        })->name('organisasi.logout');
+    });
 });
 
 

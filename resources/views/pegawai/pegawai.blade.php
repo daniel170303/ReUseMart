@@ -135,7 +135,7 @@
 
     <button onclick="showForm('create')">+ Tambah Pegawai</button>
 
-    <form action="{{ route('pegawai.index') }}" method="GET" style="margin-top: 16px; margin-bottom: 12px;">
+    <form action="{{ url ('/pegawai') }}" method="GET" style="margin-top: 16px; margin-bottom: 12px;">
         <input type="text" name="keyword" placeholder="🔍 Cari pegawai..." value="{{ request('keyword') }}"
             style="padding: 8px; width: 250px; border-radius: 4px; border: 1px solid #ccc;">
         <button type="submit" style="padding: 8px 12px; margin-left: 4px;">Cari</button>

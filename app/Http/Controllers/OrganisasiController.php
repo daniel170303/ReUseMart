@@ -104,4 +104,53 @@ class OrganisasiController extends Controller
         
         return view('organisasi.dashboardOrganisasi', compact('organisasi', 'totalRequests', 'pendingRequests'));
     }
+
+    // Profile organisasi yang login
+    public function profile()
+    {
+        $organisasi = Auth::guard('organisasi')->user();
+        
+        if (!$organisasi) {
+            return redirect()->route('login')->with('error', 'Silakan login terlebih dahulu.');
+        }
+        
+        return view('organisasi.profileOrganisasi', compact('organisasi'));
+    }
+
+    // Update profile organisasi
+    public function updateProfile(Request $request)
+    {
+        $organisasi = Auth::guard('organisasi')->user();
+        
+        if (!$organisasi) {
+            return redirect()->route('login')->with('error', 'Silakan login terlebih dahulu.');
+        }
+
+        $validated = $request->validate([
+            'nama_organisasi' => 'required|string|max:255',
+            'alamat_organisasi' => 'required|string|max:500',
+            'nomor_telepon_organisasi' => 'required|string|max:20',
+            'email_organisasi' => [
+                'required',
+                'email',
+                'max:255',
+                Rule::unique('organisasi', 'email_organisasi')->ignore($organisasi->id_organisasi, 'id_organisasi'),
+            ],
+            'password_organisasi' => 'nullable|string|min:8|confirmed',
+        ]);
+
+        // Jika password diisi, hash password baru
+        if (!empty($validated['password_organisasi'])) {
+            $validated['password_organisasi'] = Hash::make($validated['password_organisasi']);
+        } else {
+            unset($validated['password_organisasi']);
+        }
+
+        try {
+            $organisasi->update($validated);
+            return redirect()->route('organisasi.profile')->with('success', 'Profile berhasil diperbarui.');
+        } catch (\Exception $e) {
+            return redirect()->back()->with('error', 'Terjadi kesalahan: ' . $e->getMessage())->withInput();
+        }
+    }
 }

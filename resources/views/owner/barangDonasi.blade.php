@@ -31,7 +31,6 @@
                 @if ($requests->isEmpty())
                     <div class="alert alert-info">
                         <i class="fas fa-info-circle me-2"></i>Tidak ada request donasi dengan status pending.
-                        <br><small>Debug: Total requests di database dapat dilihat di log.</small>
                     </div>
                 @else
                     <div class="table-responsive">
@@ -62,14 +61,12 @@
                                         </td>
                                         <td>
                                             <div class="btn-group" role="group">
-                                                <form action="{{ route('request.terima', $req->id_request) }}"
-                                                    method="POST" class="d-inline">
-                                                    @csrf
-                                                    <button type="submit" class="btn btn-success btn-sm"
-                                                        onclick="return confirm('Yakin ingin menerima request ini?')">
-                                                        <i class="fas fa-check me-1"></i>Terima
-                                                    </button>
-                                                </form>
+                                                <button class="btn btn-success btn-sm btn-terima-request"
+                                                    data-id="{{ $req->id_request }}"
+                                                    data-nama="{{ $req->nama_request_barang }}"
+                                                    data-organisasi="{{ $req->nama_organisasi }}">
+                                                    <i class="fas fa-check me-1"></i>Terima
+                                                </button>
                                                 <button class="btn btn-danger btn-sm ms-1"
                                                     onclick="tolakRequest({{ $req->id_request }})">
                                                     <i class="fas fa-times me-1"></i>Tolak
@@ -98,7 +95,6 @@
                 @if ($donasis->isEmpty())
                     <div class="alert alert-info">
                         <i class="fas fa-info-circle me-2"></i>Belum ada data donasi.
-                        <br><small>Debug: Cek log untuk melihat data yang tersedia.</small>
                     </div>
                 @else
                     <div class="table-responsive">
@@ -161,6 +157,76 @@
         </div>
     </div>
 
+    <!-- Modal Terima Request -->
+    <div class="modal fade" id="terimaRequestModal" tabindex="-1" aria-labelledby="terimaRequestModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header bg-success text-white">
+                    <h5 class="modal-title" id="terimaRequestModalLabel">
+                        <i class="fas fa-check-circle me-2"></i>Konfirmasi Donasi
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <form id="konfirmasiDonasiForm" method="POST" action="{{ route('owner.donasi.konfirmasi') }}">
+                    @csrf
+                    <div class="modal-body">
+                        <input type="hidden" name="id_request" id="requestId" />
+                        
+                        <div class="alert alert-info">
+                            <h6><i class="fas fa-info-circle me-2"></i>Informasi Request</h6>
+                            <p class="mb-1"><strong>Request untuk:</strong> <span id="requestNama"></span></p>
+                            <p class="mb-0"><strong>Organisasi:</strong> <span id="requestOrganisasi"></span></p>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="id_barang" class="form-label">
+                                <i class="fas fa-box me-1"></i>Pilih Barang untuk Donasi <span class="text-danger">*</span>
+                            </label>
+                            <select class="form-select" id="id_barang" name="id_barang" required>
+                                <option value="">-- Pilih Barang --</option>
+                            </select>
+                            <small class="form-text text-muted">Hanya menampilkan barang dengan status "barang untuk donasi"</small>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="tanggal_donasi" class="form-label">
+                                        <i class="fas fa-calendar me-1"></i>Tanggal Donasi <span class="text-danger">*</span>
+                                    </label>
+                                    <input type="date" class="form-control" id="tanggal_donasi" name="tanggal_donasi" 
+                                           value="{{ date('Y-m-d') }}" required />
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="penerima_donasi" class="form-label">
+                                        <i class="fas fa-user me-1"></i>Penerima Donasi <span class="text-danger">*</span>
+                                    </label>
+                                    <input type="text" class="form-control" id="penerima_donasi" name="penerima_donasi" 
+                                           placeholder="Nama penerima donasi" required />
+                                </div>
+                            </div>
+                        </div>
+
+                        <div id="barangDetail" class="alert alert-secondary d-none">
+                            <h6><i class="fas fa-info-circle me-2"></i>Detail Barang Terpilih</h6>
+                            <div id="barangInfo"></div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                            <i class="fas fa-times me-1"></i>Batal
+                        </button>
+                        <button type="submit" class="btn btn-success">
+                            <i class="fas fa-check me-1"></i>Konfirmasi Donasi
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
     <!-- Modal Edit Donasi -->
     <div class="modal fade" id="editDonasiModal" tabindex="-1" aria-labelledby="editDonasiModalLabel" aria-hidden="true">
         <div class="modal-dialog">
@@ -178,25 +244,23 @@
                         <input type="hidden" name="id" id="donasiId" />
 
                         <div class="mb-3">
-                            <label for="id_barang" class="form-label">ID Barang</label>
-                            <input type="number" class="form-control" id="id_barang" name="id_barang" required />
+                            <label for="edit_id_barang" class="form-label">ID Barang</label>
+                            <input type="number" class="form-control" id="edit_id_barang" name="id_barang" required />
                         </div>
 
                         <div class="mb-3">
-                            <label for="id_request" class="form-label">ID Request</label>
-                            <input type="number" class="form-control" id="id_request" name="id_request" required />
+                            <label for="edit_id_request" class="form-label">ID Request</label>
+                            <input type="number" class="form-control" id="edit_id_request" name="id_request" required />
                         </div>
 
                         <div class="mb-3">
-                            <label for="tanggal_donasi" class="form-label">Tanggal Donasi</label>
-                            <input type="date" class="form-control" id="tanggal_donasi" name="tanggal_donasi"
-                                required />
+                            <label for="edit_tanggal_donasi" class="form-label">Tanggal Donasi</label>
+                            <input type="date" class="form-control" id="edit_tanggal_donasi" name="tanggal_donasi" required />
                         </div>
 
                         <div class="mb-3">
-                            <label for="penerima_donasi" class="form-label">Penerima Donasi</label>
-                            <input type="text" class="form-control" id="penerima_donasi" name="penerima_donasi"
-                                required />
+                            <label for="edit_penerima_donasi" class="form-label">Penerima Donasi</label>
+                            <input type="text" class="form-control" id="edit_penerima_donasi" name="penerima_donasi" required />
                         </div>
                     </div>
                     <div class="modal-footer">
@@ -216,6 +280,29 @@
 @push('scripts')
     <script>
         document.addEventListener('DOMContentLoaded', function() {
+            // Handle Terima Request Button
+            document.querySelectorAll('.btn-terima-request').forEach(button => {
+                button.addEventListener('click', function() {
+                    const requestId = this.getAttribute('data-id');
+                    const requestNama = this.getAttribute('data-nama');
+                    const requestOrganisasi = this.getAttribute('data-organisasi');
+                    
+                    // Set data ke modal
+                    document.getElementById('requestId').value = requestId;
+                    document.getElementById('requestNama').textContent = requestNama;
+                    document.getElementById('requestOrganisasi').textContent = requestOrganisasi;
+                    document.getElementById('penerima_donasi').value = requestOrganisasi; // Set default penerima
+                    
+                    // Load barang tersedia
+                    loadBarangTersedia(requestId);
+                    
+                    // Show modal
+                    const modal = new bootstrap.Modal(document.getElementById('terimaRequestModal'));
+                    modal.show();
+                });
+            });
+
+            // Handle Edit Donasi Modal
             var editDonasiModal = document.getElementById('editDonasiModal');
             editDonasiModal.addEventListener('show.bs.modal', function(event) {
                 var button = event.relatedTarget;
@@ -230,25 +317,88 @@
 
                 // Isi form dengan data yang diterima
                 this.querySelector('#donasiId').value = id;
-                this.querySelector('#id_barang').value = id_barang;
-                this.querySelector('#id_request').value = id_request;
-                this.querySelector('#tanggal_donasi').value = formattedDate;
-                this.querySelector('#penerima_donasi').value = penerima_donasi;
+                this.querySelector('#edit_id_barang').value = id_barang;
+                this.querySelector('#edit_id_request').value = id_request;
+                this.querySelector('#edit_tanggal_donasi').value = formattedDate;
+                this.querySelector('#edit_penerima_donasi').value = penerima_donasi;
 
-                // Set action form secara dinamis menggunakan base URL Laravel
+                // Set action form secara dinamis
                 var form = this.querySelector('#editDonasiForm');
                 var baseUrl = "{{ url('owner/donasi') }}";
                 form.action = baseUrl + "/" + id + "/edit";
             });
+
+            // Handle barang selection change
+            document.getElementById('id_barang').addEventListener('change', function() {
+                const selectedOption = this.options[this.selectedIndex];
+                const barangDetail = document.getElementById('barangDetail');
+                const barangInfo = document.getElementById('barangInfo');
+                
+                if (this.value) {
+                    const nama = selectedOption.getAttribute('data-nama');
+                    const jenis = selectedOption.getAttribute('data-jenis');
+                    const stok = selectedOption.getAttribute('data-stok');
+                    const harga = selectedOption.getAttribute('data-harga');
+                    
+                    barangInfo.innerHTML = `
+                        <p class="mb-1"><strong>Nama:</strong> ${nama}</p>
+                        <p class="mb-1"><strong>Jenis:</strong> ${jenis}</p>
+                        <p class="mb-0"><strong>Harga:</strong> Rp ${parseInt(harga).toLocaleString('id-ID')}</p>
+                    `;
+                    barangDetail.classList.remove('d-none');
+                } else {
+                    barangDetail.classList.add('d-none');
+                }
+            });
         });
-    </script>
-    <script>
+
+        function loadBarangTersedia(requestId) {
+            const selectBarang = document.getElementById('id_barang');
+            selectBarang.innerHTML = '<option value="">Loading...</option>';
+            
+            fetch(`{{ url('owner/request') }}/${requestId}/terima`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    selectBarang.innerHTML = '<option value="">-- Pilih Barang --</option>';
+                    
+                    data.barang_tersedia.forEach(barang => {
+                        const option = document.createElement('option');
+                        option.value = barang.id_barang;
+                        option.textContent = `${barang.nama_barang_titipan}`;
+                        option.setAttribute('data-nama', barang.nama_barang_titipan);
+                        option.setAttribute('data-jenis', barang.jenis_barang);
+                        option.setAttribute('data-stok', barang.stok_barang);
+                        option.setAttribute('data-harga', barang.harga_barang);
+                        selectBarang.appendChild(option);
+                    });
+                    
+                    if (data.barang_tersedia.length === 0) {
+                        selectBarang.innerHTML = '<option value="">Tidak ada barang tersedia untuk donasi</option>';
+                    }
+                } else {
+                    selectBarang.innerHTML = '<option value="">Error loading data</option>';
+                    console.error('Error:', data.message);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                selectBarang.innerHTML = '<option value="">Error loading data</option>';
+            });
+        }
+
         function tolakRequest(id) {
-            if (confirm('Yakin ingin menolak request ini?')) {
+            if (confirm('Yakin ingin menolak request ini? Data request akan dihapus secara permanen.')) {
                 // Buat form dinamis untuk menolak request
                 const form = document.createElement('form');
                 form.method = 'POST';
-                form.action = `/request/${id}/tolak`;
+                form.action = `{{ url('owner/request') }}/${id}/tolak`;
 
                 const csrfToken = document.createElement('input');
                 csrfToken.type = 'hidden';
