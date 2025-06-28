@@ -349,22 +349,7 @@
             </div>
         </div>
     @endforeach
-
-    {{-- Script untuk auto download nota --}}
-    {{-- @if (session('nota_path'))
-        <script>
-            window.onload = function() {
-                const link = document.createElement('a');
-                link.href = "{{ asset('storage/nota/' . session('nota_path')) }}";
-                link.download = "";
-                link.style.display = 'none';
-                document.body.appendChild(link);
-                link.click();
-                document.body.removeChild(link);
-            };
-        </script>
-    @endif --}}
-
+    
     {{-- Script untuk enhanced UX dan Debug --}}
     <script>
         $(document).ready(function() {

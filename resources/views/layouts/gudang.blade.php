@@ -79,6 +79,12 @@
         <h4 class="text-white mb-4">Gudang</h4>
         <a href="{{ route('pegawai.gudang') }}"><i class="fas fa-boxes"></i> Barang Titipan</a>
         <a href="{{ route('penitipan.index') }}"><i class="fas fa-clipboard-list"></i> Penitipan</a>
+        <a href="{{ route('gudang.jadwalPengembalian') }}"><i class="fas fa-undo"></i> Konfirmasi Pengembalian</a>
+        <a href="{{ route('gudang.jadwalPengiriman') }}"><i class="fas fa-truck"></i> Jadwal Pengiriman &
+            Pengambilan</a>
+        <a href="{{ route('gudang.konfirmasiPengambilan') }}"><i class="fas fa-check-circle"></i> Konfirmasi
+            Pengambilan</a>
+        <a href="{{ route('gudang.listTransaksi') }}"><i class="fas fa-check-circle"></i> List Transaksi</a>
         <a href="{{ route('logout') }}"
             onclick="event.preventDefault(); document.getElementById('logout-form').submit();">
             <i class="fas fa-sign-out-alt"></i> Logout
@@ -94,10 +100,8 @@
         </main>
     </div>
 
-    <!-- jQuery HARUS dimuat SEBELUM Bootstrap JS -->
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 
-    {{-- Bootstrap JS --}}
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.0/dist/js/bootstrap.bundle.min.js"></script>
 
     @yield('scripts')

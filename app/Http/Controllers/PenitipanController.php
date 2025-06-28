@@ -8,6 +8,7 @@ use App\Models\Penitip;
 use App\Models\BarangTitipan;
 use App\Models\BarangTitipanHunter;
 use App\Models\Pegawai;
+use App\Models\Transaksi;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Session;
 use Barryvdh\DomPDF\Facade\Pdf;
@@ -181,19 +182,53 @@ class PenitipanController extends Controller
         return redirect()->back()->with('error', 'Penitipan tidak bisa diperpanjang.');
     }
 
-    public function konfirmasiPengambilan($id)
+    public function halamanJadwalPengembalian()
     {
-        $penitipan = Penitipan::findOrFail($id);
+        $jadwalPengambilan = DetailPenitipan::with(['barangTitipan', 'penitipan.penitip'])
+            ->whereHas('penitipan', function ($query) {
+                $query->whereNotNull('tanggal_pengambilan')
+                    ->where('status_barang', 'akan diambil penitip');
+            })
+            ->get();
 
-        // Update penitipan: status pengambilan, tanggal pengambilan, dan status_barang
-        $penitipan->update([
-            'tanggal_pengambilan' => now(),
-            'status_barang' => 'sudah diambil penitip', // sekarang sudah valid
+        return view('pegawai.gudang.jadwalPengembalian', compact('jadwalPengambilan'));
+    }
+
+    public function konfirmasiPengembalian(Request $request)
+    {
+        $request->validate([
+            'id_penitipan' => 'required|exists:penitipan,id_penitipan',
         ]);
 
-        // Update semua barang terkait menjadi "sudah diambil penitip"
-        $detailBarang = DetailPenitipan::where('id_penitipan', $id)->get();
+        $penitipan = Penitipan::findOrFail($request->id_penitipan);
+        $tanggalBatas = \Carbon\Carbon::parse($penitipan->tanggal_batas_pengambilan);
 
+        // Cek apakah hari ini sudah lewat dari tanggal batas pengambilan
+        if (now()->gt($tanggalBatas)) {
+            // Barang otomatis jadi donasi
+            $penitipan->update([
+                'status_barang' => 'barang untuk donasi',
+            ]);
+
+            $detailBarang = DetailPenitipan::where('id_penitipan', $penitipan->id_penitipan)->get();
+            foreach ($detailBarang as $detail) {
+                $barang = BarangTitipan::find($detail->id_barang);
+                if ($barang) {
+                    $barang->status_barang = 'barang untuk donasi';
+                    $barang->save();
+                }
+            }
+
+            return back()->withErrors(['Batas waktu pengambilan telah lewat. Barang otomatis menjadi donasi.']);
+        }
+
+        // Masih dalam waktu, boleh dikonfirmasi
+        $penitipan->update([
+            'tanggal_pengambilan' => now(),
+            'status_barang' => 'sudah diambil penitip',
+        ]);
+
+        $detailBarang = DetailPenitipan::where('id_penitipan', $penitipan->id_penitipan)->get();
         foreach ($detailBarang as $detail) {
             $barang = BarangTitipan::find($detail->id_barang);
             if ($barang) {
@@ -202,35 +237,153 @@ class PenitipanController extends Controller
             }
         }
 
-        return back()->with('success', 'Pengambilan barang berhasil dikonfirmasi dan status diperbarui.');
+        return back()->with('success', 'Pengambilan barang berhasil dikonfirmasi.');
     }
 
-    public function jadwalkanPengiriman(Request $request)
+    public function jadwalPengiriman()
     {
+        // Ambil data transaksi
+        $transaksi = \DB::table('transaksi')
+            ->leftJoin('transaksi_pengiriman', 'transaksi.id_transaksi', '=', 'transaksi_pengiriman.id_transaksi')
+            ->leftJoin('pegawai', function ($join) {
+                $join->on('transaksi_pengiriman.id_pegawai', '=', 'pegawai.id_pegawai')
+                    ->where('pegawai.id_role', 6); // pastikan hanya kurir
+            })
+            ->whereIn('transaksi.status_transaksi', ['dikirim', 'diambil pembeli'])
+            ->select(
+                'transaksi.*',
+                'pegawai.nama_pegawai as nama_kurir'
+            )
+            ->get();
+
+        // Ambil semua pegawai dengan role kurir
+        $kurirs = \App\Models\Pegawai::where('id_role', 6)->get();
+
+        return view('pegawai.gudang.jadwalPengiriman', compact('transaksi', 'kurirs'));
+    }
+
+    public function prosesJadwalkanPengiriman(Request $request)
+    {
+        // Validasi awal
         $request->validate([
-            'id_penitipan' => 'required|exists:penitipan,id',
-            'tanggal_pengiriman' => 'required|date',
-            'kurir_id' => 'required|exists:pegawai,id_pegawai',
+            'id_transaksi' => 'required|exists:transaksi,id_transaksi',
+            'tanggal_pengiriman' => 'nullable|date',
+            'waktu_pengiriman' => 'nullable|date_format:H:i',
         ]);
 
-        $penitipan = Penitipan::with('transaksi')->findOrFail($request->id_penitipan); // pastikan ini id_penitipan
+        $transaksi = \DB::table('transaksi')->where('id_transaksi', $request->id_transaksi)->first();
 
-        // Validasi status transaksi dulu
-        if ($penitipan->transaksi && $penitipan->transaksi->status_transaksi !== 'Dikirim') {
-            return redirect()->back()->withErrors(['Hanya transaksi dengan status Dikirim yang bisa dijadwalkan.']);
+        if (!$transaksi) {
+            return back()->withErrors(['id_transaksi' => 'Transaksi tidak ditemukan'])->withInput();
         }
 
-        // Baru update penitipan
-        $penitipan->tanggal_pengiriman = $request->tanggal_pengiriman;
-        $penitipan->kurir_id = $request->kurir_id;
-        $penitipan->save();
+        $status = strtolower($transaksi->status_transaksi);
 
-        return redirect()->back()->with('success', 'Pengiriman berhasil dijadwalkan.');
+        if ($status === 'dikirim') {
+            $request->validate([
+                'id_kurir' => 'required|exists:pegawai,id_pegawai',
+            ]);
+        }
+
+        // Gabungkan tanggal dan waktu menjadi objek Carbon
+        if ($request->tanggal_pengiriman && $request->waktu_pengiriman) {
+            $tanggalWaktu = Carbon::parse($request->tanggal_pengiriman . ' ' . $request->waktu_pengiriman);
+        } else {
+            return back()->withErrors(['waktu_pengiriman' => 'Tanggal dan waktu pengiriman harus diisi'])->withInput();
+        }
+
+        // Cek jika tanggal pengiriman adalah hari ini
+        $hariIni = Carbon::today();
+        if ($tanggalWaktu->isSameDay($hariIni)) {
+            // Maksimal jam 16:00:00
+            $batasJam = $tanggalWaktu->copy()->setTime(16, 0, 0);
+            if ($tanggalWaktu->greaterThan($batasJam)) {
+                return back()->withErrors(['waktu_pengiriman' => 'Waktu maksimal pukul 16:00 jika tanggal hari ini'])->withInput();
+            }
+        }
+
+        // Simpan jadwal pengiriman atau pengambilan sesuai status transaksi
+        if ($status === 'dikirim') {
+            \DB::table('transaksi')->where('id_transaksi', $request->id_transaksi)->update([
+                'tanggal_pengiriman' => $tanggalWaktu,
+            ]);
+
+            \DB::table('transaksi_pengiriman')->updateOrInsert(
+                ['id_transaksi' => $request->id_transaksi],
+                ['id_pegawai' => $request->id_kurir]
+            );
+        } elseif ($status === 'diambil pembeli') {
+            \DB::table('transaksi')->where('id_transaksi', $request->id_transaksi)->update([
+                'tanggal_pengambilan' => $tanggalWaktu,
+            ]);
+        } else {
+            return back()->withErrors(['status_transaksi' => 'Status transaksi tidak valid untuk penjadwalan'])->withInput();
+        }
+
+        // Tambahkan notifikasi HANYA jika jenis pengiriman adalah 'Pengantaran'
+        if (in_array($status, ['dikirim']) && strtolower($transaksi->jenis_pengiriman) === 'pengantaran') {
+            // Ambil relasi pembeli dan penitip
+            $barang = \DB::table('barang_titipan')->where('id_barang', $transaksi->id_barang)->first();
+            $penitipan = \DB::table('detail_penitipan')->where('id_barang', $barang->id_barang)->first();
+            $penitipanHeader = \DB::table('penitipan')->where('id_penitipan', $penitipan->id_penitipan)->first();
+            $penitip = \DB::table('penitip')->where('id_penitip', $penitipanHeader->id_penitip)->first();
+            $pembeli = \DB::table('pembeli')->where('id_pembeli', $transaksi->id_pembeli)->first();
+            $kurir = \DB::table('pegawai')->where('id_pegawai', $request->id_kurir)->first();
+
+            $waktuFormat = $tanggalWaktu->format('d M Y H:i');
+        }
+        return redirect()->route('pegawai.gudang.jadwalPengiriman')->with('success', 'Jadwal berhasil disimpan.');
     }
 
-    /**
-     * Update status barang yang melewati tanggal batas pengambilan
-     */
+    public function indexKonfirmasiPengambilan()
+    {
+        $transaksi = Transaksi::where('status_transaksi', 'Diambil Pembeli')->get();
+
+        return view('pegawai.gudang.konfirmasiPengambilan', compact('transaksi'));
+    }
+
+
+    // public function konfirmasiPengambilan(Request $request, $id_transaksi)
+    // {
+    //     $transaksi = Transaksi::findOrFail($id_transaksi);
+
+    //     // Cek dulu status_transaksi valid
+    //     if ($transaksi->status_transaksi !== 'Diambil Pembeli') {
+    //         return back()->withErrors(['Status transaksi tidak valid untuk konfirmasi pengambilan.']);
+    //     }
+
+    //     // Update status_transaksi jadi 'Selesai'
+    //     $transaksi->update([
+    //         'status_transaksi' => 'Selesai',
+    //         'tanggal_pengambilan' => now(),
+    //     ]);
+
+    //     return back()->with('success', 'Status transaksi berhasil diperbarui menjadi selesai.');
+    // }
+
+    public function viewTransaksiSederhana()
+    {
+        $transaksi = Transaksi::whereIn('status_transaksi', ['Siap Diambil'])->get();
+        return view('pegawai.gudang.listTransaksi', compact('transaksi'));
+    }
+
+    public function konfirmasiPengambilan(Request $request, $id_transaksi)
+    {
+        $transaksi = Transaksi::findOrFail($id_transaksi);
+
+        // Cek dulu status_transaksi valid
+        if ($transaksi->status_transaksi !== 'Siap Diambil') {
+            return back()->withErrors(['Status transaksi tidak valid untuk konfirmasi pengambilan.']);
+        }
+
+        // Update status_transaksi jadi 'Selesai'
+        $transaksi->update([
+            'status_transaksi' => 'Selesai',
+        ]);
+
+        return back()->with('success', 'Status transaksi berhasil diperbarui menjadi selesai.');
+    }
+
     private function updateStatusBarangMelewatiBatas()
     {
         try {

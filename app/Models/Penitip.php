@@ -2,65 +2,51 @@
 
 namespace App\Models;
 
-use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Laravel\Sanctum\HasApiTokens;
-use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Str;
-use Illuminate\Support\Facades\Log;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Foundation\Auth\User as Authenticatable;
 
 class Penitip extends Authenticatable
 {
-    use HasFactory, HasApiTokens;
-    
+    use HasFactory;
+
     protected $table = 'penitip';
     protected $primaryKey = 'id_penitip';
     public $timestamps = false;
-    
+
     protected $fillable = [
         'nama_penitip',
+        'nik_penitip',
+        'nomor_telepon_penitip',
         'email_penitip',
         'password_penitip',
-        'nomor_telepon_penitip',
-        'alamat_penitip',
-        'tanggal_lahir_penitip',
     ];
 
     protected $hidden = [
         'password_penitip',
     ];
 
-    // Override method untuk autentikasi Laravel
-    public function getAuthIdentifierName()
+    // Accessor untuk nama
+    public function getNameAttribute()
     {
-        return 'email_penitip';
+        return $this->nama_penitip;
     }
 
-    public function getAuthIdentifier()
+    // Accessor untuk email
+    public function getEmailAttribute()
     {
-        return $this->getAttribute($this->primaryKey);
+        return $this->email_penitip;
     }
 
-    public function getAuthPassword()
+    // Relasi ke SaldoPenitip
+    public function saldo()
     {
-        return $this->password_penitip;
+        return $this->hasOne(SaldoPenitip::class, 'id_penitip');
     }
 
-    public function getRememberToken()
+    // Relasi ke RewardPenitip
+    public function reward()
     {
-        return $this->remember_token ?? null;
+        return $this->hasOne(RewardPenitip::class, 'id_penitip');
     }
-
-    public function setRememberToken($value)
-    {
-        $this->remember_token = $value;
-    }
-
-    public function getRememberTokenName()
-    {
-        return 'remember_token';
-    }
-    
-    // JANGAN gunakan mutator untuk password karena bisa menyebabkan masalah
-    // Gunakan DB::table() untuk update password langsung
 }

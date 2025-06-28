@@ -4,24 +4,26 @@
 <head>
     <meta charset="UTF-8">
     <title>Dashboard Penitip</title>
-    <link rel="stylesheet" href="{{ asset('css/app.css') }}">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+
+    {{-- BOOTSTRAP --}}
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    
+    {{-- FONT AWESOME --}}
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    
+    {{-- GOOGLE FONTS --}}
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
+    
+    {{-- CUSTOM CSS --}}
+    <link rel="stylesheet" href="{{ asset('css/app.css') }}">
 
     <style>
-        * {
-            box-sizing: border-box;
-        }
-
         body {
             display: flex;
             min-height: 100vh;
-            margin: 0;
             font-family: 'Inter', sans-serif;
-            background-color: #f1f3f5;
+            margin: 0;
+            background-color: #f8f9fa;
         }
 
         .sidebar {
@@ -64,7 +66,6 @@
         .content {
             flex-grow: 1;
             padding: 40px;
-            background-color: #f8f9fa;
         }
     </style>
 </head>
@@ -74,32 +75,35 @@
         <h4>Menu Penitip</h4>
         <ul>
             <li>
-                <a href="{{ url('penitip/profile/11') }}"
-                    class="{{ request()->is('penitip/profile/11') ? 'active' : '' }}">
-                    Profil
+                <a href="{{ url('penitip/profile/' . session('user_id')) }}"
+                    class="{{ request()->is('penitip/profile/' . session('user_id')) ? 'active' : '' }}">
+                    <i class="fas fa-user"></i> Profile
                 </a>
             </li>
             <li>
-                <a href="{{ url('penitip/11/barang-titipan') }}"
-                    class="{{ request()->is('penitip/11/barang-titipan') ? 'active' : '' }}">
-                    Barang Titipan
+                <a href="{{ url('penitip/' . session('user_id') . '/barang-titipan') }}"
+                    class="{{ request()->is('penitip/' . session('user_id') . '/barang-titipan') ? 'active' : '' }}">
+                    <i class="fas fa-box-open"></i> Barang Titipan
                 </a>
             </li>
             <li>
-                <a href="#" class="{{ request()->is('riwayat') ? 'active' : '' }}">
-                    Riwayat
+                <a href="{{ route('logout') }}"
+                onclick="event.preventDefault(); document.getElementById('logout-form').submit();">
+                    <i class="fas fa-sign-out-alt"></i> Logout
                 </a>
+                <form id="logout-form" action="{{ route('logout') }}" method="POST" class="d-none">
+                    @csrf
+                </form>
             </li>
         </ul>
     </div>
-
-    <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.1/dist/umd/popper.min.js"></script>
-    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
 
     <div class="content">
         @yield('content')
     </div>
 
+    {{-- BOOTSTRAP SCRIPT --}}
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     @yield('scripts')
 </body>
 

@@ -168,56 +168,28 @@
         <nav class="sidebar-nav">
             <ul class="nav flex-column">
                 <!-- Heading -->
-                <div class="sidebar-heading">Donasi</div>
+                <div class="sidebar-heading">Request Donasi</div>
                 
-                <!-- Request Donasi -->
+                <!-- Request Barang -->
                 <li class="nav-item">
-                    <a class="nav-link" 
-                       href="">
+                    <a class="nav-link {{ request()->routeIs('organisasi.requestBarang.*') ? 'active' : '' }}" 
+                       href="{{ route('organisasi.requestBarang.index') }}">
                         <i class="fas fa-clipboard-list"></i>
-                        <span>Daftar Request</span>
+                        <span>Request Barang</span>
                     </a>
                 </li>
-                
-                <li class="nav-item">
-                    <a class="nav-link}" 
-                       href="">
-                        <i class="fas fa-plus-circle"></i>
-                        <span>Buat Request Baru</span>
-                    </a>
-                </li>
-                
-                <li class="nav-item">
-                    <a class="nav-link" 
-                       href="">
-                        <i class="fas fa-history"></i>
-                        <span>Riwayat Donasi</span>
-                    </a>
-                </li>
-                
-                <div class="sidebar-divider"></div>
                 
                 <!-- Heading -->
                 <div class="sidebar-heading">Akun</div>
                 
                 <!-- Profile -->
                 <li class="nav-item">
-                    <a class="nav-link" 
+                    <a class="nav-link {{ request()->routeIs('organisasi.profile') ? 'active' : '' }}" 
                        href="{{ route('organisasi.profile') }}">
                         <i class="fas fa-building"></i>
                         <span>Profil Organisasi</span>
                     </a>
                 </li>
-                
-                <li class="nav-item">
-                    <a class="nav-link " 
-                       href="">
-                        <i class="fas fa-cog"></i>
-                        <span>Pengaturan</span>
-                    </a>
-                </li>
-                
-                <div class="sidebar-divider"></div>
                 
                 <!-- Logout -->
                 <li class="nav-item">
@@ -249,14 +221,11 @@
                     </button>
                     <ul class="dropdown-menu dropdown-menu-end">
                         <li>
-                            <a class="dropdown-item" href="">
+                            <a class="dropdown-item" href="{{ route('organisasi.profile') }}">
                                 <i class="fas fa-user me-2"></i>Profil
                             </a>
                         </li>
                         <li>
-                            <a class="dropdown-item" href="">
-                                <i class="fas fa-cog me-2"></i>Pengaturan
-                            </a>
                         </li>
                         <li><hr class="dropdown-divider"></li>
                         <li>
@@ -300,6 +269,19 @@
                 <div class="alert alert-info alert-dismissible fade show" role="alert">
                     <i class="fas fa-info-circle me-2"></i>
                     {{ session('info') }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            @endif
+
+            @if ($errors->any())
+                <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                    <i class="fas fa-exclamation-circle me-2"></i>
+                    <strong>Terjadi kesalahan:</strong>
+                    <ul class="mb-0 mt-2">
+                        @foreach ($errors->all() as $error)
+                            <li>{{ $error }}</li>
+                        @endforeach
+                    </ul>
                     <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
                 </div>
             @endif

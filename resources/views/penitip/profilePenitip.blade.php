@@ -1,62 +1,88 @@
 @extends('layouts.penitip')
 
 @section('content')
-    <div class="container d-flex justify-content-center align-items-start min-vh-100 py-5">
-        <div class="w-100" style="max-width: 900px;">
-            <!-- Profil Penitip -->
-            <div class="card mb-4 shadow-sm border-0">
-                <div class="card-header bg-primary text-white text-center">
-                    <h3 class="mb-0"><i class="fas fa-user-circle me-2"></i>Profil Penitip</h3>
+    <div class="container py-5">
+        <div class="mx-auto" style="max-width: 900px;">
+
+            {{-- PROFIL PENITIP --}}
+            <div class="card shadow border-0 rounded-4 mb-5">
+                <div class="card-header bg-gradient bg-primary text-white text-center py-4 rounded-top-4">
+                    <h3 class="mb-0"><i class="fas fa-user-circle me-2"></i> Profile Penitip</h3>
                 </div>
-                <div class="card-body">
-                    <div class="row mb-2">
-                        <div class="col-sm-4 text-muted">Nama</div>
-                        <div class="col-sm-8">{{ $penitip->nama_penitip }}</div>
+                <div class="card-body px-4 py-4">
+                    @php
+                        $profil = [
+                            'Nama' => $penitip->nama_penitip,
+                            'NIK' => $penitip->nik_penitip,
+                            'Email' => $penitip->email_penitip,
+                            'No. Telepon' => $penitip->nomor_telepon_penitip,
+                        ];
+                    @endphp
+                    @foreach ($profil as $label => $value)
+                        <div class="row mb-3 align-items-center">
+                            <div class="col-sm-4 text-muted fw-semibold">
+                                <i class="fas fa-chevron-right me-1 text-primary"></i> {{ $label }}
+                            </div>
+                            <div class="col-sm-8">{{ $value }}</div>
+                        </div>
+                    @endforeach
+                </div>
+            </div>
+
+            {{-- SALDO & REWARD PENITIP --}}
+            <div class="card shadow border-0 rounded-4 mb-5">
+                <div class="card-header bg-info text-white text-center py-4 rounded-top-4">
+                    <h4 class="mb-0"><i class="fas fa-wallet me-2"></i> Saldo & Reward</h4>
+                </div>
+                <div class="card-body px-4 py-4">
+                    <div class="row mb-3 align-items-center">
+                        <div class="col-sm-4 text-muted fw-semibold">
+                            <i class="fas fa-wallet me-1 text-primary"></i> Saldo Penitip
+                        </div>
+                        <div class="col-sm-8">
+                            Rp {{ number_format($penitip->saldo->saldo_penitip ?? 0, 0, ',', '.') }}
+                        </div>
                     </div>
-                    <div class="row mb-2">
-                        <div class="col-sm-4 text-muted">NIK</div>
-                        <div class="col-sm-8">{{ $penitip->nik_penitip }}</div>
+
+                    <div class="row mb-3 align-items-center">
+                        <div class="col-sm-4 text-muted fw-semibold">
+                            <i class="fas fa-gift me-1 text-primary"></i> Poin Reward
+                        </div>
+                        <div class="col-sm-8">
+                            {{ $penitip->reward->jumlah_poin_penitip ?? 0 }} poin
+                        </div>
                     </div>
-                    <div class="row mb-2">
-                        <div class="col-sm-4 text-muted">Email</div>
-                        <div class="col-sm-8">{{ $penitip->email_penitip }}</div>
-                    </div>
-                    <div class="row">
-                        <div class="col-sm-4 text-muted">No. Telepon</div>
-                        <div class="col-sm-8">{{ $penitip->nomor_telepon_penitip }}</div>
+
+                    <div class="row mb-3 align-items-center">
+                        <div class="col-sm-4 text-muted fw-semibold">
+                            <i class="fas fa-percentage me-1 text-primary"></i> Komisi Penitip
+                        </div>
+                        <div class="col-sm-8">
+                            Rp {{ number_format($penitip->reward->komisi_penitip ?? 0, 0, ',', '.') }}
+                        </div>
                     </div>
                 </div>
             </div>
 
-            <!-- Rating Penitip -->
-            @if (!is_null($averageRating))
-                <div class="card mb-4 shadow-sm border-0">
-                    <div class="card-header bg-warning text-dark text-center">
-                        <h4 class="mb-0"><i class="fas fa-star me-2"></i>Rating Penitip</h4>
-                    </div>
-                    <div class="card-body text-center">
-                        <h1 class="display-5 fw-bold text-warning">
-                            {{ $averageRating }} <i class="fas fa-star text-warning"></i>
-                        </h1>
-                        <p class="text-muted mb-0">Berdasarkan rating dari pembeli untuk semua barang titipan</p>
-                    </div>
+            {{-- BARANG TITIPAN --}}
+            <div class="card shadow border-0 rounded-4 mb-5">
+                <div class="card-header bg-success text-white text-center py-4 rounded-top-4">
+                    <h4 class="mb-0"><i class="fas fa-box-open me-2"></i> Barang Titipan</h4>
                 </div>
-            @endif
-
-            <!-- Barang Titipan -->
-            <div class="card mb-4 shadow-sm border-0">
-                <div class="card-header bg-success text-white text-center">
-                    <h4 class="mb-0"><i class="fas fa-box-open me-2"></i>Barang Titipan</h4>
-                </div>
-                <div class="card-body p-0">
+                <div class="card-body px-4 py-3">
                     @if ($barangTitipan->isEmpty())
-                        <div class="p-3 text-center text-muted">Belum ada barang yang dititipkan.</div>
+                        <p class="text-center text-muted fst-italic">Belum ada barang yang dititipkan.</p>
                     @else
                         <ul class="list-group list-group-flush">
                             @foreach ($barangTitipan as $barang)
                                 <li class="list-group-item d-flex justify-content-between align-items-center">
-                                    {{ $barang->nama_barang_titipan }}
-                                    <span class="badge bg-info text-dark">{{ $barang->status_barang }}</span>
+                                    <div class="d-flex align-items-center gap-2">
+                                        <i class="fas fa-cube text-info"></i>
+                                        {{ $barang->nama_barang_titipan }}
+                                    </div>
+                                    <span class="badge bg-light text-dark border px-3 py-1 rounded-pill shadow-sm">
+                                        {{ ucfirst($barang->status_barang) }}
+                                    </span>
                                 </li>
                             @endforeach
                         </ul>
@@ -64,27 +90,28 @@
                 </div>
             </div>
 
-            <!-- Riwayat Penitipan -->
-            <div class="card shadow-sm border-0">
-                <div class="card-header bg-secondary text-white text-center">
-                    <h4 class="mb-0"><i class="fas fa-history me-2"></i>Riwayat Penitipan</h4>
+            {{-- RIWAYAT PENITIPAN --}}
+            <div class="card shadow border-0 rounded-4">
+                <div class="card-header bg-secondary text-white text-center py-4 rounded-top-4">
+                    <h4 class="mb-0"><i class="fas fa-history me-2"></i> Riwayat Penitipan</h4>
                 </div>
-                <div class="card-body p-0">
+                <div class="card-body px-4 py-3">
                     @if ($riwayatPenitipan->isEmpty())
-                        <div class="p-3 text-center text-muted">Belum ada riwayat penitipan.</div>
+                        <p class="text-center text-muted fst-italic">Belum ada riwayat penitipan.</p>
                     @else
                         <ul class="list-group list-group-flush">
                             @foreach ($riwayatPenitipan as $riwayat)
                                 <li class="list-group-item">
-                                    <i class="fas fa-calendar-alt text-primary me-2"></i>
+                                    <i class="fas fa-calendar-day text-primary me-2"></i>
                                     <strong>{{ $riwayat->created_at->format('d M Y') }}</strong> —
-                                    {{ $riwayat->barang->nama_barang_titipan ?? 'Barang tidak ditemukan' }}
+                                    <span class="text-muted">{{ $riwayat->barang->nama_barang_titipan ?? 'Barang tidak ditemukan' }}</span>
                                 </li>
                             @endforeach
                         </ul>
                     @endif
                 </div>
             </div>
+
         </div>
     </div>
 @endsection

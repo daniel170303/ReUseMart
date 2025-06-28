@@ -505,4 +505,92 @@ private function notifikasiPenitip($transaksi)
             return redirect()->route('keranjang')->with('error', 'Mohon maaf, terjadi kesalahan teknis saat proses checkout. Silakan coba beberapa saat lagi atau hubungi administrator.');
         }
     }
+
+    public function cetakPDF($id)
+    {
+        $transaksi = Transaksi::findOrFail($id);
+
+        $nomorUrut = str_pad($transaksi->id_transaksi, 5, '0', STR_PAD_LEFT);
+        $tanggalTransaksi = Carbon::parse($transaksi->tanggal_pemesanan)->format('y.m');
+        $noNota = $tanggalTransaksi . '.' . $nomorUrut;
+
+        $pembeli = \DB::table('pembeli')
+        ->select('nama_pembeli', 'alamat_pembeli', 'email_pembeli')
+        ->where('id_pembeli', $transaksi->id_pembeli)
+        ->first();
+
+
+        // Ambil data barang titipan
+        $barangTitipan = \DB::table('barang_titipan')->where('id_barang', $transaksi->id_barang)->first();
+
+        // Ambil nama kurir
+        $kurir = \DB::table('transaksi_pengiriman')
+            ->join('pegawai', function ($join) {
+                $join->on('transaksi_pengiriman.id_pegawai', '=', 'pegawai.id_pegawai')
+                    ->where('pegawai.id_role', 6);
+            })
+            ->where('transaksi_pengiriman.id_transaksi', $transaksi->id_transaksi)
+            ->select('pegawai.nama_pegawai as nama_kurir')
+            ->first();
+
+        // Format tanggal supaya tampil cantik
+        $tanggal_pemesanan = Carbon::parse($transaksi->tanggal_pemesanan)->format('d-m-Y');
+        $tanggal_pelunasan = $transaksi->tanggal_pelunasan ? Carbon::parse($transaksi->tanggal_pelunasan)->format('d-m-Y') : null;
+        $tanggal_pengiriman = $transaksi->tanggal_pengiriman ? Carbon::parse($transaksi->tanggal_pengiriman)->format('d-m-Y') : null;
+
+        $data = [
+            'no_nota' => $noNota,
+            'tanggal_pemesanan' => $tanggal_pemesanan,
+            'tanggal_pelunasan' => $tanggal_pelunasan,
+            'tanggal_pengiriman' => $tanggal_pengiriman,
+            'nama_pembeli' => $pembeli->nama_pembeli ?? '-',
+            'email_pembeli' => $pembeli->email_pembeli ?? '-',
+            'alamat_pembeli' => $pembeli->alamat_pembeli ?? '-',
+            'nama_kurir' => $kurir->nama_kurir ?? '-',
+            'barang' => $barangTitipan->nama_barang_titipan ?? '-',
+            'ongkir' => $transaksi->ongkir ?? 0,
+        ];
+
+        $pdf = Pdf::loadView('pdf.notaPenjualan', $data);
+
+        return $pdf->download('nota_penjualan_' . $data['no_nota'] . '.pdf');
+    }
+
+    public function cetakPDFAmbil($id)
+    {
+        $transaksi = Transaksi::findOrFail($id);
+
+        $nomorUrut = str_pad($transaksi->id_transaksi, 5, '0', STR_PAD_LEFT);
+        $tanggalTransaksi = Carbon::parse($transaksi->tanggal_pemesanan)->format('y.m');
+        $noNota = $tanggalTransaksi . '.' . $nomorUrut;
+
+        $pembeli = \DB::table('pembeli')
+            ->select('nama_pembeli', 'alamat_pembeli', 'email_pembeli')
+            ->where('id_pembeli', $transaksi->id_pembeli)
+            ->first();
+
+        $barangTitipan = \DB::table('barang_titipan')->where('id_barang', $transaksi->id_barang)->first();
+
+        // Format tanggal
+        $tanggal_pemesanan = Carbon::parse($transaksi->tanggal_pemesanan)->format('d-m-Y');
+        $tanggal_pelunasan = $transaksi->tanggal_pelunasan ? Carbon::parse($transaksi->tanggal_pelunasan)->format('d-m-Y') : null;
+        $tanggal_pengambilan = $transaksi->tanggal_pengambilan ? Carbon::parse($transaksi->tanggal_pengambilan)->format('d-m-Y') : null;
+
+        $data = [
+            'no_nota' => $noNota,
+            'tanggal_pemesanan' => $tanggal_pemesanan,
+            'tanggal_pelunasan' => $tanggal_pelunasan,
+            'tanggal_pengiriman' => $tanggal_pengambilan,
+            'nama_pembeli' => $pembeli->nama_pembeli ?? '-',
+            'email_pembeli' => $pembeli->email_pembeli ?? '-',
+            'alamat_pembeli' => $pembeli->alamat_pembeli ?? '-',
+            'nama_kurir' => '- (Diambil Pembeli)', 
+            'barang' => $barangTitipan->nama_barang_titipan ?? '-',
+            'ongkir' => $transaksi->ongkir ?? 0,
+        ];
+
+        $pdf = Pdf::loadView('pdf.notaPengambilan', $data);
+
+        return $pdf->download('nota_penjualan_' . $data['no_nota'] . '.pdf');
+    }
 }

@@ -38,6 +38,12 @@ class Transaksi extends Model
         'alamat_pengiriman' => 'array',
     ];
 
+    // Relasi ke Barang
+    public function barangTitipan()
+    {
+        return $this->belongsTo(BarangTitipan::class, 'id_barang', 'id_barang');
+    }
+
     // Relasi ke Pembeli
     public function pembeli()
     {

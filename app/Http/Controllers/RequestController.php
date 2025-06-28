@@ -172,7 +172,7 @@ class RequestController extends Controller
 
     public function create()
     {
-        $requests = \App\Models\Request::all(); // atau bisa dikosongkan kalau tidak ingin tampilkan
+        $requests = \App\Models\Request::all();
         return view('organisasi.request_barang', compact('requests'));
     }
 

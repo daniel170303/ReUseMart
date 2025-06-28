@@ -121,6 +121,18 @@ class OwnerController extends Controller
                 ->where('rd.status_request', 'pending')
                 ->get();
 
+            // Ambil semua request untuk riwayat (termasuk yang ditolak dan diterima)
+            $allRequestsHistory = DB::table('request as rd')
+                ->leftJoin('organisasi as o', 'rd.id_organisasi', '=', 'o.id_organisasi')
+                ->select(
+                    'rd.*',
+                    'o.nama_organisasi',
+                    'o.email_organisasi'
+                )
+                ->whereIn('rd.status_request', ['ditolak', 'diterima'])
+                ->orderBy('rd.tanggal_request', 'desc')
+                ->get();
+
             Log::info('Final requests with join: ' . $requests->count());
             Log::info('Final requests data: ' . json_encode($requests->toArray()));
 
@@ -140,13 +152,14 @@ class OwnerController extends Controller
 
             Log::info('Barang Donasi - Requests: ' . $requests->count() . ', Donasis: ' . $donasis->count());
 
-            return view('owner.barangDonasi', compact('requests', 'donasis'));
+            return view('owner.barangDonasi', compact('requests', 'donasis', 'allRequestsHistory'));
         } catch (\Exception $e) {
             Log::error('Error in barangDonasi: ' . $e->getMessage());
             Log::error('Stack trace: ' . $e->getTraceAsString());
             return view('owner.barangDonasi', [
                 'requests' => collect(),
-                'donasis' => collect()
+                'donasis' => collect(),
+                'allRequestsHistory' => collect()
             ])->with('error', 'Terjadi kesalahan saat memuat data: ' . $e->getMessage());
         }
     }
@@ -185,14 +198,14 @@ class OwnerController extends Controller
         try {
             DB::beginTransaction();
 
-            // Update status request menjadi 'ditolak' atau hapus
-            $deleted = DB::table('request')
+            // Update status request menjadi 'ditolak' tanpa menghapus data
+            $updated = DB::table('request')
                 ->where('id_request', $id)
-                ->delete(); // atau ->update(['status_request' => 'ditolak'])
+                ->update(['status_request' => 'ditolak']);
 
-            if ($deleted) {
+            if ($updated) {
                 DB::commit();
-                return redirect()->back()->with('success', 'Request donasi berhasil ditolak dan dihapus.');
+                return redirect()->back()->with('success', 'Request donasi berhasil ditolak.');
             } else {
                 DB::rollback();
                 return redirect()->back()->with('error', 'Request tidak ditemukan.');

@@ -21,6 +21,7 @@ use App\Http\Controllers\OwnerController;
 use App\Http\Controllers\CartController;
 use App\Http\Controllers\CheckoutController;
 use App\Http\Controllers\TransaksiController;
+use App\Http\Controllers\RequestController;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Response;
 
@@ -140,7 +141,7 @@ Route::middleware(['multiauth'])->group(function () {
         Route::get('/penitip/{id}', [PenitipController::class, 'show'])->name('penitip.show');
         Route::put('/penitip/{id}', [PenitipController::class, 'update'])->name('penitip.update');
         Route::delete('/penitip/{id}', [PenitipController::class, 'destroy'])->name('penitip.destroy');
-        Route::get('/penitip/search/{keyword}', [PenitipController::class, 'search'])->name('penitip.search');
+        Route::get('/penitip/search/{keyword?}', [PenitipController::class, 'search'])->name('penitip.search');
         Route::post('/logout', function () {
             Auth::guard('pegawai')->logout();
             session()->invalidate();
@@ -158,10 +159,22 @@ Route::middleware(['multiauth'])->group(function () {
         Route::get('/', [BarangTitipanController::class, 'index'])->name('index');
         Route::post('/', [BarangTitipanController::class, 'store'])->name('store');
         Route::get('/barang/{id}/detail', [BarangTitipanController::class, 'showDetail'])->name('barang.showDetail');
-        //Route::get('/edit/{id}', [BarangTitipanController::class, 'edit'])->name('edit');
         Route::put('/barang/{id}', [BarangTitipanController::class, 'update'])->name('update');
         Route::delete('/destroy/{id}', [BarangTitipanController::class, 'destroy'])->name('destroy');
-        Route::post('/penitipan/jadwalkan-pengiriman', [PenitipanController::class, 'jadwalkanPengiriman'])->name('penitipan.jadwalkanPengiriman');
+        //Route::post('/penitipan/jadwalkan-pengiriman', [PenitipanController::class, 'jadwalkanPengiriman'])->name('penitipan.jadwalkanPengiriman');
+        Route::get('/jadwal-pengembalian', [PenitipanController::class, 'halamanJadwalPengembalian'])->name('jadwalPengembalian');
+        Route::post('/konfirmasi-pengembalian', [PenitipanController::class, 'konfirmasiPengembalian'])->name('konfirmasiPengembalian');
+        Route::get('/jadwal-pengiriman', [PenitipanController::class, 'jadwalPengiriman'])->name('jadwalPengiriman');
+        Route::post('/jadwal-pengiriman/proses', [PenitipanController::class, 'prosesJadwalkanPengiriman'])->name('gudang.penitipan.prosesJadwalkanPengiriman');
+        Route::get('/transaksi/{id}/cetak-pdfJual', [TransaksiController::class, 'cetakPDF'])->name('gudang.transaksi.cetakPDF');
+        Route::get('/transaksi/{id}/cetak-pdfAmbil', [TransaksiController::class, 'cetakPDFAmbil'])->name('gudang.transaksi.cetakPDFAmbil');
+        Route::get('/konfirmasi-pengambilan', [PenitipanController::class, 'indexKonfirmasiPengambilan'])->name('konfirmasiPengambilan');
+        Route::put('/konfirmasi-pengambilan/{id_transaksi}', [PenitipanController::class, 'konfirmasiPengambilan'])->name('pengambilan.konfirmasi');
+        // Menampilkan halaman transaksi sederhana (Siap Diambil & Selesai)
+        Route::get('/transaksi-sederhana', [PenitipanController::class, 'viewTransaksiSederhana'])->name('listTransaksi');
+
+        // Konfirmasi pengambilan: dari 'Siap Diambil' menjadi 'Selesai'
+        Route::post('/transaksi/{id_transaksi}/konfirmasi', [PenitipanController::class, 'konfirmasiPengambilan'])->name('gudang.transaksi.konfirmasiPengambilan');
         
         // Tambahan logout untuk pegawai gudang
         Route::post('/logout', function () {
@@ -252,9 +265,20 @@ Route::middleware(['multiauth'])->group(function () {
     });
     Route::get('/organisasi/dashboard', [OrganisasiController::class, 'dashboard'])->name('organisasi.dashboard');
     Route::prefix('organisasi')->name('organisasi.')->group(function () {
-        // Profile organisasi
+        // Profile
         Route::get('/profile', [OrganisasiController::class, 'profile'])->name('profile');
         Route::put('/profile', [OrganisasiController::class, 'updateProfile'])->name('profile.update');
+        
+        // Request Barang Routes
+        Route::prefix('request-barang')->name('requestBarang.')->group(function () {
+            Route::get('/', [RequestController::class, 'index'])->name('index');
+            Route::get('/search', [RequestController::class, 'search'])->name('search');
+            Route::post('/', [RequestController::class, 'store'])->name('store');
+            Route::get('/{id}/edit', [RequestController::class, 'edit'])->name('edit');
+            Route::put('/{id}', [RequestController::class, 'update'])->name('update');
+            Route::delete('/{id}', [RequestController::class, 'destroy'])->name('destroy');
+            Route::get('/create', [RequestController::class, 'create'])->name('create');
+        });
         Route::post('/logout', function () {
             Auth::guard('pegawai')->logout();
             session()->invalidate();

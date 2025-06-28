@@ -82,6 +82,63 @@
             </div>
         </div>
 
+        {{-- Riwayat Request Donasi --}}
+        <div class="card mb-4">
+            <div class="card-header bg-info text-white">
+                <h5 class="mb-0">
+                    <i class="fas fa-history me-2"></i>Riwayat Request Donasi ({{ isset($allRequestsHistory) ? $allRequestsHistory->count() : 0 }})
+                </h5>
+            </div>
+            <div class="card-body">
+                @if (isset($allRequestsHistory) && $allRequestsHistory->count() > 0)
+                    <div class="table-responsive">
+                        <table class="table table-bordered table-striped">
+                            <thead class="table-dark">
+                                <tr>
+                                    <th>ID Request</th>
+                                    <th>Organisasi</th>
+                                    <th>Nama Request Barang</th>
+                                    <th>Tanggal Request</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach ($allRequestsHistory as $req)
+                                    <tr>
+                                        <td>{{ $req->id_request }}</td>
+                                        <td>
+                                            {{ $req->nama_organisasi ?? 'N/A' }}
+                                            <br>
+                                            <small class="text-muted">{{ $req->email_organisasi ?? '' }}</small>
+                                        </td>
+                                        <td>{{ $req->nama_request_barang }}</td>
+                                        <td>{{ \Carbon\Carbon::parse($req->tanggal_request)->format('d/m/Y H:i') }}</td>
+                                        <td>
+                                            @if($req->status_request == 'diterima')
+                                                <span class="badge bg-success">
+                                                    <i class="fas fa-check me-1"></i>Diterima
+                                                </span>
+                                            @elseif($req->status_request == 'ditolak')
+                                                <span class="badge bg-danger">
+                                                    <i class="fas fa-times me-1"></i>Ditolak
+                                                </span>
+                                            @else
+                                                <span class="badge bg-secondary">{{ ucfirst($req->status_request) }}</span>
+                                            @endif
+                                        </td>
+                                    </tr>
+                                @endforeach
+                            </tbody>
+                        </table>
+                    </div>
+                @else
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle me-2"></i>Belum ada riwayat request donasi.
+                    </div>
+                @endif
+            </div>
+        </div>
+
         {{-- Daftar Donasi --}}
         <div class="card">
             <div class="card-header bg-success text-white">
@@ -393,8 +450,9 @@
             });
         }
 
+        // Fungsi untuk menolak request (update status menjadi 'ditolak')
         function tolakRequest(id) {
-            if (confirm('Yakin ingin menolak request ini? Data request akan dihapus secara permanen.')) {
+            if (confirm('Yakin ingin menolak request ini? Status akan diubah menjadi "ditolak".')) {
                 // Buat form dinamis untuk menolak request
                 const form = document.createElement('form');
                 form.method = 'POST';
