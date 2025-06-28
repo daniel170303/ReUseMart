@@ -206,7 +206,7 @@
                             @enderror
                         </div>
                         <div class="col-md-6 mb-3">
-                            <label for="berat_barang">Berat (gram) <span class="text-danger">*</span></label>
+                            <label for="berat_barang">Berat (kg) <span class="text-danger">*</span></label>
                             <input type="number" class="form-control @error('berat_barang') is-invalid @enderror"
                                 name="berat_barang" id="berat_barang" value="{{ old('berat_barang') }}" min="1"
                                 placeholder="Masukkan berat dalam gram">
@@ -349,7 +349,7 @@
                                 <td>{{ $barang->nama_barang_titipan }}</td>
                                 <td>Rp{{ number_format($barang->harga_barang, 0, ',', '.') }}</td>
                                 <td>{{ $barang->jenis_barang }}</td>
-                                <td>{{ $barang->berat_barang }} g</td>
+                                <td>{{ $barang->berat_barang }} kg</td>
                                 <td>{{ ucfirst($barang->status_barang) }}</td>
                                 <td>{{ $barang->garansi_barang ?? '' }}</td>
                                 <td>
@@ -376,136 +376,6 @@
                 </table>
             </div>
         </div>
-
-        {{-- Tabel Barang dengan Jadwal Pengembalian --}}
-        <div class="card mt-5">
-            <div class="card-header bg-success text-white">Barang dengan Jadwal Pengembalian</div>
-            <div class="card-body">
-                @php
-                    $barangDenganJadwal = $barangTitipan->filter(function ($barang) {
-                        $penitipan = $barang->penitipan;
-                        return $penitipan &&
-                            $penitipan->tanggal_pengambilan !== null &&
-                            $barang->status_barang !== 'sudah diambil penitip';
-                    });
-                @endphp
-
-                @if ($barangDenganJadwal->count() > 0)
-                    <table class="table table-bordered table-striped">
-                        <thead>
-                            <tr>
-                                <th>Gambar</th>
-                                <th>Nama</th>
-                                <th>Jenis</th>
-                                <th>Status</th>
-                                <th>Tanggal Pengambilan</th>
-                                <th>Aksi</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @foreach ($barangDenganJadwal as $barang)
-                                <tr>
-                                    <td>
-                                        @if ($barang->gambar_barang && file_exists(public_path('storage/' . $barang->gambar_barang)))
-                                            <img src="{{ asset('storage/' . $barang->gambar_barang) }}" alt="Gambar"
-                                                width="80">
-                                        @else
-                                            <span class="text-muted">Tidak ada gambar</span>
-                                        @endif
-                                    </td>
-                                    <td>{{ $barang->nama_barang_titipan }}</td>
-                                    <td>{{ $barang->jenis_barang }}</td>
-                                    <td>{{ ucfirst($barang->status_barang) }}</td>
-                                    <td>{{ \Carbon\Carbon::parse($barang->penitipan->tanggal_pengambilan)->format('d M Y') }}
-                                    </td>
-                                    <td>
-                                        <form
-                                            action="{{ route('penitipan.konfirmasiPengambilan', $barang->penitipan->id_penitipan) }}"
-                                            method="POST">
-                                            @csrf
-                                            <button type="submit" class="btn btn-success btn-sm"
-                                                onclick="return confirm('Yakin ingin mengonfirmasi pengambilan barang ini?')">
-                                                Konfirmasi Pengambilan
-                                            </button>
-                                        </form>
-                                    </td>
-                                </tr>
-                            @endforeach
-                        </tbody>
-                    </table>
-                @else
-                    <p class="text-muted">Tidak ada barang yang dijadwalkan untuk pengambilan saat ini.</p>
-                @endif
-            </div>
-        </div>
-
-        <h3 class="mt-10 mb-4 text-xl font-semibold">Jadwal Pengiriman & Pengambilan</h3>
-
-        <table class="min-w-full divide-y divide-gray-300 border border-gray-300 rounded-lg shadow-sm">
-            <thead class="bg-gray-100">
-                <tr>
-                    @foreach (['ID Transaksi', 'Nama Barang', 'Status Transaksi', 'Tanggal Pengiriman', 'Tanggal Pengambilan', 'Foto Barang', 'Aksi'] as $header)
-                        <th class="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wide">
-                            {{ $header }}
-                        </th>
-                    @endforeach
-                </tr>
-            </thead>
-            <tbody class="bg-white divide-y divide-gray-200">
-                @forelse ($transaksiProses as $transaksi)
-                    <tr class="hover:bg-gray-50 transition duration-150">
-                        <td class="px-6 py-4 whitespace-nowrap font-medium text-gray-900">{{ $transaksi->id }}</td>
-                        <td class="px-6 py-4 whitespace-nowrap text-gray-800">
-                            {{ $transaksi->barangTitipan->nama_barang_titipan ?? '-' }}</td>
-                        <td class="px-6 py-4 whitespace-nowrap">
-                            <span
-                                class="inline-block px-3 py-1 rounded-full text-xs font-semibold
-                        {{ $transaksi->status_transaksi == 'Dikirim' ? 'bg-yellow-100 text-yellow-800' : '' }}
-                        {{ $transaksi->status_transaksi == 'Diambil' ? 'bg-green-100 text-green-800' : '' }}">
-                                {{ $transaksi->status_transaksi }}
-                            </span>
-                        </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-gray-700">{{ $transaksi->tanggal_pengiriman ?? '-' }}
-                        </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-gray-700">{{ $transaksi->tanggal_pengambilan ?? '-' }}
-                        </td>
-                        <td class="px-6 py-4 whitespace-nowrap flex space-x-3">
-                            @if ($transaksi->barangTitipan && $transaksi->barangTitipan->gambar_barang)
-                                <img src="{{ asset('storage/' . $transaksi->barangTitipan->gambar_barang) }}"
-                                    alt="Foto utama"
-                                    class="w-16 h-16 object-cover rounded border border-gray-300 shadow-sm">
-                            @endif
-                            @if ($transaksi->barangTitipan && $transaksi->barangTitipan->gambarBarangTitipan)
-                                @foreach ($transaksi->barangTitipan->gambarBarangTitipan->take(1) as $gambar)
-                                    <img src="{{ asset('storage/gambar_barang_titipan/' . $gambar->nama_file_gambar) }}"
-                                        alt="Foto tambahan"
-                                        class="w-16 h-16 object-cover rounded border border-gray-300 shadow-sm">
-                                @endforeach
-                            @endif
-                        </td>
-                        <td class="px-6 py-4 whitespace-nowrap flex space-x-4">
-                            <a href="{{ route('gudang.barang.showDetail', $transaksi->barangTitipan->id_barang ?? '') }}"
-                                class="text-indigo-600 hover:text-indigo-900 font-semibold transition">
-                                Detail
-                            </a>
-
-                            @if ($transaksi->status_transaksi == 'Dikirim')
-                                <button class="btn btn-success btn-sm"
-                                    onclick="openScheduleModal({{ $transaksi->id_penitipan }})" type="button">
-                                    Jadwalkan Pengiriman
-                                </button>
-                            @endif
-
-                        </td>
-                    </tr>
-                @empty
-                    <tr>
-                        <td colspan="7" class="px-6 py-6 text-center text-gray-500 italic">Tidak ada transaksi dengan
-                            status 'Dikirim' atau 'Diambil'</td>
-                    </tr>
-                @endforelse
-            </tbody>
-        </table>
 
         {{-- Modal Edit --}}
         <div class="modal fade" id="editModal" tabindex="-1" role="dialog" aria-labelledby="editModalLabel"
@@ -560,7 +430,7 @@
                                 </div>
                                 
                                 <div class="col-md-6 mb-3">
-                                    <label for="edit_berat_barang">Berat (gram) <span class="text-danger">*</span></label>
+                                    <label for="edit_berat_barang">Berat (kg) <span class="text-danger">*</span></label>
                                     <input type="number" class="form-control" name="berat_barang" id="edit_berat_barang"
                                         min="1" required>
                                 </div>

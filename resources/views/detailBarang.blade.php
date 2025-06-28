@@ -26,13 +26,12 @@
                     {{ number_format($barang->harga_barang, 0, ',', '.') }}</p>
                 <div class="flex flex-col sm:items-end text-sm mt-4 sm:mt-0">
                     <span class="text-green-600">Garansi: {{ $barang->garansi_barang }}</span>
-                    <span class="text-blue-600">Berlaku sampai: {{ $barang->tanggal_habis_garansi }}</span>
                 </div>
             </div>
 
             <!-- Info jenis dan berat -->
             <p class="text-sm text-gray-500 mb-6">Jenis: {{ $barang->jenis_barang }} | Berat:
-                {{ $barang->berat_barang }} gr</p>
+                {{ $barang->berat_barang }} kg</p>
 
             <!-- Gambar Barang -->
             <h3 class="text-xl font-semibold text-gray-800 mt-6 mb-3">Gambar Barang:</h3>

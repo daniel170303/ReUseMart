@@ -46,13 +46,6 @@
                         <i class="fas fa-users mr-2"></i>Pegawai
                     </a>
                 </li>
-                <li>
-                    <a href="{{ route('admin.penitip.index') }}"
-                        class="block py-2 px-3 rounded hover:bg-green-100 text-gray-700 {{ request()->routeIs('admin.penitip.*') ? 'bg-green-200 font-semibold' : '' }}">
-                        <i class="fas fa-user-friends mr-2"></i>Penitip
-                    </a>
-                </li>
-
             </ul>
         </nav>
         <div class="px-4 py-4 mt-auto border-t border-gray-200">

@@ -29,4 +29,9 @@ class DetailPenitipan extends Model
     {
         return $this->belongsTo(BarangTitipan::class, 'id_barang', 'id_barang');
     }
+
+    public function barangTitipan()
+    {
+        return $this->belongsTo(BarangTitipan::class, 'id_barang', 'id_barang');
+    }
 }

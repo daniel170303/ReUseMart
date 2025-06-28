@@ -182,6 +182,55 @@ class PenitipanController extends Controller
         return redirect()->back()->with('error', 'Penitipan tidak bisa diperpanjang.');
     }
 
+    public function perpanjangPenitipan(Request $request)
+    {
+        try {
+            // Validasi input
+            $request->validate([
+                'id_penitipan' => 'required|exists:penitipan,id_penitipan',
+            ]);
+
+            $penitipan = Penitipan::findOrFail($request->id_penitipan);
+
+            // Cek apakah sudah pernah diperpanjang
+            if ($penitipan->status_perpanjangan === 'ya') {
+                return redirect()->back()->with('error', 'Penitipan ini sudah pernah diperpanjang sebelumnya.');
+            }
+
+            // Hitung tanggal baru
+            $tanggalSelesaiBaru = Carbon::parse($penitipan->tanggal_selesai_penitipan)->addDays(30);
+            $tanggalBatasBaru = $tanggalSelesaiBaru->copy()->addDays(7);
+
+            // Update penitipan
+            $penitipan->update([
+                'tanggal_selesai_penitipan' => $tanggalSelesaiBaru,
+                'tanggal_batas_pengambilan' => $tanggalBatasBaru,
+                'status_perpanjangan' => 'ya',
+            ]);
+
+            Log::info('Penitipan diperpanjang', [
+                'id_penitipan' => $penitipan->id_penitipan,
+                'tanggal_selesai_baru' => $tanggalSelesaiBaru,
+                'user_id' => session('user_id')
+            ]);
+
+            return redirect()->back()->with('success', 'Masa penitipan berhasil diperpanjang selama 30 hari.');
+
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return redirect()->back()
+                ->withErrors($e->errors())
+                ->withInput();
+
+        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+            Log::error('Penitipan tidak ditemukan: ' . $e->getMessage());
+            return redirect()->back()->with('error', 'Data penitipan tidak ditemukan.');
+
+        } catch (\Exception $e) {
+            Log::error('Error perpanjang penitipan: ' . $e->getMessage());
+            return redirect()->back()->with('error', 'Gagal memperpanjang masa penitipan. Silakan coba lagi.');
+        }
+    }
+
     public function halamanJadwalPengembalian()
     {
         $jadwalPengambilan = DetailPenitipan::with(['barangTitipan', 'penitipan.penitip'])
@@ -249,7 +298,7 @@ class PenitipanController extends Controller
                 $join->on('transaksi_pengiriman.id_pegawai', '=', 'pegawai.id_pegawai')
                     ->where('pegawai.id_role', 6); // pastikan hanya kurir
             })
-            ->whereIn('transaksi.status_transaksi', ['dikirim', 'diambil pembeli'])
+            ->whereIn('transaksi.jenis_pengiriman', ['Pengantaran', 'Ambil Sendiri'])
             ->select(
                 'transaksi.*',
                 'pegawai.nama_pegawai as nama_kurir'
@@ -315,6 +364,7 @@ class PenitipanController extends Controller
         } elseif ($status === 'diambil pembeli') {
             \DB::table('transaksi')->where('id_transaksi', $request->id_transaksi)->update([
                 'tanggal_pengambilan' => $tanggalWaktu,
+                'status_transaksi' => 'Siap Diambil',
             ]);
         } else {
             return back()->withErrors(['status_transaksi' => 'Status transaksi tidak valid untuk penjadwalan'])->withInput();
@@ -332,12 +382,12 @@ class PenitipanController extends Controller
 
             $waktuFormat = $tanggalWaktu->format('d M Y H:i');
         }
-        return redirect()->route('pegawai.gudang.jadwalPengiriman')->with('success', 'Jadwal berhasil disimpan.');
+        return redirect()->route('gudang.jadwalPengiriman')->with('success', 'Jadwal berhasil disimpan.');
     }
 
     public function indexKonfirmasiPengambilan()
     {
-        $transaksi = Transaksi::where('status_transaksi', 'Diambil Pembeli')->get();
+        $transaksi = Transaksi::where('status_transaksi', 'Siap Diambil')->get();
 
         return view('pegawai.gudang.konfirmasiPengambilan', compact('transaksi'));
     }

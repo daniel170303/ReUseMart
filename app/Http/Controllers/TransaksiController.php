@@ -14,6 +14,7 @@ use App\Models\Pembeli;
 use App\Models\RewardPembeli;
 use App\Jobs\CancelUnpaidTransactionJob; // Import the job class
 use Carbon\Carbon;
+use Barryvdh\DomPDF\Facade\Pdf;
 
 class TransaksiController extends Controller
 {
@@ -54,7 +55,7 @@ class TransaksiController extends Controller
     {
         $validated = $request->validate([
             // Validasi field lama, sesuaikan jika masih dipakai
-            // 'id_barang'          => 'required|integer',
+            'id_barang'          => 'required|integer',
             'id_pembeli'         => 'required|integer',
             // 'nama_barang'        => 'required|string|max:255',
             'tanggal_pemesanan'  => 'required|date',
@@ -347,9 +348,9 @@ private function notifikasiPenitip($transaksi)
     // Memproses checkout dari keranjang belanja
     public function processCheckout(Request $request)
     {
-        $pembeli = Auth::user(); // Asumsi guard 'pembeli' atau pengguna default adalah Pembeli
-       if (!$pembeli || !$pembeli instanceof Pembeli) {
-             return redirect()->route('login')->with('error', 'Silakan login sebagai pembeli untuk melanjutkan.');
+        $pembeli = Auth::user();
+        if (!$pembeli || !$pembeli instanceof Pembeli) {
+            return redirect()->route('login')->with('error', 'Silakan login sebagai pembeli untuk melanjutkan.');
         }
 
         $cart = Session::get('cart', []);
@@ -363,10 +364,9 @@ private function notifikasiPenitip($transaksi)
             'nama_penerima' => 'required_if:metode_pengiriman,kurir|string|max:255|nullable',
             'no_telepon' => 'required_if:metode_pengiriman,kurir|string|max:20|nullable',
             'alamat_lengkap' => 'required_if:metode_pengiriman,kurir|string|nullable',
-            'kota' => 'required_if:metode_pengiriman,kurir|string|in:Yogyakarta|nullable', // Asumsi hanya Yogyakarta
+            'kota' => 'required_if:metode_pengiriman,kurir|string|in:Yogyakarta|nullable',
             'kode_pos' => 'nullable|string|max:10',
             'poin_ditebus' => 'integer|min:0|nullable',
-            // 'catatan_pembeli' => 'nullable|string|max:1000', // Contoh jika ada field catatan
         ], [
             'metode_pengiriman.required' => 'Metode pengiriman wajib dipilih.',
             'nama_penerima.required_if' => 'Nama penerima wajib diisi untuk pengiriman kurir.',
@@ -381,46 +381,75 @@ private function notifikasiPenitip($transaksi)
 
         // --- 2. KALKULASI SERVER-SIDE ---
         $subtotalBarang = 0;
+        $firstBarangId = null;
+        $namaBarangList = [];
+
+        // Debug cart
+        \Log::info('Cart contents:', ['cart' => $cart]);
+
         foreach ($cart as $id => $item) {
-            // Ambil detail barang terbaru dari DB untuk memastikan akurasi harga dan ketersediaan
             $barang = BarangTitipan::find($id);
-            if (!$barang || !in_array($barang->status_barang, ['tersedia', 'promo'])) { // Cek status ketersediaan
-                // Hapus item dari keranjang jika tidak lagi tersedia dan beri tahu pengguna
+            if (!$barang || !in_array($barang->status_barang, ['tersedia', 'promo'])) {
                 Session::forget("cart.{$id}");
                 return redirect()->route('keranjang')->with('error', "Barang '{$item['nama']}' tidak lagi tersedia atau sudah habis dan telah dihapus dari keranjang Anda.");
             }
-            $subtotalBarang += $barang->harga_barang * $item['jumlah_barang'];
+            $subtotalBarang += $barang->harga_barang * $item['jumlah'];
+            
+            // Ambil ID barang pertama untuk kompatibilitas
+            if ($firstBarangId === null) {
+                $firstBarangId = $barang->id_barang;
+            }
+            
+            // Kumpulkan nama barang
+            $namaBarangList[] = $barang->nama_barang_titipan;
         }
+
+        // Pastikan firstBarangId tidak null
+        if ($firstBarangId === null) {
+            return redirect()->route('keranjang')->with('error', 'Tidak ada barang valid dalam keranjang.');
+        }
+
+        // Buat nama barang gabungan
+        $namaBarangGabungan = count($namaBarangList) > 1 
+            ? $namaBarangList[0] . ' (+' . (count($namaBarangList) - 1) . ' item lainnya)'
+            : $namaBarangList[0];
+
+        \Log::info('Barang info:', [
+            'first_barang_id' => $firstBarangId,
+            'nama_barang_gabungan' => $namaBarangGabungan,
+            'total_items' => count($cart)
+        ]);
 
         $ongkir = 0;
         if ($request->input('metode_pengiriman') === 'kurir') {
-            $ongkir = ($subtotalBarang >= 1500000) ? 0 : 100000; // Gratis ongkir jika >= 1.5jt
+            $ongkir = ($subtotalBarang >= 1500000) ? 0 : 100000;
         }
 
         $poinDitebus = (int) $request->input('poin_ditebus', 0);
         $rewardPembeli = $pembeli->rewardPembeli()->firstOrCreate(
             ['id_pembeli' => $pembeli->id_pembeli],
-            ['jumlah_poin_pembeli' => 0] // Inisialisasi jika belum ada
+            ['jumlah_poin_pembeli' => 0]
         );
         $poinSaatIni = $rewardPembeli->jumlah_poin_pembeli ?? 0;
 
         if ($poinDitebus > $poinSaatIni) {
             return redirect()->back()->with('error', 'Jumlah poin yang ingin Anda tukarkan melebihi poin yang Anda miliki saat ini.')->withInput();
         }
-        $NILAI_TUKAR_POIN = 10000; // 1 poin = Rp 10.000 (konstanta)
+
+        $NILAI_TUKAR_POIN = 100;
         $diskonPoin = $poinDitebus * $NILAI_TUKAR_POIN;
 
         $totalPembayaran = $subtotalBarang + $ongkir - $diskonPoin;
         if ($totalPembayaran < 0) {
-            $totalPembayaran = 0; // Total tidak boleh negatif
+            $totalPembayaran = 0;
         }
 
-        // Hitung poin yang akan diperoleh dari transaksi ini
+        // Hitung poin yang akan diperoleh
         $poinDiperoleh = 0;
         if ($subtotalBarang > 0) {
-            $poinDasar = floor($subtotalBarang / 10000); // 1 poin per Rp 10.000
+            $poinDasar = floor($subtotalBarang / 10000);
             $poinBonus = 0;
-            if ($subtotalBarang > 500000) { // Bonus 20% jika subtotal > Rp 500.000
+            if ($subtotalBarang > 500000) {
                 $poinBonus = floor($poinDasar * 0.20);
             }
             $poinDiperoleh = $poinDasar + $poinBonus;
@@ -430,36 +459,54 @@ private function notifikasiPenitip($transaksi)
         $nomorNota = $this->generateTransactionNumber();
 
         // --- 4. TRANSAKSI DATABASE ---
-        $createdTransaction = null; // Variabel untuk menyimpan transaksi yang baru dibuat
+        $createdTransaction = null;
         try {
             DB::transaction(function () use (
-                $request, $pembeli, $cart, $nomorNota, $subtotalBarang, $ongkir, $diskonPoin, $poinDitebus, $totalPembayaran, $poinDiperoleh, $rewardPembeli, &$createdTransaction
+                $request, $pembeli, $cart, $nomorNota, $subtotalBarang, $ongkir, $diskonPoin, 
+                $poinDitebus, $totalPembayaran, $poinDiperoleh, $rewardPembeli, 
+                $firstBarangId, $namaBarangGabungan, &$createdTransaction
             ) {
-                // Buat data Transaksi utama
-                $createdTransaction = Transaksi::create([
+                // PERBAIKAN: Data transaksi dengan semua field yang diperlukan
+                $transaksiData = [
                     'nomor_nota' => $nomorNota,
                     'id_pembeli' => $pembeli->id_pembeli,
+                    'id_barang' => $firstBarangId, // WAJIB: ID barang pertama
+                    'nama_barang' => $namaBarangGabungan, // WAJIB: Nama barang
                     'tanggal_pemesanan' => Carbon::now(),
+                    'tanggal_pelunasan' => null,
                     'subtotal_barang' => $subtotalBarang,
                     'ongkir' => $ongkir,
                     'diskon_poin' => $diskonPoin,
                     'poin_ditebus' => $poinDitebus,
                     'total_pembayaran' => $totalPembayaran,
                     'metode_pengiriman' => $request->input('metode_pengiriman'),
+                    'jenis_pengiriman' => $request->input('metode_pengiriman'),
                     'alamat_pengiriman_lengkap' => $request->input('metode_pengiriman') === 'kurir' ? $request->input('alamat_lengkap') : null,
+                    'alamat_pengiriman' => $request->input('metode_pengiriman') === 'kurir' ? $request->input('alamat_lengkap') : null,
                     'nama_penerima' => $request->input('metode_pengiriman') === 'kurir' ? $request->input('nama_penerima') : null,
                     'telepon_penerima' => $request->input('metode_pengiriman') === 'kurir' ? $request->input('no_telepon') : null,
                     'kode_pos_pengiriman' => $request->input('metode_pengiriman') === 'kurir' ? $request->input('kode_pos') : null,
-                    'status_transaksi' => 'menunggu_pembayaran', // Status awal transaksi
+                    'status_transaksi' => 'menunggu_pembayaran',
                     'poin_diperoleh' => $poinDiperoleh,
-                    'catatan_pembeli' => $request->input('catatan_pembeli'), // Jika ada field catatan
+                    'catatan_pembeli' => $request->input('catatan_pembeli'),
+                ];
+
+                \Log::info('Data transaksi yang akan disimpan:', $transaksiData);
+
+                // Buat transaksi
+                $createdTransaction = Transaksi::create($transaksiData);
+
+                \Log::info('Transaksi berhasil dibuat:', [
+                    'id_transaksi' => $createdTransaction->id_transaksi,
+                    'nomor_nota' => $nomorNota,
+                    'id_barang' => $firstBarangId,
+                    'nama_barang' => $namaBarangGabungan
                 ]);
 
-                // Buat DetailTransaksi untuk setiap item dan perbarui status BarangTitipan
+                // Buat DetailTransaksi untuk setiap item
                 foreach ($cart as $id => $itemDetails) {
-                    $barang = BarangTitipan::find($id); // Ambil ulang data barang untuk keamanan dalam transaksi
+                    $barang = BarangTitipan::find($id);
                     if (!$barang) {
-                        // Seharusnya tidak terjadi jika validasi di atas sudah benar
                         throw new \Exception("Barang dengan ID {$id} tidak ditemukan saat proses checkout.");
                     }
 
@@ -469,14 +516,18 @@ private function notifikasiPenitip($transaksi)
                         'nama_barang' => $barang->nama_barang_titipan,
                         'harga_satuan' => $barang->harga_barang,
                         'jumlah_barang' => $itemDetails['jumlah'],
-                        'subtotal_item' => $barang->harga_barang * $itemDetails['jumlah_barang'],
+                        'subtotal_item' => $barang->harga_barang * $itemDetails['jumlah'],
                     ]);
 
-                    // Perbarui status barang titipan menjadi 'menunggu_pembayaran'
-                    // atau status lain yang sesuai seperti 'dipesan', 'pending_payment'
+                    // Perbarui status barang titipan
                     $barang->status_barang = 'menunggu_pembayaran';
-                    // Jika ada sistem stok: $barang->decrement('stok', $itemDetails['jumlah']);
                     $barang->save();
+
+                    \Log::info('Detail transaksi dibuat:', [
+                        'id_barang' => $id,
+                        'nama_barang' => $barang->nama_barang_titipan,
+                        'jumlah' => $itemDetails['jumlah']
+                    ]);
                 }
 
                 // Perbarui Poin Pembeli
@@ -489,20 +540,36 @@ private function notifikasiPenitip($transaksi)
             });
 
             // Dispatch job untuk membatalkan transaksi jika tidak dibayar dalam 1 menit
-            // Pastikan $createdTransaction sudah terisi setelah DB::transaction
             if ($createdTransaction && $createdTransaction->status_transaksi === 'menunggu_pembayaran') {
                 CancelUnpaidTransactionJob::dispatch($createdTransaction->id_transaksi)->delay(now()->addMinutes(1));
             }
 
-            // --- 5. REDIRECT ---
-            // Arahkan ke halaman riwayat transaksi atau halaman detail pembayaran
-            // Sertakan nomor transaksi untuk referensi
             return redirect()->route('pembeli.history')->with('success', "Checkout berhasil! Nomor Transaksi Anda: {$nomorNota}. Segera lakukan pembayaran dalam 1 menit.");
-            // Contoh lain: return redirect()->route('pembayaran.info', ['nomor_nota' => $nomorNota]);
 
+        } catch (\Illuminate\Database\QueryException $e) {
+            \Log::error('Database Query Error:', [
+                'error_code' => $e->getCode(),
+                'error_message' => $e->getMessage(),
+                'sql' => $e->getSql() ?? 'N/A',
+                'bindings' => $e->getBindings() ?? [],
+                'cart' => $cart,
+                'first_barang_id' => $firstBarangId ?? 'NULL'
+            ]);
+            
+            return redirect()->route('keranjang')->with('error', 
+                'Terjadi kesalahan database: Field id_barang tidak memiliki nilai default. Error: ' . $e->getMessage());
+            
         } catch (\Exception $e) {
-            \Illuminate\Support\Facades\Log::error('Kesalahan saat proses checkout: ' . $e->getMessage() . ' - Trace: ' . $e->getTraceAsString());
-            return redirect()->route('keranjang')->with('error', 'Mohon maaf, terjadi kesalahan teknis saat proses checkout. Silakan coba beberapa saat lagi atau hubungi administrator.');
+            \Log::error('General Error saat proses checkout:', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+                'cart' => $cart,
+                'pembeli_id' => $pembeli->id_pembeli ?? 'unknown',
+                'first_barang_id' => $firstBarangId ?? 'NULL'
+            ]);
+            
+            return redirect()->route('keranjang')->with('error', 
+                'Terjadi kesalahan: ' . $e->getMessage());
         }
     }
 

@@ -64,34 +64,43 @@
                             <button type="button"
                                 onclick="openModal(
                                     {{ $barang->detailPenitipan->id_penitipan ?? 'null' }},
-                                    '{{ $barang->nama_barang_titipan }}',
+                                    '{{ addslashes($barang->nama_barang_titipan) }}',
                                     '{{ $barang->detailPenitipan->penitipan->tanggal_selesai_penitipan ?? '' }}'
                                 )"
-                                class="btn btn-sm btn-outline-primary shadow-sm">
-                                Jadwalkan
+                                class="btn btn-sm btn-outline-primary shadow-sm"
+                                data-bs-toggle="tooltip" 
+                                data-bs-placement="top" 
+                                title="Jadwalkan pengambilan barang">
+                                <i class="fas fa-calendar-alt me-1"></i>Jadwalkan
                             </button>
 
                             {{-- Tombol Detail --}}
                             <button type="button"
                                 onclick="showDetail(
-                                    '{{ asset('storage/' . $barang->gambar_barang) }}',
-                                    '{{ $barang->nama_barang_titipan }}',
-                                    '{{ $barang->jenis_barang }}',
+                                    '{{ $barang->gambar_barang ? asset('storage/' . $barang->gambar_barang) : '/images/no-image.png' }}',
+                                    '{{ addslashes($barang->nama_barang_titipan) }}',
+                                    '{{ addslashes($barang->jenis_barang ?? '') }}',
                                     'Rp{{ number_format($barang->harga_barang, 0, ',', '.') }}',
                                     '{{ $barang->berat_barang }} gram',
-                                    '{{ $barang->status_garansi }}',
-                                    {{ $barang->deskripsi_barang }}
+                                    '{{ addslashes($barang->status_garansi ?? '') }}',
+                                    '{{ addslashes($barang->deskripsi_barang ?? '') }}'
                                 )"
-                                class="btn btn-sm btn-outline-info shadow-sm ms-1">
-                                Detail
+                                class="btn btn-sm btn-outline-info shadow-sm ms-1"
+                                data-bs-toggle="tooltip" 
+                                data-bs-placement="top" 
+                                title="Lihat detail barang">
+                                <i class="fas fa-eye me-1"></i>Detail
                             </button>
 
                             {{-- Tombol Perpanjang --}}
                             @if ($barang->detailPenitipan && $barang->detailPenitipan->penitipan && $barang->detailPenitipan->penitipan->status_perpanjangan === 'tidak')
                                 <button type="button"
                                     onclick="konfirmasiPerpanjangan({{ $barang->detailPenitipan->penitipan->id_penitipan }})"
-                                    class="btn btn-sm btn-outline-success shadow-sm ms-1">
-                                    Perpanjang
+                                    class="btn btn-sm btn-outline-success shadow-sm ms-1"
+                                    data-bs-toggle="tooltip" 
+                                    data-bs-placement="top" 
+                                    title="Perpanjang masa penitipan">
+                                    <i class="fas fa-clock me-1"></i>Perpanjang
                                 </button>
                             @endif
                         </td>
@@ -189,11 +198,25 @@
 @endsection
 
 @section('scripts')
+{{-- Pastikan Bootstrap 5 JS loaded --}}
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+{{-- Atau jika menggunakan Bootstrap 4, gunakan ini: --}}
+{{-- <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/js/bootstrap.bundle.min.js"></script> --}}
+
 <script>
+    // Perbaiki fungsi openModal
     function openModal(idPenitipan, namaBarang, tanggalSelesai) {
+        console.log('Opening modal with:', {idPenitipan, namaBarang, tanggalSelesai}); // Debug
+        
+        if (!idPenitipan || idPenitipan === 'null') {
+            alert('Data penitipan tidak valid');
+            return;
+        }
+        
         document.getElementById('modalIdPenitipan').value = idPenitipan;
 
-        if (tanggalSelesai) {
+        if (tanggalSelesai && tanggalSelesai !== '') {
             const selesai = new Date(tanggalSelesai);
             const min = new Date(selesai);
             min.setDate(min.getDate() + 1);
@@ -205,59 +228,112 @@
                 const yyyy = date.getFullYear();
                 const mm = String(date.getMonth() + 1).padStart(2, '0');
                 const dd = String(date.getDate()).padStart(2, '0');
-                return ${yyyy}-${mm}-${dd};
+                return `${yyyy}-${mm}-${dd}`; // Perbaiki: gunakan backticks
             };
 
             const input = document.getElementById('tanggal_pengambilan');
-            input.min = formatDate(min);
-            input.max = formatDate(max);
-            input.value = '';
+            if (input) {
+                input.min = formatDate(min);
+                input.max = formatDate(max);
+                input.value = '';
+            }
         }
 
-        const modal = new bootstrap.Modal(document.getElementById('modalPengambilan'));
-        modal.show();
+        // Gunakan Bootstrap 5 modal
+        const modalElement = document.getElementById('modalPengambilan');
+        if (modalElement) {
+            const modal = new bootstrap.Modal(modalElement);
+            modal.show();
+        } else {
+            console.error('Modal element not found');
+        }
     }
 
     function closeModal() {
-        const modal = bootstrap.Modal.getInstance(document.getElementById('modalPengambilan'));
-        modal.hide();
+        const modalElement = document.getElementById('modalPengambilan');
+        if (modalElement) {
+            const modal = bootstrap.Modal.getInstance(modalElement);
+            if (modal) {
+                modal.hide();
+            }
+        }
     }
 
+    // Perbaiki fungsi showDetail
     function showDetail(gambar, nama, jenis, harga, berat, garansi, deskripsi) {
-        document.getElementById('detailGambar').src = gambar;
-        document.getElementById('detailNama').textContent = nama;
-        document.getElementById('detailJenis').textContent = jenis;
-        document.getElementById('detailHarga').textContent = harga;
-        document.getElementById('detailBerat').textContent = berat;
-        document.getElementById('detailGaransi').textContent = garansi;
-        document.getElementById('detailDeskripsi').textContent = deskripsi;
+        console.log('Showing detail with:', {gambar, nama, jenis, harga, berat, garansi, deskripsi}); // Debug
+        
+        // Set gambar
+        const imgElement = document.getElementById('detailGambar');
+        if (imgElement) {
+            imgElement.src = gambar || '/path/to/default-image.jpg';
+            imgElement.onerror = function() {
+                this.src = '/path/to/default-image.jpg';
+            };
+        }
+        
+        // Set detail information
+        const setTextContent = (id, content) => {
+            const element = document.getElementById(id);
+            if (element) {
+                element.textContent = content || '-';
+            }
+        };
+        
+        setTextContent('detailNama', nama);
+        setTextContent('detailJenis', jenis);
+        setTextContent('detailHarga', harga);
+        setTextContent('detailBerat', berat);
+        setTextContent('detailGaransi', garansi);
+        setTextContent('detailDeskripsi', deskripsi);
 
-        const detailModal = new bootstrap.Modal(document.getElementById('modalDetailBarang'));
-        detailModal.show();
+        // Show modal
+        const modalElement = document.getElementById('modalDetailBarang');
+        if (modalElement) {
+            const detailModal = new bootstrap.Modal(modalElement);
+            detailModal.show();
+        } else {
+            console.error('Detail modal element not found');
+        }
     }
 
-    document.getElementById('searchInput').addEventListener('keyup', function () {
-        const filter = this.value.toLowerCase();
-        const rows = document.querySelectorAll('tbody tr');
-
-        rows.forEach(row => {
-            const text = row.textContent.toLowerCase();
-            row.style.display = text.includes(filter) ? '' : 'none';
-        });
-    });
-
+    // Fungsi konfirmasi perpanjangan
     function konfirmasiPerpanjangan(id_penitipan) {
+        console.log('Konfirmasi perpanjangan for:', id_penitipan); // Debug
+        
+        if (!id_penitipan) {
+            alert('ID Penitipan tidak valid');
+            return;
+        }
+        
         document.getElementById('idPenitipanPerpanjang').value = id_penitipan;
         const modal = new bootstrap.Modal(document.getElementById('modalKonfirmasiPerpanjang'));
         modal.show();
     }
 
-    setTimeout(() => {
-        const alert = document.querySelector('.alert');
-        if (alert) {
-            const bsAlert = new bootstrap.Alert(alert);
-            bsAlert.close();
+    // Search functionality
+    document.addEventListener('DOMContentLoaded', function() {
+        const searchInput = document.getElementById('searchInput');
+        if (searchInput) {
+            searchInput.addEventListener('keyup', function () {
+                const filter = this.value.toLowerCase();
+                const rows = document.querySelectorAll('tbody tr');
+
+                rows.forEach(row => {
+                    const text = row.textContent.toLowerCase();
+                    row.style.display = text.includes(filter) ? '' : 'none';
+                });
+            });
         }
-    }, 4000);
+
+        // Auto-hide alerts
+        setTimeout(() => {
+            const alert = document.querySelector('.alert');
+            if (alert) {
+                const bsAlert = new bootstrap.Alert(alert);
+                bsAlert.close();
+            }
+        }, 4000);
+    });
 </script>
 @endsection

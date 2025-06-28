@@ -87,7 +87,6 @@ Route::middleware(['multiauth'])->group(function () {
         Route::get('/pembeli/profile', [PembeliController::class, 'dashboardPembeli'])->name('pembeli.profilePembeli');
         
         // Profile dan history
-        Route::get('/pembeli/{id}/history', [PembeliController::class, 'history'])->name('pembeli.history');
         Route::post('/rating', [RatingController::class, 'store'])->name('rating.store');
         Route::post('/pembeli/update-alamat', [PembeliController::class, 'updateAlamat'])->name('pembeli.updateAlamat');
         
@@ -125,7 +124,7 @@ Route::middleware(['multiauth'])->group(function () {
     Route::prefix('penitip')->group(function () {
         Route::get('/profile/{id}', [PenitipController::class, 'profileById'])->name('penitip.profile.id');
         Route::get('/{id}/barang-titipan', [PenitipController::class, 'barangTitipanPenitip'])->name('penitip.barangTitipan');
-        Route::post('penitipan/perpanjang/{id_penitipan}', [PenitipanController::class, 'perpanjang'])->name('penitip.penitipan.perpanjang');
+        Route::post('/perpanjang-penitipan', [PenitipanController::class, 'perpanjangPenitipan'])->name('penitip.perpanjang');
         Route::post('/jadwal-pengambilan', [PenitipController::class, 'jadwalPengambilan'])->name('penitip.jadwalPengambilan');
     });
     Route::post('/penitipan/perpanjang', [PenitipanController::class, 'perpanjang'])->name('penitipan.perpanjang');
@@ -165,9 +164,9 @@ Route::middleware(['multiauth'])->group(function () {
         Route::get('/jadwal-pengembalian', [PenitipanController::class, 'halamanJadwalPengembalian'])->name('jadwalPengembalian');
         Route::post('/konfirmasi-pengembalian', [PenitipanController::class, 'konfirmasiPengembalian'])->name('konfirmasiPengembalian');
         Route::get('/jadwal-pengiriman', [PenitipanController::class, 'jadwalPengiriman'])->name('jadwalPengiriman');
-        Route::post('/jadwal-pengiriman/proses', [PenitipanController::class, 'prosesJadwalkanPengiriman'])->name('gudang.penitipan.prosesJadwalkanPengiriman');
-        Route::get('/transaksi/{id}/cetak-pdfJual', [TransaksiController::class, 'cetakPDF'])->name('gudang.transaksi.cetakPDF');
-        Route::get('/transaksi/{id}/cetak-pdfAmbil', [TransaksiController::class, 'cetakPDFAmbil'])->name('gudang.transaksi.cetakPDFAmbil');
+        Route::post('/jadwal-pengiriman/proses', [PenitipanController::class, 'prosesJadwalkanPengiriman'])->name('penitipan.prosesJadwalkanPengiriman');
+        Route::get('/transaksi/{id}/cetak-pdfJual', [TransaksiController::class, 'cetakPDF'])->name('transaksi.cetakPDF');
+        Route::get('/transaksi/{id}/cetak-pdfAmbil', [TransaksiController::class, 'cetakPDFAmbil'])->name('transaksi.cetakPDFAmbil');
         Route::get('/konfirmasi-pengambilan', [PenitipanController::class, 'indexKonfirmasiPengambilan'])->name('konfirmasiPengambilan');
         Route::put('/konfirmasi-pengambilan/{id_transaksi}', [PenitipanController::class, 'konfirmasiPengambilan'])->name('pengambilan.konfirmasi');
         // Menampilkan halaman transaksi sederhana (Siap Diambil & Selesai)
@@ -356,7 +355,7 @@ Route::prefix('penitipan')->name('penitipan.')->group(function () {
     Route::post('/{id}/konfirmasi-pengambilan', [PenitipanController::class, 'konfirmasiPengambilan'])
         ->name('konfirmasiPengambilan');
     Route::get('/{id}/download', [PenitipanController::class, 'downloadNota'])->name('download');
-
+    Route::post('/perpanjang', [PenitipanController::class, 'perpanjangPenitipan'])->name('perpanjang');
 });
 
 // Detail Penitipan Routes
@@ -369,14 +368,6 @@ Route::prefix('detail-penitipan')->name('detail-penitipan.')->group(function () 
 
 Route::prefix('pegawai')->name('pegawai.')->group(function () {
     Route::get('/gudang', [BarangTitipanController::class, 'index'])->name('gudang');
-});
-
-//Route PENITIP
-Route::prefix('penitip')->group(function () {
-    Route::get('/profile/{id}', [PenitipController::class, 'profileById'])->name('penitip.profile.id');
-    Route::get('/{id}/barang-titipan', [PenitipController::class, 'barangTitipanPenitip'])->name('penitip.barangTitipan');
-    Route::post('penitipan/perpanjang/{id_penitipan}', [PenitipanController::class, 'perpanjang'])->name('penitip.penitipan.perpanjang');
-    Route::post('/jadwal-pengambilan', [PenitipController::class, 'jadwalPengambilan'])->name('penitip.jadwalPengambilan');
 });
 
 Route::get('/search-organisasi', function(Request $request) {

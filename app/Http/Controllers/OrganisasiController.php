@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use App\Models\Organisasi;
 use App\Models\Request as RequestDonasi;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Validation\Rule;
 
 class OrganisasiController extends Controller
 {

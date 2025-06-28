@@ -323,7 +323,7 @@
                                                     -
                                                 @endif
                                             </td>
-                                            <td>{{ $detail->barang->berat_barang ?? '-' }} gr</td>
+                                            <td>{{ $detail->barang->berat_barang ?? '-' }} kg</td>
                                             <td>
                                                 @if($detail->barang)
                                                     <span class="badge badge-secondary">{{ ucfirst($detail->barang->status_barang) }}</span>

@@ -58,7 +58,6 @@ class RequestController extends Controller
             'id_organisasi' => 'required|integer',
             'nama_request_barang' => 'required|string',
             'tanggal_request' => 'required|date',
-            'status_request' => 'required|string',
         ]);
 
         $data->update($validated);

@@ -16,6 +16,7 @@ class Transaksi extends Model
     protected $fillable = [
         'nomor_nota',
         'id_pembeli',
+        'id_barang',
         'tanggal_pemesanan',
         'tanggal_pelunasan',
         'jenis_pengiriman',

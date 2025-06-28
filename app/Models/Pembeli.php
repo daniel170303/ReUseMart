@@ -15,6 +15,7 @@ class Pembeli extends Authenticatable
     protected $primaryKey = 'id_pembeli';
     public $incrementing = true;
     protected $keyType = 'int';
+    public $timestamps = false;
 
     protected $fillable = [
         'nama_pembeli',
