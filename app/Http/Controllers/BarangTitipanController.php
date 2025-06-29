@@ -12,6 +12,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Validation\Rule;
 use Carbon\Carbon;
 
 class BarangTitipanController extends Controller
@@ -99,13 +100,27 @@ class BarangTitipanController extends Controller
             return redirect()->back()->with('error', 'Akses ditolak. Anda bukan pegawai gudang.');
         }
 
+        // Define allowed categories as array for better maintenance
+        $allowedCategories = [
+            'Elektronik & Gadget',
+            'Pakaian & Aksesori',
+            'Perabotan Rumah Tangga',
+            'Buku, Alat Tulis, & Peralatan Sekolah',
+            'Hobi, Mainan, & Koleksi',
+            'Perlengkapan Bayi & Anak',
+            'Otomotif & Aksesori',
+            'Perlengkapan Taman & Outdoor',
+            'Peralatan Kantor & Industri',
+            'Kosmetik & Perawatan Diri'
+        ];
+
         // Validasi berbeda berdasarkan mode
         $rules = [
             'nama_barang_titipan' => 'required|string|max:255',
             'harga_barang' => 'required|numeric',
             'deskripsi_barang' => 'required|string',
-            'jenis_barang' => 'required|in:Elektronik & Gadget,Pakaian & Aksesori,Perabotan Rumah Tangga,Buku, Alat Tulis, & Peralatan Sekolah,Hobi, Mainan, & Koleksi,Perlengkapan Bayi & Anak,Otomotif & Aksesori,Perlengkapan Taman & Outdoor,Peralatan Kantor & Industri,Kosmetik & Perawatan Diri',
-            'garansi_barang' => 'required|date', // Validasi tanggal akhir garansi
+            'jenis_barang' => ['required', Rule::in($allowedCategories)],
+            'garansi_barang' => 'required|date',
             'berat_barang' => 'required|integer',
             'status_barang' => 'required|in:dijual,terjual,sudah diambil penitip,sudah didonasikan,barang untuk donasi',
             'gambar_barang' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
@@ -118,8 +133,29 @@ class BarangTitipanController extends Controller
             $rules['hunter_id'] = 'required|exists:pegawai,id_pegawai';
         }
 
-        $validatedData = $request->validate($rules);
+        // Add custom error messages
+        $messages = [
+            'jenis_barang.required' => 'Jenis barang harus dipilih.',
+            'jenis_barang.in' => 'Jenis barang yang dipilih tidak valid. Pilih salah satu dari kategori yang tersedia.',
+        ];
 
+        try {
+            $validatedData = $request->validate($rules, $messages);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            // Debug: Log the actual value being validated
+            \Log::error('Validation failed for jenis_barang', [
+                'submitted_value' => $request->jenis_barang,
+                'allowed_values' => $allowedCategories,
+                'errors' => $e->errors()
+            ]);
+            
+            return redirect()->back()
+                ->withErrors($e->errors())
+                ->withInput()
+                ->with('error', 'Validasi gagal. Periksa kembali data yang dimasukkan.');
+        }
+
+        // Rest of your store method...
         try {
             DB::beginTransaction();
 
@@ -183,6 +219,7 @@ class BarangTitipanController extends Controller
 
         } catch (\Exception $e) {
             DB::rollback();
+            \Log::error('Error storing barang titipan: ' . $e->getMessage());
             return redirect()->back()->with('error', 'Terjadi kesalahan saat menyimpan barang: ' . $e->getMessage());
         }
     }
@@ -299,18 +336,53 @@ class BarangTitipanController extends Controller
 
         $barang = BarangTitipan::findOrFail($id);
 
-        $request->validate([
+        // Define allowed categories
+        $allowedCategories = [
+            'Elektronik & Gadget',
+            'Pakaian & Aksesori',
+            'Perabotan Rumah Tangga',
+            'Buku, Alat Tulis, & Peralatan Sekolah',
+            'Hobi, Mainan, & Koleksi',
+            'Perlengkapan Bayi & Anak',
+            'Otomotif & Aksesori',
+            'Perlengkapan Taman & Outdoor',
+            'Peralatan Kantor & Industri',
+            'Kosmetik & Perawatan Diri'
+        ];
+
+        $rules = [
             'nama_barang_titipan' => 'required|string|max:255',
             'harga_barang' => 'required|numeric',
-            'jenis_barang' => 'required|in:Elektronik & Gadget,Pakaian & Aksesori,Perabotan Rumah Tangga,Buku, Alat Tulis, & Peralatan Sekolah,Hobi, Mainan, & Koleksi,Perlengkapan Bayi & Anak,Otomotif & Aksesori,Perlengkapan Taman & Outdoor,Peralatan Kantor & Industri,Kosmetik & Perawatan Diri',
-            'garansi_barang' => 'required|date', // Validasi tanggal akhir garansi
+            'jenis_barang' => ['required', Rule::in($allowedCategories)],
+            'garansi_barang' => 'required|date',
             'berat_barang' => 'required|numeric',
             'status_barang' => 'required|string|in:dijual,terjual,sudah diambil penitip,sudah didonasikan,barang untuk donasi',
             'deskripsi_barang' => 'required|string',
             'gambar_barang' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
             'gambar.*' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
-        ]);
+        ];
 
+        $messages = [
+            'jenis_barang.required' => 'Jenis barang harus dipilih.',
+            'jenis_barang.in' => 'Jenis barang yang dipilih tidak valid.',
+        ];
+
+        try {
+            $request->validate($rules, $messages);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            \Log::error('Update validation failed for jenis_barang', [
+                'submitted_value' => $request->jenis_barang,
+                'allowed_values' => $allowedCategories,
+                'errors' => $e->errors()
+            ]);
+            
+            return redirect()->back()
+                ->withErrors($e->errors())
+                ->withInput()
+                ->with('error', 'Validasi gagal. Periksa kembali data yang dimasukkan.');
+        }
+
+        // Rest of your update method...
         $updateData = $request->only([
             'nama_barang_titipan',
             'harga_barang',

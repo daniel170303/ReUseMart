@@ -84,7 +84,7 @@
             Pengambilan</a>
         <a href="{{ route('gudang.konfirmasiPengambilan') }}"><i class="fas fa-check-circle"></i> Konfirmasi
             Pengambilan</a>
-        <a href="{{ route('gudang.listTransaksi') }}"><i class="fas fa-check-circle"></i> List Transaksi</a>
+        {{-- <a href="{{ route('gudang.listTransaksi') }}"><i class="fas fa-check-circle"></i> List Transaksi</a> --}}
         <a href="{{ route('logout') }}"
             onclick="event.preventDefault(); document.getElementById('logout-form').submit();">
             <i class="fas fa-sign-out-alt"></i> Logout

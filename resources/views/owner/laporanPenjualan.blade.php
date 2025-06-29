@@ -6,19 +6,6 @@
     <div class="container">
         <h2 class="my-4">Laporan Penjualan Tahunan {{ $tahun }}</h2>
 
-        <!-- Debug Info -->
-        @if(config('app.debug'))
-            <div class="alert alert-info">
-                <strong>Debug Info:</strong><br>
-                Data Grafik Count: {{ $dataGrafik->count() }}<br>
-                Data Grafik Sum: {{ $dataGrafik->sum('penjualan') }}<br>
-                <details>
-                    <summary>Data Grafik Detail</summary>
-                    <pre>{{ json_encode($dataGrafik->toArray(), JSON_PRETTY_PRINT) }}</pre>
-                </details>
-            </div>
-        @endif
-
         <!-- Filter Tahun -->
         <form method="GET" action="{{ route('owner.laporanPenjualan') }}" class="mb-4 d-flex gap-2">
             <select name="tahun" class="form-select w-auto">
@@ -54,27 +41,6 @@
                         <h5 class="card-title">Total Komisi</h5>
                         <p class="card-text">Rp{{ number_format($totalKomisi, 0, ',', '.') }}</p>
                     </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Grafik -->
-        <div class="mb-5">
-            <div class="card">
-                <div class="card-header">
-                    <h5>Grafik Penjualan Tahunan {{ $tahun }}</h5>
-                </div>
-                <div class="card-body">
-                    @if($dataGrafik->sum('penjualan') > 0)
-                        <div style="height: 400px;">
-                            <canvas id="grafikPenjualan"></canvas>
-                        </div>
-                    @else
-                        <div class="alert alert-warning">
-                            <i class="fas fa-exclamation-triangle"></i>
-                            Tidak ada data penjualan untuk tahun {{ $tahun }}
-                        </div>
-                    @endif
                 </div>
             </div>
         </div>

@@ -549,56 +549,92 @@
         </button>
     </div>
 
-    <!-- Category Section -->
+        <!-- Category Section -->
     <section class="category-section">
         <div class="container">
-            <div class="row">
-                <div class="col-2 col-md">
+            <div class="text-center mb-4">
+                <h2 class="section-title">Kategori Produk</h2>
+                <p class="section-subtitle">Temukan barang bekas berkualitas berdasarkan kategori</p>
+            </div>
+            <div class="row g-3">
+                <div class="col-6 col-md-4 col-lg-2">
                     <div class="category-item">
                         <div class="category-icon">
                             <i class="fas fa-laptop"></i>
                         </div>
-                        <p class="category-name">Elektronik</p>
+                        <p class="category-name">Elektronik & Gadget</p>
                     </div>
                 </div>
-                <div class="col-2 col-md">
+                <div class="col-6 col-md-4 col-lg-2">
                     <div class="category-item">
                         <div class="category-icon">
                             <i class="fas fa-tshirt"></i>
                         </div>
-                        <p class="category-name">Fashion</p>
+                        <p class="category-name">Pakaian & Aksesori</p>
                     </div>
                 </div>
-                <div class="col-2 col-md">
+                <div class="col-6 col-md-4 col-lg-2">
                     <div class="category-item">
                         <div class="category-icon">
-                            <i class="fas fa-home"></i>
+                            <i class="fas fa-couch"></i>
                         </div>
-                        <p class="category-name">Furniture</p>
+                        <p class="category-name">Perabotan Rumah Tangga</p>
                     </div>
                 </div>
-                <div class="col-2 col-md">
+                <div class="col-6 col-md-4 col-lg-2">
                     <div class="category-item">
                         <div class="category-icon">
                             <i class="fas fa-book"></i>
                         </div>
-                        <p class="category-name">Buku</p>
+                        <p class="category-name">Buku, Alat Tulis, & Peralatan Sekolah</p>
                     </div>
                 </div>
-                <div class="col-2 col-md">
+                <div class="col-6 col-md-4 col-lg-2">
                     <div class="category-item">
                         <div class="category-icon">
                             <i class="fas fa-gamepad"></i>
                         </div>
-                        <p class="category-name">Gaming</p>
+                        <p class="category-name">Hobi, Mainan, & Koleksi</p>
                     </div>
                 </div>
-                <div class="col-2 col-md">
+                <div class="col-6 col-md-4 col-lg-2">
                     <div class="category-item">
                         <div class="category-icon">
-                            <i class="fas fa-bicycle"></i>
+                            <i class="fas fa-baby"></i>
                         </div>
-                        <p class="category-name">Olahraga</p>
+                        <p class="category-name">Perlengkapan Bayi & Anak</p>
+                    </div>
+                </div>
+                <div class="col-6 col-md-4 col-lg-2">
+                    <div class="category-item">
+                        <div class="category-icon">
+                            <i class="fas fa-car"></i>
+                        </div>
+                        <p class="category-name">Otomotif & Aksesori</p>
+                    </div>
+                </div>
+                <div class="col-6 col-md-4 col-lg-2">
+                    <div class="category-item">
+                        <div class="category-icon">
+                            <i class="fas fa-seedling"></i>
+                        </div>
+                        <p class="category-name">Perlengkapan Taman & Outdoor</p>
+                    </div>
+                </div>
+                <div class="col-6 col-md-4 col-lg-2">
+                    <div class="category-item">
+                        <div class="category-icon">
+                            <i class="fas fa-briefcase"></i>
+                        </div>
+                        <p class="category-name">Peralatan Kantor & Industri</p>
+                    </div>
+                </div>
+                <div class="col-6 col-md-4 col-lg-2">
+                    <div class="category-item">
+                        <div class="category-icon">
+                            <i class="fas fa-spa"></i>
+                        </div>
+                        <p class="category-name">Kosmetik & Perawatan Diri</p>
                     </div>
                 </div>
             </div>

@@ -1394,4 +1394,415 @@ class OwnerController extends Controller
             ->get();
     }
 
+    // Add this method to the existing OwnerController class
+
+public function laporanBarangDonasi(HttpRequest $request)
+{
+    try {
+        // Cek apakah user yang login adalah owner
+        if (!Auth::guard('pegawai')->check()) {
+            return redirect()->route('login')->withErrors(['access_denied' => 'Anda tidak diizinkan mengakses halaman ini.']);
+        }
+
+        $owner = Auth::guard('pegawai')->user();
+        
+        if (!$owner->rolePegawai || $owner->rolePegawai->nama_role !== 'Owner') {
+            return redirect('/')->withErrors(['access_denied' => 'Anda tidak memiliki hak akses sebagai Owner.']);
+        }
+
+        // Get filter parameters
+        $tahun = (int) $request->get('tahun', date('Y'));
+
+        // Data laporan donasi barang
+        $laporanDonasi = $this->getLaporanDonasiBarang($tahun);
+        
+        // Summary data
+        $totalDonasi = $laporanDonasi->count();
+        $totalOrganisasi = $laporanDonasi->unique('nama_organisasi')->count();
+
+        return view('owner.laporanBarangDonasi', compact(
+            'laporanDonasi',
+            'totalDonasi',
+            'totalOrganisasi',
+            'tahun'
+        ));
+
+    } catch (\Exception $e) {
+        Log::error('Error in laporanBarangDonasi: ' . $e->getMessage());
+        return redirect()->back()->with('error', 'Terjadi kesalahan: ' . $e->getMessage());
+    }
+}
+
+public function laporanBarangDonasiPDF(HttpRequest $request)
+{
+    try {
+        $tahun = (int) ($request->tahun ?? date('Y'));
+
+        // Panggil data yang sama seperti laporanBarangDonasi()
+        $laporanDonasi = $this->getLaporanDonasiBarang($tahun);
+        
+        // Hitung summary data
+        $totalDonasi = $laporanDonasi->count();
+        $totalOrganisasi = $laporanDonasi->unique('nama_organisasi')->count();
+        $tanggalCetak = now()->translatedFormat('d F Y');
+
+        // Load view dengan data
+        $pdf = Pdf::loadView('owner.laporanBarangDonasiPDF', compact(
+            'laporanDonasi',
+            'totalDonasi',
+            'totalOrganisasi',
+            'tahun',
+            'tanggalCetak'
+        ));
+
+        // Set paper size dan orientation
+        $pdf->setPaper('A4', 'landscape');
+        
+        // Set options untuk DomPDF
+        $pdf->setOptions([
+            'isHtml5ParserEnabled' => true,
+            'isPhpEnabled' => true,
+            'defaultFont' => 'DejaVu Sans'
+        ]);
+
+        return $pdf->download('laporan-donasi-barang-' . $tahun . '.pdf');
+
+    } catch (\Exception $e) {
+        Log::error('Error generating Donasi PDF: ' . $e->getMessage());
+        return redirect()->back()->with('error', 'Gagal membuat PDF: ' . $e->getMessage());
+    }
+}
+
+private function getLaporanDonasiBarang($tahun)
+{
+    return DB::table('donasi as d')
+        ->join('barang_titipan as bt', 'd.id_barang', '=', 'bt.id_barang')
+        ->join('request as r', 'd.id_request', '=', 'r.id_request')
+        ->leftJoin('organisasi as o', 'r.id_organisasi', '=', 'o.id_organisasi')
+        ->leftJoin('detail_penitipan as dp', 'bt.id_barang', '=', 'dp.id_barang')
+        ->leftJoin('penitipan as p', 'dp.id_penitipan', '=', 'p.id_penitipan')
+        ->leftJoin('penitip as pen', 'p.id_penitip', '=', 'pen.id_penitip')
+        ->select(
+            'bt.id_barang as kode_produk',
+            'bt.nama_barang_titipan as nama_produk',
+            'pen.id_penitip',
+            'pen.nama_penitip',
+            'd.tanggal_donasi',
+            'o.nama_organisasi',
+            'd.penerima_donasi as nama_penerima',
+            'r.nama_request_barang',
+            'd.id_donasi'
+        )
+        ->whereYear('d.tanggal_donasi', $tahun)
+        ->orderBy('d.tanggal_donasi', 'desc')
+        ->get();
+}
+
+// Add these methods to the existing OwnerController class
+
+public function laporanRequestDonasi(HttpRequest $request)
+{
+    try {
+        // Cek apakah user yang login adalah owner
+        if (!Auth::guard('pegawai')->check()) {
+            return redirect()->route('login')->withErrors(['access_denied' => 'Anda tidak diizinkan mengakses halaman ini.']);
+        }
+
+        $owner = Auth::guard('pegawai')->user();
+        
+        if (!$owner->rolePegawai || $owner->rolePegawai->nama_role !== 'Owner') {
+            return redirect('/')->withErrors(['access_denied' => 'Anda tidak memiliki hak akses sebagai Owner.']);
+        }
+
+        // Get filter parameters
+        $status = $request->get('status', 'pending'); // Default to pending requests
+        $tahun = (int) $request->get('tahun', date('Y'));
+
+        // Data laporan request donasi
+        $laporanRequest = $this->getLaporanRequestDonasi($status, $tahun);
+        
+        // Summary data
+        $totalRequest = $laporanRequest->count();
+        $totalOrganisasi = $laporanRequest->unique('id_organisasi')->count();
+        $requestPending = $laporanRequest->where('status_request', 'pending')->count();
+        $requestDiterima = $laporanRequest->where('status_request', 'diterima')->count();
+        $requestDitolak = $laporanRequest->where('status_request', 'ditolak')->count();
+
+        return view('owner.laporanRequestDonasi', compact(
+            'laporanRequest',
+            'totalRequest',
+            'totalOrganisasi',
+            'requestPending',
+            'requestDiterima',
+            'requestDitolak',
+            'status',
+            'tahun'
+        ));
+
+    } catch (\Exception $e) {
+        Log::error('Error in laporanRequestDonasi: ' . $e->getMessage());
+        return redirect()->back()->with('error', 'Terjadi kesalahan: ' . $e->getMessage());
+    }
+}
+
+public function laporanRequestDonasiPDF(HttpRequest $request)
+{
+    try {
+        $status = $request->get('status', 'pending');
+        $tahun = (int) ($request->tahun ?? date('Y'));
+
+        // Panggil data yang sama seperti laporanRequestDonasi()
+        $laporanRequest = $this->getLaporanRequestDonasi($status, $tahun);
+        
+        // Hitung summary data
+        $totalRequest = $laporanRequest->count();
+        $totalOrganisasi = $laporanRequest->unique('id_organisasi')->count();
+        $tanggalCetak = now()->translatedFormat('d F Y');
+
+        // Tentukan judul berdasarkan status
+        $judulLaporan = 'LAPORAN REQUEST DONASI';
+        if ($status === 'pending') {
+            $judulLaporan = 'REKAP REQUEST DONASI (BELUM TERPENUHI)';
+        } elseif ($status === 'diterima') {
+            $judulLaporan = 'REKAP REQUEST DONASI (SUDAH TERPENUHI)';
+        } elseif ($status === 'ditolak') {
+            $judulLaporan = 'REKAP REQUEST DONASI (DITOLAK)';
+        }
+
+        // Load view dengan data
+        $pdf = Pdf::loadView('owner.laporanRequestDonasiPDF', compact(
+            'laporanRequest',
+            'totalRequest',
+            'totalOrganisasi',
+            'status',
+            'tahun',
+            'tanggalCetak',
+            'judulLaporan'
+        ));
+
+        // Set paper size dan orientation
+        $pdf->setPaper('A4', 'landscape');
+        
+        // Set options untuk DomPDF
+        $pdf->setOptions([
+            'isHtml5ParserEnabled' => true,
+            'isPhpEnabled' => true,
+            'defaultFont' => 'DejaVu Sans'
+        ]);
+
+        $filename = 'laporan-request-donasi-' . strtolower($status) . '-' . $tahun . '.pdf';
+        return $pdf->download($filename);
+
+    } catch (\Exception $e) {
+        Log::error('Error generating Request Donasi PDF: ' . $e->getMessage());
+        return redirect()->back()->with('error', 'Gagal membuat PDF: ' . $e->getMessage());
+    }
+}
+
+private function getLaporanRequestDonasi($status = 'all', $tahun = null)
+{
+    $query = DB::table('request as r')
+        ->leftJoin('organisasi as o', 'r.id_organisasi', '=', 'o.id_organisasi')
+        ->select(
+            'r.id_request',
+            'r.id_organisasi',
+            'o.nama_organisasi',
+            'o.alamat_organisasi',
+            'o.email_organisasi',
+            'o.nomor_telepon_organisasi',
+            'r.nama_request_barang as request_barang',
+            'r.tanggal_request',
+            'r.status_request'
+        );
+
+    // Filter berdasarkan status
+    if ($status !== 'all') {
+        $query->where('r.status_request', $status);
+    }
+
+    // Filter berdasarkan tahun jika diberikan
+    if ($tahun) {
+        $query->whereYear('r.tanggal_request', $tahun);
+    }
+
+    return $query->orderBy('r.tanggal_request', 'desc')->get();
+}
+
+// Add these methods to the existing OwnerController class
+
+public function laporanTransaksiPenitip(HttpRequest $request)
+{
+    try {
+        // Cek apakah user yang login adalah owner
+        if (!Auth::guard('pegawai')->check()) {
+            return redirect()->route('login')->withErrors(['access_denied' => 'Anda tidak diizinkan mengakses halaman ini.']);
+        }
+
+        $owner = Auth::guard('pegawai')->user();
+        
+        if (!$owner->rolePegawai || $owner->rolePegawai->nama_role !== 'Owner') {
+            return redirect('/')->withErrors(['access_denied' => 'Anda tidak memiliki hak akses sebagai Owner.']);
+        }
+
+        // Get filter parameters
+        $idPenitip = $request->get('id_penitip');
+        $bulan = (int) $request->get('bulan', date('m'));
+        $tahun = (int) $request->get('tahun', date('Y'));
+
+        // Get all penitip for dropdown
+        $penitipList = \App\Models\Penitip::orderBy('nama_penitip')->get();
+
+        // Data laporan transaksi penitip
+        $laporanTransaksi = collect();
+        $penitipData = null;
+        $totalPendapatan = 0;
+        $totalBonus = 0;
+        $totalBersih = 0;
+
+        if ($idPenitip) {
+            $penitipData = \App\Models\Penitip::find($idPenitip);
+            if ($penitipData) {
+                $laporanTransaksi = $this->getLaporanTransaksiPenitip($idPenitip, $bulan, $tahun);
+                $totalPendapatan = $laporanTransaksi->sum('harga_jual');
+                $totalBonus = $laporanTransaksi->sum('bonus_terjual_cepat');
+                $totalBersih = $laporanTransaksi->sum('pendapatan');
+            }
+        }
+
+        // Nama bulan untuk tampilan
+        $namaBulan = [
+            1 => 'Januari', 2 => 'Februari', 3 => 'Maret', 4 => 'April',
+            5 => 'Mei', 6 => 'Juni', 7 => 'Juli', 8 => 'Agustus',
+            9 => 'September', 10 => 'Oktober', 11 => 'November', 12 => 'Desember'
+        ];
+
+        return view('owner.laporanTransaksiPenitip', compact(
+            'laporanTransaksi',
+            'penitipList',
+            'penitipData',
+            'totalPendapatan',
+            'totalBonus',
+            'totalBersih',
+            'idPenitip',
+            'bulan',
+            'tahun',
+            'namaBulan'
+        ));
+
+    } catch (\Exception $e) {
+        Log::error('Error in laporanTransaksiPenitip: ' . $e->getMessage());
+        return redirect()->back()->with('error', 'Terjadi kesalahan: ' . $e->getMessage());
+    }
+}
+
+public function laporanTransaksiPenitipPDF(HttpRequest $request)
+{
+    try {
+        $idPenitip = $request->get('id_penitip');
+        $bulan = (int) ($request->bulan ?? date('m'));
+        $tahun = (int) ($request->tahun ?? date('Y'));
+
+        if (!$idPenitip) {
+            return redirect()->back()->with('error', 'ID Penitip harus dipilih untuk generate PDF.');
+        }
+
+        // Get penitip data
+        $penitipData = \App\Models\Penitip::find($idPenitip);
+        if (!$penitipData) {
+            return redirect()->back()->with('error', 'Data penitip tidak ditemukan.');
+        }
+
+        // Panggil data transaksi
+        $laporanTransaksi = $this->getLaporanTransaksiPenitip($idPenitip, $bulan, $tahun);
+        
+        // Hitung summary data
+        $totalProduk = $laporanTransaksi->count();
+        $totalPendapatan = $laporanTransaksi->sum('harga_jual');
+        $totalBonus = $laporanTransaksi->sum('bonus_terjual_cepat');
+        $totalBersih = $laporanTransaksi->sum('pendapatan');
+
+        $namaBulan = [
+            1 => 'Januari', 2 => 'Februari', 3 => 'Maret', 4 => 'April',
+            5 => 'Mei', 6 => 'Juni', 7 => 'Juli', 8 => 'Agustus',
+            9 => 'September', 10 => 'Oktober', 11 => 'November', 12 => 'Desember'
+        ];
+
+        $namaBulanTerpilih = $namaBulan[$bulan];
+        $tanggalCetak = now()->translatedFormat('d F Y');
+
+        // Load view dengan data
+        $pdf = Pdf::loadView('owner.laporanTransaksiPenitipPDF', compact(
+            'laporanTransaksi',
+            'penitipData',
+            'totalProduk',
+            'totalPendapatan',
+            'totalBonus',
+            'totalBersih',
+            'bulan',
+            'tahun',
+            'namaBulanTerpilih',
+            'tanggalCetak'
+        ));
+
+        // Set paper size dan orientation
+        $pdf->setPaper('A4', 'landscape');
+        
+        // Set options untuk DomPDF
+        $pdf->setOptions([
+            'isHtml5ParserEnabled' => true,
+            'isPhpEnabled' => true,
+            'defaultFont' => 'DejaVu Sans'
+        ]);
+
+        $filename = 'laporan-transaksi-penitip-T' . $idPenitip . '-' . strtolower($namaBulanTerpilih) . '-' . $tahun . '.pdf';
+        return $pdf->download($filename);
+
+    } catch (\Exception $e) {
+        Log::error('Error generating Transaksi Penitip PDF: ' . $e->getMessage());
+        return redirect()->back()->with('error', 'Gagal membuat PDF: ' . $e->getMessage());
+    }
+}
+
+private function getLaporanTransaksiPenitip($idPenitip, $bulan, $tahun)
+{
+    return DB::table('transaksi as t')
+        ->join('barang_titipan as bt', 't.id_barang', '=', 'bt.id_barang')
+        ->join('detail_penitipan as dp', 'bt.id_barang', '=', 'dp.id_barang')
+        ->join('penitipan as p', 'dp.id_penitipan', '=', 'p.id_penitipan')
+        ->join('penitip as pen', 'p.id_penitip', '=', 'pen.id_penitip')
+        ->select(
+            'bt.id_barang as kode_produk',
+            'bt.nama_barang_titipan as nama_produk',
+            'bt.created_at as tanggal_masuk',
+            't.tanggal_pelunasan as tanggal_laku',
+            'bt.harga_barang as harga_jual',
+            DB::raw('CASE 
+                WHEN LOWER(TRIM(COALESCE(p.status_perpanjangan, "tidak"))) = "ya" THEN bt.harga_barang * 0.70 
+                ELSE bt.harga_barang * 0.80 
+            END as harga_bersih'),
+            DB::raw('CASE 
+                WHEN DATEDIFF(t.tanggal_pelunasan, bt.created_at) <= 7 THEN 30000
+                ELSE 0 
+            END as bonus_terjual_cepat'),
+            DB::raw('(CASE 
+                WHEN LOWER(TRIM(COALESCE(p.status_perpanjangan, "tidak"))) = "ya" THEN bt.harga_barang * 0.70 
+                ELSE bt.harga_barang * 0.80 
+            END) + (CASE 
+                WHEN DATEDIFF(t.tanggal_pelunasan, bt.created_at) <= 7 THEN 30000
+                ELSE 0 
+            END) as pendapatan'),
+            'p.status_perpanjangan'
+        )
+        ->where('pen.id_penitip', $idPenitip)
+        ->whereMonth('t.tanggal_pelunasan', $bulan)
+        ->whereYear('t.tanggal_pelunasan', $tahun)
+        ->where('t.status_transaksi', 'Selesai')
+        ->whereNotNull('t.tanggal_pelunasan')
+        ->orderBy('t.tanggal_pelunasan', 'desc')
+        ->get();
+}
+
+
+
+
 }

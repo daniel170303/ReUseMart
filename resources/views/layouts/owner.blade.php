@@ -110,6 +110,21 @@
                     <i class="fas fa-users me-2"></i> Laporan Komisi Hunter
                 </a>
 
+                <a href="{{ route('owner.laporan.donasi') }}"
+                    class="nav-link text-dark px-4 py-3 {{ request()->routeIs('owner.laporan.donasi') ? 'active' : '' }}">
+                    <i class="fas fa-heart me-2"></i> Laporan Donasi
+                </a>
+
+                <a href="{{ route('owner.laporan.request-donasi') }}"
+                    class="nav-link text-dark px-4 py-3 {{ request()->routeIs('owner.laporan.request-donasi') ? 'active' : '' }}">
+                    <i class="fas fa-clipboard-list me-2"></i> Laporan Request Donasi
+                </a>
+
+                <a href="{{ route('owner.laporan.transaksi-penitip') }}"
+                    class="nav-link text-dark px-4 py-3 {{ request()->routeIs('owner.laporan.transaksi-penitip') ? 'active' : '' }}">
+                    <i class="fas fa-file-invoice-dollar me-2"></i> Laporan Transaksi Penitip
+                </a>
+
                 {{-- Logout sebagai menu nav-link --}}
                 @auth('pegawai')
                     <a href="#" onclick="event.preventDefault(); document.getElementById('logout-form').submit();"

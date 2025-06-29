@@ -211,6 +211,19 @@ Route::middleware(['multiauth'])->group(function () {
         Route::put('/donasi/{id}/edit', [OwnerController::class, 'editDonasi'])->name('donasi.edit');
         Route::delete('/donasi/{id}/hapus', [OwnerController::class, 'hapusDonasi'])->name('donasi.hapus');
 
+        // Laporan Donasi Barang
+        Route::get('/laporan/donasi', [OwnerController::class, 'laporanBarangDonasi'])->name('laporan.donasi');
+        Route::get('/laporan/donasi/pdf', [OwnerController::class, 'laporanBarangDonasiPDF'])->name('laporan.donasi.pdf');
+
+        // Laporan Request Donasi
+        Route::get('/laporan/request-donasi', [OwnerController::class, 'laporanRequestDonasi'])->name('laporan.request-donasi');
+        Route::get('/laporan/request-donasi/pdf', [OwnerController::class, 'laporanRequestDonasiPDF'])->name('laporan.request-donasi.pdf');
+
+        // Laporan Transaksi Penitip
+        Route::get('/laporan/transaksi-penitip', [OwnerController::class, 'laporanTransaksiPenitip'])->name('laporan.transaksi-penitip');
+        Route::get('/laporan/transaksi-penitip/pdf', [OwnerController::class, 'laporanTransaksiPenitipPDF'])->name('laporan.transaksi-penitip.pdf');
+        
+
         Route::post('/logout', function () {
             Auth::guard('pegawai')->logout();
             session()->invalidate();

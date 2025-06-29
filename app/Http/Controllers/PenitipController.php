@@ -199,7 +199,7 @@ class PenitipController extends Controller
         return view('penitip.profilePenitip', compact('penitip', 'barangTitipan', 'riwayatPenitipan'));
     }
 
-    public function barangTitipanPenitip($id_penitip)
+    public function barangTitipanPenitip($id_penitip, Request $request)
     {
         $barangTitipan = BarangTitipan::whereHas('detailPenitipan', function ($query) use ($id_penitip) {
             $query->whereHas('penitipan', function ($subQuery) use ($id_penitip) {
@@ -217,6 +217,16 @@ class PenitipController extends Controller
                 $tanggalHabis = now()->subMonths(abs($barang->sisa_garansi));
                 $barang->status_garansi = 'Garansi Habis pada ' . $tanggalHabis->translatedFormat('d M Y');
             }
+        }
+
+        if ($request->ajax() || $request->expectsJson()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Data barang titipan berhasil diambil',
+                'data' => $barangTitipan,
+                'count' => $barangTitipan->count(),
+                'id_penitip' => $id_penitip
+            ]);
         }
 
         return view('penitip.barangTitipanPenitip', compact('barangTitipan'));
