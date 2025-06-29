@@ -45,6 +45,11 @@ class Transaksi extends Model
         return $this->belongsTo(BarangTitipan::class, 'id_barang', 'id_barang');
     }
 
+    public function barang()
+    {
+        return $this->belongsTo(BarangTitipan::class, 'id_barang', 'id_barang');
+    }
+
     // Relasi ke Pembeli
     public function pembeli()
     {

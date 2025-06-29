@@ -39,7 +39,7 @@ Route::get('/top-seller/summary', [MobileController::class, 'getTopSellerSummary
 Route::get('/komisi-pegawai/pegawai/{id_pegawai}', [KomisiPegawaiController::class, 'getByPegawai']);
 Route::get('/komisi-pegawai/pegawai/{id_pegawai}/total', [KomisiPegawaiController::class, 'getTotalKomisiByPegawai']);
 
-Route::get('/pembeli/history-transaksi', [PembeliController::class, 'historyTransaksi']);
+Route::get('pembeli/history', [MobileController::class, 'history']);
 
 // Route::get('/pembeli/history-transaksi', [PembeliController::class, 'historyTransaksi']);
 
@@ -106,7 +106,7 @@ Route::middleware('auth:sanctum')->group(function () {
         
         // Pindahkan ke dalam group dan hapus duplikasi 'pembeli'
         Route::get('/profile', [PembeliController::class, 'profile']);
-        // Route::get('/history-transaksi', [PembeliController::class, 'historyTransaksi']);
+        // Route::get('/history', [TransaksiController::class, 'history']);
         Route::post('/update-alamat', [PembeliController::class, 'updateAlamat']);
         
         // Endpoint untuk data pembeli yang login

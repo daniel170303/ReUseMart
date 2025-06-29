@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Http\Controllers\Controller;
 use App\Models\BarangTitipan;
+use App\Models\Pembeli;
 use Illuminate\Http\Request;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
@@ -299,6 +300,77 @@ class MobileController extends Controller
                 'error' => $e->getMessage(),
                 'line' => $e->getLine(),
                 'file' => $e->getFile()
+            ], 500);
+        }
+    }
+
+    public function history(Request $request)
+    {
+        try {
+            // Validasi parameter
+            $request->validate([
+                'id_pembeli' => 'required|integer|exists:pembeli,id_pembeli'
+            ]);
+
+            $idPembeli = $request->query('id_pembeli');
+            
+            // Verifikasi pembeli exists
+            $pembeli = Pembeli::find($idPembeli);
+            if (!$pembeli) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Pembeli tidak ditemukan',
+                    'data' => null
+                ], 404);
+            }
+
+            // Ambil transaksi dengan relasi barang
+            $transaksis = Transaksi::with(['barang' => function($query) {
+                    $query->select('id_barang', 'nama_barang_titipan', 'harga_barang', 'gambar_barang');
+                }])
+                ->where('id_pembeli', $idPembeli)
+                ->orderBy('tanggal_pemesanan', 'desc')
+                ->get();
+
+            // Format response
+            $formattedTransaksis = $transaksis->map(function ($transaksi) {
+                return [
+                    'id_transaksi' => $transaksi->id_transaksi,
+                    'id_pembeli' => $transaksi->id_pembeli,
+                    'id_barang_titipan' => $transaksi->id_barang_titipan,
+                    'tanggal_pemesanan' => $transaksi->tanggal_pemesanan,
+                    'status_transaksi' => $transaksi->status_transaksi,
+                    'metode_pembayaran' => $transaksi->metode_pembayaran,
+                    'total_harga' => $transaksi->total_harga,
+                    'barang' => $transaksi->barang ? [
+                        'id_barang_titipan' => $transaksi->barang->id_barang_titipan,
+                        'nama_barang_titipan' => $transaksi->barang->nama_barang_titipan,
+                        'harga_barang' => $transaksi->barang->harga_barang,
+                        'foto_utama_url' => $transaksi->barang->foto_utama_url,
+                    ] : null,
+                ];
+            });
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Riwayat transaksi berhasil diambil',
+                'data' => $formattedTransaksis->toArray() // Langsung array, bukan nested
+            ], 200);
+
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Validasi gagal',
+                'data' => [],
+                'errors' => $e->errors()
+            ], 422);
+        } catch (\Exception $e) {
+            \Log::error('Error in history API: ' . $e->getMessage());
+            
+            return response()->json([
+                'success' => false,
+                'message' => 'Terjadi kesalahan server: ' . $e->getMessage(),
+                'data' => []
             ], 500);
         }
     }
