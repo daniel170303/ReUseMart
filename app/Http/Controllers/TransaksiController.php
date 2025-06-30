@@ -486,7 +486,7 @@ private function notifikasiPenitip($transaksi)
                     'nama_penerima' => $request->input('metode_pengiriman') === 'kurir' ? $request->input('nama_penerima') : null,
                     'telepon_penerima' => $request->input('metode_pengiriman') === 'kurir' ? $request->input('no_telepon') : null,
                     'kode_pos_pengiriman' => $request->input('metode_pengiriman') === 'kurir' ? $request->input('kode_pos') : null,
-                    'status_transaksi' => 'menunggu_pembayaran',
+                    'status_transaksi' => 'required|in:menunggu_pembayaran,menunggu_verifikasi,disiapkan,Diproses,Dikirim,Siap Diambil,Diambil',
                     'poin_diperoleh' => $poinDiperoleh,
                     'catatan_pembeli' => $request->input('catatan_pembeli'),
                 ];
