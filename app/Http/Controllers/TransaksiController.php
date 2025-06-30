@@ -60,7 +60,7 @@ class TransaksiController extends Controller
             // 'nama_barang'        => 'required|string|max:255',
             'tanggal_pemesanan'  => 'required|date',
             'tanggal_pelunasan'  => 'nullable|date',
-            'jenis_pengiriman'   => 'required|string|max:50', // Mungkin tidak relevan lagi
+            'jenis_pengiriman' => $request->input('metode_pengiriman') === 'kurir' ? 'Pengantaran' : 'Ambil Sendiri',
             'tanggal_pengiriman' => 'nullable|date',
             'tanggal_pengambilan'=> 'nullable|date',
             'ongkir'             => 'required|integer',
